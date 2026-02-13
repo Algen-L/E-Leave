@@ -71,6 +71,15 @@
                             <option value="hr" {{ old('role') === 'hr' ? 'selected' : '' }}>HR</option>
                             <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>Head HR</option>
                             <option value="immediate_head" {{ old('role') === 'immediate_head' ? 'selected' : '' }}>Immediate Head</option>
+                            @if(auth()->user()->role === 'super_admin')
+                                <optgroup label="High Level Roles">
+                                    <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASDS</option>
+                                    <option value="sds" {{ old('role') === 'sds' ? 'selected' : '' }}>SDS</option>
+                                    <option value="sgod_chief" {{ old('role') === 'sgod_chief' ? 'selected' : '' }}>SGOD Chief</option>
+                                    <option value="cid_chief" {{ old('role') === 'cid_chief' ? 'selected' : '' }}>CID Chief</option>
+                                    <option value="ao" {{ old('role') === 'ao' ? 'selected' : '' }}>AO</option>
+                                </optgroup>
+                            @endif
                         </select>
                         @error('role')
                             <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>

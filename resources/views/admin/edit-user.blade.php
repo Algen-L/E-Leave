@@ -285,6 +285,15 @@
                                     <option value="hr" {{ old('role', $editUser->role) === 'hr' ? 'selected' : '' }}>HR</option>
                                     <option value="head_hr" {{ old('role', $editUser->role) === 'head_hr' ? 'selected' : '' }}>Head HR</option>
                                     <option value="immediate_head" {{ old('role', $editUser->role) === 'immediate_head' ? 'selected' : '' }}>Immediate Head</option>
+                                    @if(auth()->user()->role === 'super_admin')
+                                        <optgroup label="High Level Roles">
+                                            <option value="asds" {{ old('role', $editUser->role) === 'asds' ? 'selected' : '' }}>ASDS</option>
+                                            <option value="sds" {{ old('role', $editUser->role) === 'sds' ? 'selected' : '' }}>SDS</option>
+                                            <option value="sgod_chief" {{ old('role', $editUser->role) === 'sgod_chief' ? 'selected' : '' }}>SGOD Chief</option>
+                                            <option value="cid_chief" {{ old('role', $editUser->role) === 'cid_chief' ? 'selected' : '' }}>CID Chief</option>
+                                            <option value="ao" {{ old('role', $editUser->role) === 'ao' ? 'selected' : '' }}>AO</option>
+                                        </optgroup>
+                                    @endif
                                 </select>
                                 @error('role')
                                     <div class="invalid-feedback">{{ $message }}</div>

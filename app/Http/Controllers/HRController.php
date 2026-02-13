@@ -32,7 +32,7 @@ class HRController extends Controller
     {
         $search = $request->input('search');
 
-        $users = User::where('role', 'user')
+        $users = User::where('role', '!=', 'super_admin')
             ->when($search, function ($query, $search) {
                 return $query->where('first_name', 'like', "%{$search}%")
                              ->orWhere('last_name', 'like', "%{$search}%")

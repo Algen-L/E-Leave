@@ -155,11 +155,17 @@ class AdminController extends Controller
             'last_name' => 'required|string|max:100',
             'gmail' => 'required|email|unique:users,gmail,' . $user->id,
             'position' => 'nullable|string|max:100',
-            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head',
+            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head,asds,sds,sgod_chief,cid_chief,ao',
             'office_station' => 'nullable|string|max:100',
             'is_active' => 'required|boolean',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
+
+        // Authorization check for restricted roles
+        $restrictedRoles = ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'];
+        if (in_array($request->role, $restrictedRoles) && Auth::user()->role !== 'super_admin') {
+             return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign this role.');
+        }
 
         $updateData = [
             'username' => $request->username,
@@ -387,8 +393,14 @@ class AdminController extends Controller
             'gmail' => 'nullable|email|unique:users,gmail',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
-            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head',
+            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head,asds,sds,sgod_chief,cid_chief,ao',
         ]);
+
+        // Authorization check for restricted roles
+        $restrictedRoles = ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'];
+        if (in_array($request->role, $restrictedRoles) && Auth::user()->role !== 'super_admin') {
+            return redirect()->back()->withInput()->with('error', 'Only Super Admin can create accounts with this role.');
+        }
 
         $user = User::create([
             'username' => $request->username,

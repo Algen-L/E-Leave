@@ -222,10 +222,10 @@
                                 <label class="lbl">Frequency</label>
                                 <select name="accrual_period" class="input-std w-medium">
                                     <option value="None" {{ $accrualPeriod == 'None' ? 'selected' : '' }}>None (Manual Only)</option>
-                                    <option value="Monthly" {{ $accrualPeriod == 'Monthly' ? 'selected' : '' }}>Monthly</option>
+                                    <option value="Monthly" {{ $accrualPeriod == 'Monthly' ? 'selected' : '' }}>Monthly (Every 24th)</option>
                                     <option value="Yearly" {{ $accrualPeriod == 'Yearly' ? 'selected' : '' }}>Yearly</option>
                                 </select>
-                                <div class="help-text">How often credits are automatically added.</div>
+                                <div class="help-text">How often credits are automatically added. (Monthly run date: 24th)</div>
                             </div>
                         </div>
 

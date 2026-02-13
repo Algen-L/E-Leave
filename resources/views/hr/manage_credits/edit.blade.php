@@ -248,19 +248,33 @@
     <form action="{{ route('hr-staff.manage-credits.update', $user->id) }}" method="POST">
         @csrf
         
-        <div class="credits-card-container mb-8">
+        @php
+            $creditLeaves = $leaveTypes->where('category', 'Credit');
+            $statutoryLeaves = $leaveTypes->where('category', '!=', 'Credit');
+        @endphp
+
+        <!-- Section A: Credit-Based Leaves -->
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">
+                <i class="fas fa-coins"></i>
+            </span>
+            Credit-Based Leaves
+        </h3>
+        <p class="text-sm text-gray-500 mb-4 pl-10 -mt-2">Leaves that accrue monthly (Vacation & Sick Leave).</p>
+
+        <div class="credits-card-container mb-10">
             <div class="card-header">
                 <div class="header-title">
                     <i class="fas fa-layer-group text-blue-400 text-sm"></i> 
-                    <span>Leave Type Category</span>
+                    <span>Leave Type</span>
                 </div>
                 <div class="header-title pr-14">
-                    <i class="fas fa-coins text-blue-400 text-sm"></i>
-                    <span>Allocation</span>
+                    <i class="fas fa-calculator text-blue-400 text-sm"></i>
+                    <span>Current Balance</span>
                 </div>
             </div>
             
-            @foreach($leaveTypes as $type)
+            @foreach($creditLeaves as $type)
                 @php
                     $credit = $existingCredits->get($type->id);
                     $dbLocked = $credit && $credit->is_locked;
@@ -281,33 +295,108 @@
                                 <i class="fas fa-unlock-alt text-[10px]"></i> Unlocked (Head HR)
                             </div>
                         @else
-                            <span class="field-sublabel">Input initial credits to allocate</span>
+                            <span class="field-sublabel">Accrues 1.25/month</span>
                         @endif
                     </div>
                     
                     <div class="flex items-center gap-6">
                         <div class="input-wrapper">
-                            <input type="number" step="0.01" min="0" 
+                            <input type="number" step="0.001" min="0" 
                                 name="credits[{{ $type->id }}]" 
                                 value="{{ $currentVal }}" 
                                 class="field-input" 
-                                placeholder="0.00" 
+                                placeholder="0.000" 
                                 {{ $isLocked ? 'readonly' : '' }}>
                         </div>
                         
                         <div class="action-area">
                             @if($isLocked)
                                 <button type="button" onclick="requestUnlock({{ $type->id }}, '{{ $type->type_name }}')" class="btn-request">
-                                    <i class="fas fa-pen mr-1"></i> Request Edit
+                                    <i class="fas fa-key mr-1"></i> Request Unlock
                                 </button>
                             @else
-                            <span class="text-gray-300 text-sm italic">Editable</span>
+                                <span class="text-xs text-gray-400">
+                                    <i class="fas fa-pen mr-1"></i> Editable
+                                </span>
                             @endif
                         </div>
                     </div>
                 </div>
             @endforeach
         </div>
+
+        <!-- Section B: Statutory / Special Leaves -->
+        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                <i class="fas fa-file-contract"></i>
+            </span>
+            Statutory / Special Leaves
+        </h3>
+        <p class="text-sm text-gray-500 mb-4 pl-10 -mt-2">Fixed allocations reset annually or per instance (SPL, FL, Maternity, etc).</p>
+
+        <div class="credits-card-container mb-8">
+            <div class="card-header">
+                <div class="header-title">
+                    <i class="fas fa-layer-group text-emerald-500 text-sm"></i> 
+                    <span>Leave Type</span>
+                </div>
+                <div class="header-title pr-14">
+                    <i class="fas fa-calendar-check text-emerald-500 text-sm"></i>
+                    <span>Allocation / Limit</span>
+                </div>
+            </div>
+            
+            @foreach($statutoryLeaves as $type)
+                @php
+                    $credit = $existingCredits->get($type->id);
+                    $dbLocked = $credit && $credit->is_locked;
+                    // Locked effectively if DB locked AND not Head HR
+                    $isLocked = $dbLocked && !auth()->user()->isHeadHR(); 
+                    $currentVal = $credit ? $credit->credits : '';
+                @endphp
+                
+                <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
+                    <div class="field-label">
+                        {{ $type->type_name }}
+                        @if($isLocked)
+                            <div class="status-badge status-locked mt-1 w-max">
+                                <i class="fas fa-lock text-[10px]"></i> Locked
+                            </div>
+                        @elseif($dbLocked)
+                            <div class="status-badge bg-orange-100 text-orange-600 border border-orange-200 mt-1 w-max">
+                                <i class="fas fa-unlock-alt text-[10px]"></i> Unlocked (Head HR)
+                            </div>
+                        @else
+                            <span class="field-sublabel">{{ $type->description }}</span>
+                        @endif
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="input-wrapper">
+                            <input type="number" step="1" min="0" 
+                                name="credits[{{ $type->id }}]" 
+                                value="{{ $currentVal }}" 
+                                class="field-input" 
+                                placeholder="0" 
+                                {{ $isLocked ? 'readonly' : '' }}>
+                        </div>
+                        
+                        <div class="action-area">
+                             @if($isLocked)
+                                <button type="button" onclick="requestUnlock({{ $type->id }}, '{{ $type->type_name }}')" class="btn-request">
+                                    <i class="fas fa-key mr-1"></i> Request Unlock
+                                </button>
+                            @else
+                                <span class="text-xs text-gray-400">
+                                    <i class="fas fa-pen mr-1"></i> Editable
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
 
         <div class="flex justify-end p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
             <button type="submit" class="btn-primary">

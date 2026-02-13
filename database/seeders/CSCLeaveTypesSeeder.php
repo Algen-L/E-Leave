@@ -23,6 +23,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Monthly',
                 'expiration_rule' => 'None', // Accumulates
                 'max_credits' => null, // Unlimited accumulation
+                'category' => 'Credit',
             ],
             [
                 'name' => 'Sick Leave',
@@ -31,6 +32,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Monthly',
                 'expiration_rule' => 'None',
                 'max_credits' => null,
+                'category' => 'Credit',
             ],
             [
                 'name' => 'Maternity Leave',
@@ -39,6 +41,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None', // Special
                 'expiration_rule' => 'None',
                 'max_credits' => null,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Paternity Leave',
@@ -47,6 +50,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None', // Per instance, not accrued
                 'expiration_rule' => 'None',
                 'max_credits' => 7,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Special Privilege Leave',
@@ -55,6 +59,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Yearly', // Reset annually
                 'expiration_rule' => 'Yearly', // Expires end of year
                 'max_credits' => 3,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Solo Parent Leave',
@@ -63,6 +68,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Yearly',
                 'expiration_rule' => 'Yearly',
                 'max_credits' => 7,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Study Leave',
@@ -71,6 +77,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None',
                 'expiration_rule' => 'None',
                 'max_credits' => null,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'VAWC Leave (RA 9262)',
@@ -79,6 +86,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Yearly', // Usually renewable
                 'expiration_rule' => 'Yearly',
                 'max_credits' => 10,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Rehabilitation Leave',
@@ -87,6 +95,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None',
                 'expiration_rule' => 'None',
                 'max_credits' => null,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Special Leave Benefits for Women',
@@ -95,6 +104,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None',
                 'expiration_rule' => 'None',
                 'max_credits' => 60, // Approx 2 months
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Special Emergency (Calamity) Leave',
@@ -103,6 +113,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'Yearly', // Usually based on declaration, but capped yearly
                 'expiration_rule' => 'Yearly',
                 'max_credits' => 5,
+                'category' => 'Statutory',
             ],
             [
                 'name' => 'Adoption Leave',
@@ -111,6 +122,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 'accrual_period' => 'None',
                 'expiration_rule' => 'None',
                 'max_credits' => null,
+                'category' => 'Statutory',
             ],
         ];
 
@@ -120,6 +132,10 @@ class CSCLeaveTypesSeeder extends Seeder
                 ['type_name' => $typeData['name']],
                 ['description' => $typeData['description']]
             );
+            
+            // Explicitly update category since duplicate names might exist
+            $type->category = $typeData['category'];
+            $type->save();
 
             // Create or Update Policy
             LeaveCreditPolicy::updateOrCreate(
