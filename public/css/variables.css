@@ -1,0 +1,123 @@
+/* Global Styling Variables for SDO System */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    /* Color Palette - Deep Blue Government Theme */
+    --primary: #0f4c75;
+    --primary-light: #1b6ca8;
+    --primary-dark: #0a2f4a;
+    --primary-gradient: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+
+    --accent: #d4af37;
+    --accent-light: #e5c158;
+    --accent-dark: #b8962e;
+    --accent-gold: #d4af37;
+
+    --success: #10b981;
+    --success-bg: #d1fae5;
+    --warning: #f59e0b;
+    --warning-bg: #fef3c7;
+    --danger: #ef4444;
+    --danger-bg: #fee2e2;
+    --info: #3b82f6;
+    --info-bg: #dbeafe;
+
+    /* Backgrounds */
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --card-bg: #ffffff;
+
+    /* Text Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-light: #ffffff;
+
+    /* Borders */
+    --border-color: #e2e8f0;
+    --border-light: #f1f5f9;
+
+    /* Radius Tokens */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 6px -1px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 3px 10px -2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 4px 16px -2px rgba(0, 0, 0, 0.3);
+
+    /* Layout Dimensions */
+    --sidebar-width: 260px;
+    --sidebar-collapsed: 76px;
+    --topbar-height: 56px;
+
+    /* Auth Page Colors */
+    --bg-dark: #0f172a;
+    --card-bg-dark: #1e293b;
+    --input-bg-dark: #0f172a;
+    --border-color-dark: #334155;
+    --primary-blue: #0ea5e9;
+    --primary-hover: #0284c7;
+    --text-main: #f8fafc;
+
+    /* Dashboard Colors */
+    --vibrant-blue: #0ea5e9;
+    --vibrant-orange: #f97316;
+}
+
+/* Reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: 15px;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+.text-gradient {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--primary-light);
+}

@@ -1,0 +1,473 @@
+/* Authentication Reset Management Page Styles */
+
+/* Filter Bar */
+.filter-bar-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.filter-form-flex {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.search-wrapper .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.search-wrapper .search-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 16px 0 44px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    background: white;
+    transition: all 0.2s;
+}
+
+.search-wrapper .search-input::placeholder {
+    color: #94a3b8;
+}
+
+.search-wrapper .search-input:focus {
+    outline: none;
+    border-color: #0f4c75;
+    box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
+}
+
+.filter-select {
+    height: 44px;
+    min-width: 140px;
+    padding: 0 36px 0 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 14px center;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #0f4c75;
+    box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
+}
+
+.filter-btn {
+    height: 44px;
+    padding: 0 24px;
+    background: #0f4c75;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: #1b6ca8;
+    transform: translateY(-1px);
+}
+
+.filter-btn i {
+    font-size: 0.85rem;
+}
+
+/* Record Count Badge */
+.record-count {
+    font-size: 0.85rem;
+    color: #0ea5e9;
+    font-weight: 600;
+}
+
+/* Rate Limits Table */
+.rate-limits-table th {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rate-limits-table td {
+    vertical-align: middle;
+}
+
+/* User Cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar-sm {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.user-avatar-sm.guest {
+    background: #94a3b8;
+}
+
+.user-avatar-sm img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.user-info-sm {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name-sm {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.user-email-sm {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+/* Role Badge */
+.role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.role-badge.role-user {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.role-badge.role-admin {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.role-badge.role-super_admin {
+    background: #fce7f3;
+    color: #be185d;
+}
+
+.role-badge.role-hr {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.role-badge.role-head_hr {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.role-badge.role-guest {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Rate Values */
+.rate-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.rate-limit {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.status-active {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.status-badge.status-blocked {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Last Activity */
+.last-activity {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.last-activity small {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.action-icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+}
+
+.action-icon-btn:hover {
+    transform: translateY(-2px);
+}
+
+.action-reset {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.action-reset:hover {
+    background: #bae6fd;
+}
+
+.action-unblock {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.action-unblock:hover {
+    background: #a7f3d0;
+}
+
+.action-block {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.action-block:hover {
+    background: #fecaca;
+}
+
+.action-email {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.action-email:hover {
+    background: #fde68a;
+}
+
+.action-view {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
+.action-view:hover {
+    background: #ddd6fe;
+}
+
+/* Empty State */
+.empty-table {
+    text-align: center;
+    padding: 40px !important;
+}
+
+.empty-state-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+}
+
+.empty-state-inline i {
+    font-size: 2rem;
+}
+
+.empty-state-inline span {
+    font-size: 0.9rem;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-container {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.modal-header h3 i {
+    color: var(--primary);
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-item span {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #64748b;
+}
+
+.loading i {
+    margin-right: 8px;
+}
+
+.error {
+    text-align: center;
+    padding: 40px;
+    color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .rate-limits-table {
+        min-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-row-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
