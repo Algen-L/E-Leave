@@ -139,6 +139,13 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/leave/history', [App\Http\Controllers\LeaveController::class, 'myApplications'])->name('leave.history');
     Route::get('/leave/form6/{id}', [App\Http\Controllers\LeaveController::class, 'generateForm6'])->name('leave.form6');
 
+    // Approval Workflow
+    Route::get('/leave/approvals', [App\Http\Controllers\LeaveApprovalController::class, 'index'])->name('leave.approvals');
+    Route::post('/leave/approvals/{id}/verify', [App\Http\Controllers\LeaveApprovalController::class, 'verify'])->name('leave.verify');
+    Route::post('/leave/approvals/{id}/recommend', [App\Http\Controllers\LeaveApprovalController::class, 'recommend'])->name('leave.recommend');
+    Route::post('/leave/approvals/{id}/approve', [App\Http\Controllers\LeaveApprovalController::class, 'approve'])->name('leave.approve');
+    Route::post('/leave/approvals/{id}/reject', [App\Http\Controllers\LeaveApprovalController::class, 'reject'])->name('leave.reject');
+
     // Notifications
     Route::post('/notifications/read', [UserController::class, 'markNotificationRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [UserController::class, 'markAllNotificationsRead'])->name('notifications.read-all');

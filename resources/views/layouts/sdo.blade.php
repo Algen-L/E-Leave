@@ -62,7 +62,6 @@
                     @endif
 
                     @if(auth()->user()->isHR() || auth()->user()->isHeadHR())
-                    <div class="nav-group-label" style="padding: 10px 20px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Credit Management</div>
                     
                     <a href="{{ route('hr-staff.manage-credits') }}" class="nav-item {{ request()->routeIs('hr-staff.manage-credits*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="fas fa-coins"></i></span>
@@ -80,6 +79,13 @@
                         <span class="nav-text">Audit & Approvals</span>
                     </a>
                     @endif
+
+                    @if(auth()->user()->isHR() || auth()->user()->isSuperAdmin())
+                    <a href="{{ route('user.leave.approvals') }}" class="nav-item {{ request()->routeIs('user.leave.approvals') ? 'active' : '' }}">
+                        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+                        <span class="nav-text">Pending Approvals</span>
+                    </a>
+                    @endif
                     
                     <div class="nav-divider"></div>
                     
@@ -93,8 +99,6 @@
                         <span class="nav-text">Home</span>
                     </a>
                     
-                    <div class="nav-group-label" style="padding: 10px 20px; font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Leave Management</div>
-                    
                     <a href="{{ route('user.leave.apply') }}" class="nav-item {{ request()->routeIs('user.leave.apply') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="fas fa-file-signature"></i></span>
                         <span class="nav-text">Apply for Leave</span>
@@ -103,6 +107,14 @@
                         <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
                         <span class="nav-text">My Applications</span>
                     </a>
+
+                    <!-- Approval Dashboard Link for Officers -->
+                    @if(in_array(auth()->user()->role, ['cid_chief', 'sgod_chief', 'ao', 'asds', 'sds', 'hr', 'head_hr', 'super_admin']))
+                    <a href="{{ route('user.leave.approvals') }}" class="nav-item {{ request()->routeIs('user.leave.approvals') ? 'active' : '' }}">
+                        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+                        <span class="nav-text">Pending Approvals</span>
+                    </a>
+                    @endif
 
                     <div class="nav-divider"></div>
 

@@ -137,22 +137,22 @@
                 <div class="form-row-custom">
                     <div class="form-group-custom">
                         <label class="field-label">RECOMMENDING APPROVER</label>
-                        <select class="field-input" name="recommending_approver">
+                        <select class="field-input" name="recommending_officer_id">
                             <option value="">Select Recommender</option>
-                            @foreach(['CID CHIEF', 'SGOD CHIEF', 'AO', 'ASDS'] as $pos)
-                                <option value="{{ $pos }}" {{ (old('recommending_approver', $user->recommending_approver) == $pos) ? 'selected' : '' }}>
-                                    {{ $pos }}
+                            @foreach($recommendingOfficers as $officer)
+                                <option value="{{ $officer->id }}" {{ (old('recommending_officer_id', $user->recommending_officer_id) == $officer->id) ? 'selected' : '' }}>
+                                    {{ $officer->full_name }} ({{ strtoupper($officer->role) }})
                                 </option>
                             @endforeach
                         </select>
                     </div>
                     <div class="form-group-custom">
                         <label class="field-label">FINAL APPROVER</label>
-                        <select class="field-input" name="final_approver">
+                        <select class="field-input" name="approving_officer_id">
                             <option value="">Select Final Approver</option>
-                            @foreach(['SDS', 'ASDS'] as $pos)
-                                <option value="{{ $pos }}" {{ (old('final_approver', $user->final_approver) == $pos) ? 'selected' : '' }}>
-                                    {{ $pos }}
+                            @foreach($finalApprovers as $officer)
+                                <option value="{{ $officer->id }}" {{ (old('approving_officer_id', $user->approving_officer_id) == $officer->id) ? 'selected' : '' }}>
+                                    {{ $officer->full_name }} ({{ strtoupper($officer->role) }})
                                 </option>
                             @endforeach
                         </select>

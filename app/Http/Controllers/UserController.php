@@ -46,10 +46,24 @@ class UserController extends Controller
         $user = Auth::user();
         $notifications = Notification::getUnreadForUser($user->id);
 
+        // Fetch Recommending Officers (CID Chief, SGOD Chief, AO, ASDS)
+        $recommendingOfficers = User::whereIn('role', ['cid_chief', 'sgod_chief', 'ao', 'asds'])
+            ->where('is_active', true)
+            ->orderBy('last_name')
+            ->get();
+
+        // Fetch Final Approvers (ASDS, SDS)
+        $finalApprovers = User::whereIn('role', ['asds', 'sds'])
+            ->where('is_active', true)
+            ->orderBy('last_name')
+            ->get();
+
         return view('user.profile', [
             'user' => $user,
             'notifications' => $notifications,
             'unreadCount' => $notifications->count(),
+            'recommendingOfficers' => $recommendingOfficers,
+            'finalApprovers' => $finalApprovers,
         ]);
     }
 
@@ -63,8 +77,8 @@ class UserController extends Controller
             'position' => 'nullable|string|max:100',
             'office_station' => 'nullable|string|max:100',
             'salary' => 'nullable|string|max:50',
-            'recommending_approver' => 'nullable|string|max:100',
-            'final_approver' => 'nullable|string|max:100',
+            'recommending_officer_id' => 'nullable|exists:users,id',
+            'approving_officer_id' => 'nullable|exists:users,id',
             'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
@@ -81,11 +95,15 @@ class UserController extends Controller
         if ($request->has('salary')) {
             $updateData['salary'] = $request->salary;
         }
-        if ($request->has('recommending_approver')) {
-            $updateData['recommending_approver'] = $request->recommending_approver;
+        if ($request->has('office_station')) {
+            $updateData['office_station'] = $request->office_station;
         }
-        if ($request->has('final_approver')) {
-            $updateData['final_approver'] = $request->final_approver;
+
+        if ($request->has('recommending_officer_id')) {
+            $updateData['recommending_officer_id'] = $request->recommending_officer_id;
+        }
+        if ($request->has('approving_officer_id')) {
+            $updateData['approving_officer_id'] = $request->approving_officer_id;
         }
 
         // Handle profile picture upload

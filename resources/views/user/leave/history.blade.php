@@ -5,6 +5,59 @@
 
 @push('styles')
 <style>
+    /* Stepper CSS */
+    .stepper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 250px;
+        position: relative;
+    }
+    .stepper::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: #e2e8f0;
+        z-index: 0;
+        transform: translateY(-50%);
+    }
+    .step {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        z-index: 1;
+        position: relative;
+        transition: all 0.3s;
+    }
+    .step.active {
+        background: #3b82f6;
+        transform: scale(1.5);
+    }
+    .step.completed {
+        background: #22c55e;
+    }
+    .step.rejected {
+        background: #ef4444;
+    }
+    .step-label {
+        position: absolute;
+        top: 150%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.6rem;
+        white-space: nowrap;
+        color: #64748b;
+        font-weight: 600;
+        display: none; /* Hide primarily, show on hover? */
+    }
+    .stepper:hover .step-label { display: block; }
+</style>
+<style>
     .summary-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -99,11 +152,12 @@
         border-radius: 20px;
         font-size: 0.75rem;
         font-weight: 700;
+        text-transform: capitalize;
     }
     
     .status-pending { background: #fff7ed; color: #c2410c; }
     .status-approved { background: #f0fdf4; color: #15803d; }
-    .status-disapproved { background: #fef2f2; color: #b91c1c; }
+    .status-rejected, .status-disapproved { background: #fef2f2; color: #b91c1c; }
     
     .action-btn {
         width: 32px;
@@ -179,13 +233,25 @@
                     <th>Date Filed</th>
                     <th>Leave Type</th>
                     <th>Inclusive Dates</th>
-                    <th>Days</th>
+                    <th>Progress Tracker</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($applications as $app)
+                @php
+                    // Helper to determine active/completed steps
+                    $s1 = $app->hr_verified_at ? 'completed' : 'active';
+                    $s2 = $app->recommended_at ? 'completed' : ($s1 == 'completed' ? 'active' : '');
+                    $s3 = $app->approved_at ? 'completed' : ($s2 == 'completed' ? 'active' : '');
+                    
+                    if (str_contains(strtolower($app->status), 'reject') || str_contains(strtolower($app->status), 'disapprove')) {
+                         if (!$app->hr_verified_at) $s1 = 'rejected';
+                         else if (!$app->recommended_at) $s2 = 'rejected';
+                         else $s3 = 'rejected';
+                    }
+                @endphp
                 <tr>
                     <td>
                         <div class="font-bold">{{ $app->date_filing->format('M d, Y') }}</div>
@@ -194,10 +260,28 @@
                     <td>{{ $app->leaveType->type_name }}</td>
                     <td>
                         {{ $app->start_date->format('M d') }} - {{ $app->end_date->format('M d, Y') }}
+                        <div class="text-xs text-gray-400">({{ $app->days_applied }} days)</div>
                     </td>
-                    <td>{{ $app->days_applied }}</td>
                     <td>
-                        <span class="status-badge status-{{ strtolower($app->status) }}">
+                        <div class="stepper">
+                            <div class="step {{ $s1 }}" title="HR Verification">
+                                <span class="step-label">HR Verify</span>
+                            </div>
+                            <div class="step {{ $s2 }}" title="Recommendation">
+                                <span class="step-label">Recommend</span>
+                            </div>
+                            <div class="step {{ $s3 }}" title="Final Approval">
+                                <span class="step-label">Approve</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @php
+                            $badgeClass = 'status-pending';
+                            if (stripos($app->status, 'approve') !== false && stripos($app->status, 'pending') === false) $badgeClass = 'status-approved';
+                            if (stripos($app->status, 'reject') !== false || stripos($app->status, 'disapprove') !== false) $badgeClass = 'status-rejected';
+                        @endphp
+                        <span class="status-badge {{ $badgeClass }}">
                             {{ $app->status }}
                         </span>
                     </td>

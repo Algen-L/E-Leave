@@ -21,7 +21,19 @@ class LeaveController extends Controller
         $user = Auth::user();
         $leaveTypes = LeaveType::where('is_active', true)->get();
         
-        return view('user.leave.apply', compact('user', 'leaveTypes'));
+        // Fetch Recommending Officers (CID Chief, SGOD Chief, AO, ASDS)
+        $recommendingOfficers = User::whereIn('role', ['cid_chief', 'sgod_chief', 'ao', 'asds'])
+            ->where('is_active', true)
+            ->orderBy('last_name')
+            ->get();
+
+        // Fetch Final Approvers (ASDS, SDS)
+        $finalApprovers = User::whereIn('role', ['asds', 'sds'])
+            ->where('is_active', true)
+            ->orderBy('last_name')
+            ->get();
+        
+        return view('user.leave.apply', compact('user', 'leaveTypes', 'recommendingOfficers', 'finalApprovers'));
     }
 
     /**
@@ -35,10 +47,16 @@ class LeaveController extends Controller
             'days_applied' => 'required|numeric|min:0.5',
         ]);
 
+        $user = Auth::user();
+
+        // Validate that the user has configured their approvers
+        if (!$user->recommending_officer_id || !$user->approving_officer_id) {
+            return back()->with('error', 'Please configure your Recommending and Approving Officers in your Profile before applying.')->withInput();
+        }
+
         try {
             DB::beginTransaction();
 
-            $user = Auth::user();
             $leaveType = LeaveType::find($request->leave_type_id);
 
             // Process dates
@@ -57,7 +75,9 @@ class LeaveController extends Controller
                 'dates' => $dates,
                 'days_applied' => $request->days_applied,
                 'commutation' => $request->has('commutation') ? 'Requested' : 'Not Requested',
-                'status' => 'Pending',
+                'status' => 'Pending HR', // Initial Status
+                'recommending_officer_id' => $user->recommending_officer_id,
+                'approving_officer_id' => $user->approving_officer_id,
             ]);
 
             // 2. Create Details (Form 6 specific)
@@ -78,10 +98,13 @@ class LeaveController extends Controller
                 
                 'other_purpose' => $request->input('other_purpose'),
             ]);
+            
+            // Notify HR (using a simple notification for now, can be expanded)
+            // \App\Models\Notification::sendToRole('hr', ...); // Placeholder
 
             DB::commit();
 
-            return redirect()->route('user.leave.history')->with('success', 'Leave application submitted successfully!');
+            return redirect()->route('user.leave.history')->with('success', 'Leave application submitted successfully! Pending HR Verification.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -117,7 +140,7 @@ class LeaveController extends Controller
      */
     public function generateForm6($id)
     {
-        $application = LeaveApplication::with(['leaveType', 'details', 'user'])->findOrFail($id);
+        $application = LeaveApplication::with(['leaveType', 'details', 'user', 'recommendingOfficer', 'approvingOfficer'])->findOrFail($id);
         
         // Check authorization
         if ($application->user_id !== Auth::id() && Auth::user()->role === 'user') {
@@ -215,25 +238,24 @@ class LeaveController extends Controller
             $setVal('salary', $user->salary ?? 'N/A');
 
             // --- APPROVERS ---
-            $recommendingPos = $user->recommending_approver;
-            $finalPos = $user->final_approver;
+            // Use the actual officers saved in the application
+            $recommenderRequest = $application->recommendingOfficer;
+            $approverRequest = $application->approvingOfficer;
 
-            // Look up names for approvers
-            $recommender = null;
-            $approver = null;
+            // Recommending Officer
+            $recName = $recommenderRequest ? $recommenderRequest->full_name : '';
+            // If the user has a position defined, use it. Otherwise, use their role expanded.
+            $recPos  = $recommenderRequest ? ($recommenderRequest->position ?: $expandPos($recommenderRequest->role)) : '';
 
-            if ($recommendingPos) {
-                $recommender = \App\Models\Signatory::where('position', $recommendingPos)->first();
-            }
-            if ($finalPos) {
-                $approver = \App\Models\Signatory::where('position', $finalPos)->first();
-            }
+            $setVal('RECOMMENDING_NAME', strtoupper($recName));
+            $setVal('RECOMMENDING_POSITION', strtoupper($recPos));
 
-            $setVal('RECOMMENDING_POSITION', strtoupper($recommender->title ?? $expandPos($recommendingPos)));
-            $setVal('FINAL_POSITION', strtoupper($approver->title ?? $expandPos($finalPos)));
+            // Final Approver
+            $finalName = $approverRequest ? $approverRequest->full_name : '';
+            $finalPos  = $approverRequest ? ($approverRequest->position ?: $expandPos($approverRequest->role)) : '';
 
-            $setVal('RECOMMENDING_NAME', strtoupper($recommender->name ?? ''));
-            $setVal('FINAL_NAME', strtoupper($approver->name ?? ''));
+            $setVal('FINAL_NAME', strtoupper($finalName));
+            $setVal('FINAL_POSITION', strtoupper($finalPos));
             
             // --- VERIFIER OF LEAVE CREDITS ---
             $verifier = \App\Models\Signatory::where('position', 'Verifier of Leave Credits')->first();
@@ -369,7 +391,10 @@ class LeaveController extends Controller
 
                     if (file_exists($outputPdf)) {
                         $filename = 'Leave_Form6_' . $lastName . '_' . $application->id . '.pdf';
-                        return response()->download($outputPdf, $filename)->deleteFileAfterSend(true);
+                        return response()->file($outputPdf, [
+                            'Content-Type' => 'application/pdf',
+                            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+                        ])->deleteFileAfterSend(true);
                     } else {
                         throw new \Exception("PDF generation failed. Output: " . implode("\n", $output));
                     }

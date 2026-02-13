@@ -262,6 +262,54 @@
             </div>
         </div>
 
+        <!-- Approval Workflow Section -->
+        <div class="form-section">
+            <h2 class="form-section-title text-blue-900">
+                <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                Approval Workflow
+            </h2>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <p class="text-sm text-blue-800">
+                        This application will be automatically routed to your assigned officers. 
+                        You can change your routing settings in your <a href="{{ route('user.profile') }}" class="font-bold underline">Profile</a>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Recommending Officer -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Recommending Approval (7.A)</label>
+                    <div class="bg-gray-100 p-3 rounded-xl border border-gray-200">
+                        @if($user->recommendingOfficer)
+                            <div class="font-bold text-gray-800">{{ $user->recommendingOfficer->full_name }}</div>
+                            <div class="text-xs text-gray-500 uppercase">{{ str_replace('_', ' ', $user->recommendingOfficer->role) }}</div>
+                        @else
+                            <div class="text-red-500 font-medium italic">Not configured</div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Final Approver -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Approved For (7.B)</label>
+                    <div class="bg-gray-100 p-3 rounded-xl border border-gray-200">
+                        @if($user->approvingOfficer)
+                            <div class="font-bold text-gray-800">{{ $user->approvingOfficer->full_name }}</div>
+                            <div class="text-xs text-gray-500 uppercase">{{ str_replace('_', ' ', $user->approvingOfficer->role) }}</div>
+                        @else
+                            <div class="text-red-500 font-medium italic">Not configured</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="form-actions flex justify-end gap-4 mt-8">
             <a href="{{ route('user.leave.history') }}" class="px-6 py-3 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
                 Cancel

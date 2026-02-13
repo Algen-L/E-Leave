@@ -54,8 +54,10 @@ class User extends Authenticatable
         'office_station',
         'position',
         'salary',
-        'recommending_approver',
-        'final_approver',
+        'recommending_approver', // Legacy?
+        'final_approver', // Legacy?
+        'recommending_officer_id', // New relational
+        'approving_officer_id', // New relational
         'employee_number',
         'rating_period',
         'area_of_specialization',
@@ -191,5 +193,15 @@ class User extends Authenticatable
     public function scopeExcludeRoles($query, array $roles)
     {
         return $query->whereNotIn('role', $roles);
+    }
+
+    public function recommendingOfficer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recommending_officer_id');
+    }
+
+    public function approvingOfficer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approving_officer_id');
     }
 }
