@@ -68,6 +68,7 @@ class LeaveApprovalController extends Controller
         $application->update([
             'status' => 'Pending Recommending',
             'hr_verified_at' => now(),
+            'hr_verifier_id' => Auth::id(),
         ]);
 
         return back()->with('success', 'Application verified. Sent to Recommending Officer.');

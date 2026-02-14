@@ -20,6 +20,7 @@ class LeaveApplication extends Model
         'status',
         'recommending_officer_id',
         'approving_officer_id',
+        'hr_verifier_id',
         'hr_verified_at',
         'recommended_at',
         'approved_at',
@@ -42,6 +43,21 @@ class LeaveApplication extends Model
     public function leaveType(): BelongsTo
     {
         return $this->belongsTo(LeaveType::class);
+    }
+
+    public function recommendingOfficer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recommending_officer_id');
+    }
+
+    public function approvingOfficer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approving_officer_id');
+    }
+
+    public function hrVerifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'hr_verifier_id');
     }
 
     public function details(): HasOne

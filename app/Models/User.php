@@ -58,6 +58,7 @@ class User extends Authenticatable
         'final_approver', // Legacy?
         'recommending_officer_id', // New relational
         'approving_officer_id', // New relational
+        'esignature', // E-Signature path
         'employee_number',
         'rating_period',
         'area_of_specialization',

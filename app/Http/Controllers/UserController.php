@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -112,6 +113,35 @@ class UserController extends Controller
             $fileName = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('profile_pics', $fileName, 'public');
             $updateData['profile_picture'] = 'storage/' . $path;
+        }
+        
+        // Handle E-Signature upload or draw
+        $sigMode = $request->input('esignature_mode');
+        
+        if ($sigMode === 'draw' && $request->input('esignature_data')) {
+            $base64Image = $request->input('esignature_data');
+            
+            // Basic validation of base64 string
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image)) {
+                $data = substr($base64Image, strpos($base64Image, ',') + 1);
+                $data = base64_decode($data);
+                
+                $fileName = 'sign_' . $user->id . '_' . time() . '.png';
+                Storage::disk('public')->put('esignatures/' . $fileName, $data);
+                $updateData['esignature'] = 'storage/esignatures/' . $fileName;
+            }
+        }
+        elseif ($request->hasFile('esignature')) {
+            $file = $request->file('esignature');
+            
+            // Basic validation for PNG
+            if (strtolower($file->getClientOriginalExtension()) === 'png') {
+                $fileName = 'sign_' . $user->id . '_' . time() . '.png';
+                $path = $file->storeAs('esignatures', $fileName, 'public');
+                $updateData['esignature'] = 'storage/' . $path;
+            } else {
+                return redirect()->back()->with('error', 'Uploaded signature must be a PNG file.');
+            }
         }
 
         if (!empty($updateData)) {

@@ -36,6 +36,9 @@
         <button type="button" class="banner-btn banner-btn-white" onclick="toggleSection('editProfileSection')">
             <i class="fas fa-edit"></i> Edit Profile
         </button>
+        <button type="button" class="banner-btn banner-btn-outline" onclick="toggleSection('esignatureSection')">
+            <i class="fas fa-signature"></i> E-Signature
+        </button>
         <button type="button" class="banner-btn banner-btn-outline" onclick="toggleSection('changePasswordSection')">
             <i class="fas fa-lock"></i> Change Password
         </button>
@@ -234,10 +237,213 @@
         </div>
     </div>
 </div>
+
+<!-- E-Signature Section -->
+<div class="profile-section" id="esignatureSection" style="display: none;">
+    <div class="section-header">
+        <h2><i class="fas fa-signature"></i> Electronic Signature</h2>
+    </div>
+    <div class="section-body">
+        <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data" id="signatureForm">
+            @csrf
+            @method('PUT')
+            
+            <input type="hidden" name="esignature_mode" id="esignatureMode" value="upload">
+            <input type="hidden" name="esignature_data" id="esignatureData">
+            
+            <div class="form-grid">
+                <div class="form-group-custom full-width">
+                    <label class="field-label">Current Signature</label>
+                    <div class="signature-preview" style="border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 20px; background: #f8fafc;">
+                        @if($user->esignature)
+                            <img src="{{ asset($user->esignature) }}" alt="E-Signature" style="max-height: 100px; max-width: 100%;">
+                        @else
+                            <p class="text-gray-400">No signature uploaded yet.</p>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="form-group-custom full-width">
+                    <label class="field-label">Update Signature</label>
+
+                    <!-- Tabs -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button type="button" class="btn-tab active" id="tabUpload" onclick="switchSigMode('upload')" 
+                            style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: #eef2ff; color: #6366f1; cursor: pointer;">
+                            <i class="fas fa-upload"></i> Upload PNG
+                        </button>
+                        <button type="button" class="btn-tab" id="tabDraw" onclick="switchSigMode('draw')"
+                            style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; cursor: pointer;">
+                            <i class="fas fa-pen-nib"></i> Draw Signature
+                        </button>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div id="uploadArea">
+                        <input type="file" name="esignature" class="field-input" accept="image/png">
+                        <small style="display: block; margin-top: 8px; color: #64748b;">
+                            Please upload a clear image of your signature (<strong>PNG only</strong> with transparent background recommended).
+                        </small>
+                    </div>
+
+                    <!-- Draw Area -->
+                    <div id="drawArea" style="display: none;">
+                        <div style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; position: relative;">
+                             <canvas id="sigCanvas" height="200" style="width: 100%; display: block; cursor: crosshair; touch-action: none;"></canvas>
+                        </div>
+                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                            <small class="text-gray-500">Sign within the box above using your mouse or touch screen.</small>
+                            <button type="button" onclick="clearSigCanvas()" style="color: #dc2626; background: transparent; border: none; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" onclick="submitSignature()" class="btn-save">
+                    <i class="fas fa-save"></i> Save Signature
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+
+    // ---- Signature Logic ----
+    let canvas, ctx;
+    let isDrawing = false;
+    let hasSignature = false;
+
+    // Initialize canvas on load or when section opens
+    // We'll init when the section is toggled or lazily
+    
+    function initCanvas() {
+        canvas = document.getElementById('sigCanvas');
+        if(!canvas) return;
+        
+        ctx = canvas.getContext('2d');
+        
+        // Handle resizing for high DPI
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = 200;
+        
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#000000';
+        
+        // Events
+        canvas.addEventListener('mousedown', startDraw);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', endDraw);
+        canvas.addEventListener('mouseout', endDraw);
+        
+        // Touch events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            canvas.dispatchEvent(mouseEvent);
+        });
+    }
+
+    function startDraw(e) {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        ctx.beginPath();
+        ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+        ctx.stroke();
+        hasSignature = true;
+    }
+
+    function endDraw() {
+        isDrawing = false;
+        ctx.closePath();
+    }
+
+    function clearSigCanvas() {
+        if(!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasSignature = false;
+    }
+
+    function switchSigMode(mode) {
+        document.getElementById('esignatureMode').value = mode;
+        
+        const tabUpload = document.getElementById('tabUpload');
+        const tabDraw = document.getElementById('tabDraw');
+        const areaUpload = document.getElementById('uploadArea');
+        const areaDraw = document.getElementById('drawArea');
+        
+        if (mode === 'upload') {
+            tabUpload.style.background = '#eef2ff';
+            tabUpload.style.color = '#6366f1';
+            
+            tabDraw.style.background = 'white';
+            tabDraw.style.color = 'black';
+            
+            areaUpload.style.display = 'block';
+            areaDraw.style.display = 'none';
+        } else {
+            tabDraw.style.background = '#eef2ff';
+            tabDraw.style.color = '#6366f1';
+            
+            tabUpload.style.background = 'white';
+            tabUpload.style.color = 'black';
+
+            areaUpload.style.display = 'none';
+            areaDraw.style.display = 'block';
+            
+            // Re-init canvas visibility can mess up dimensions
+            setTimeout(initCanvas, 50);
+        }
+    }
+    
+    function submitSignature() {
+        const mode = document.getElementById('esignatureMode').value;
+        if (mode === 'draw') {
+             if (!hasSignature) {
+                 showToast('Please sign on the canvas before saving.', 'warning');
+                 return;
+             }
+             const dataURL = canvas.toDataURL('image/png');
+             document.getElementById('esignatureData').value = dataURL;
+        }
+        
+        document.getElementById('signatureForm').submit();
+    }
+
 function initiatePasswordChange() {
     const password = document.getElementById('newPassword').value;
     const confirm = document.getElementById('confirmPassword').value;
