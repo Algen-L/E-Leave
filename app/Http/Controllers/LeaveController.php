@@ -136,6 +136,19 @@ class LeaveController extends Controller
     }
 
     /**
+     * Show single application details
+     */
+    public function show($id)
+    {
+        // Fetch application with related data
+        $application = LeaveApplication::with(['leaveType', 'details', 'recommendingOfficer', 'approvingOfficer'])
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        return view('user.leave.show', compact('application'));
+    }
+
+    /**
      * Generate Word Form 6
      */
     public function generateForm6($id)
@@ -180,6 +193,24 @@ class LeaveController extends Controller
                 $templateProcessor->setValue($key, $value);
             };
 
+            // --- HELPER: SET IMAGE ---
+            $setImage = function($placeholder, $user) use ($templateProcessor) {
+                if ($user && $user->esignature && file_exists(public_path($user->esignature))) {
+                    try {
+                        $templateProcessor->setImageValue($placeholder, [
+                            'path' => public_path($user->esignature), 
+                            'width' => 100, 
+                            'height' => 50, 
+                            'ratio' => false
+                        ]);
+                    } catch (\Exception $e) {
+                         // Fallback if image replacement fails
+                    }
+                } else {
+                    $templateProcessor->setValue($placeholder, '');
+                }
+            };
+
             // --- 1. PERSONAL INFO ---
             // Use separate fields if available, otherwise fallback to existing full_name split logic (backward compat)
             if (!empty($user->last_name) && !empty($user->first_name)) {
@@ -203,8 +234,9 @@ class LeaveController extends Controller
                 $setVal('midname', strtoupper($middleName));
                 
                 $setVal('FULLNAME', strtoupper($user->full_name)); 
-                $setVal('SIGNAME', strtoupper($user->full_name));
-                $setVal('SIG_NAME', strtoupper($user->full_name));
+                // Removed explicit clearing of SIGNAME here to allow setImage to find the placeholder
+                $setImage('SIGNAME', $user);
+                $setImage('SIG_NAME', $user);
 
             } else {
                 $fullName = strtoupper($user->full_name); 
@@ -227,8 +259,9 @@ class LeaveController extends Controller
                 $setVal('midname', '');
 
                 $setVal('FULLNAME', $fullName);
-                $setVal('SIGNAME', $fullName);
-                $setVal('SIG_NAME', $fullName);
+                // Removed explicit clearing of SIGNAME here
+                $setImage('SIGNAME', $user);
+                $setImage('SIG_NAME', $user);
             }
 
             $setVal('POSITION', $expandPos($user->position));
@@ -266,23 +299,8 @@ class LeaveController extends Controller
             $setVal('VOLC_POS', strtoupper($verifier->title ?? ''));
 
             // --- E-SIGNATURES LOGIC ---
-            // Helper to set image replacement
-            $setImage = function($placeholder, $user) use ($templateProcessor) {
-                if ($user && $user->esignature && file_exists(public_path($user->esignature))) {
-                    try {
-                        $templateProcessor->setImageValue($placeholder, [
-                            'path' => public_path($user->esignature), 
-                            'width' => 100, 
-                            'height' => 50, 
-                            'ratio' => false
-                        ]);
-                    } catch (\Exception $e) {
-                         // Fallback if image replacement fails
-                    }
-                } else {
-                    $templateProcessor->setValue($placeholder, '');
-                }
-            };
+            // (Helper $setImage defined above)
+
 
             // 1. HR Verifier Signature (${HRSIGN})
             // Logic: If HR has verified logic (time is set), we try to get the verifier.
@@ -320,37 +338,39 @@ class LeaveController extends Controller
             // Save file logic below...
                 $templateProcessor->setValue('SDS', '');
                 // We don't clear ASDS here if it was set by Recommender logic above.
+
+            // 3. HR Signature (${HRSIGN})
+            // Logic: If status is not Pending HR, it implies it has been verified.
+            // We prioritize the actual verifier stored in the DB, then fall back to the authenticated HR.
+            $hrSignUser = null;
+
+            if ($application->status != 'Pending HR') {
+                if ($application->hrVerifier) {
+                    // Priority 1: The specific HR who verified this record
+                    $hrSignUser = $application->hrVerifier;
+                } else {
+                    /** @var \App\Models\User|null $currentUser */
+                    $currentUser = \Illuminate\Support\Facades\Auth::user();
+                    
+                    if ($currentUser && ($currentUser->isHR() || $currentUser->isHeadHR())) {
+                         // Priority 2: The current HR user (fallback for legacy records without verifier_id)
+                        $hrSignUser = $currentUser;
+                    }
+                }
             }
 
-            // 3. HR Signature
-            // If status is not Pending HR, it means HR verified it. 
-            // We need to find *who* verified it. Currently we track `hr_verified_at` but not `hr_verified_by_id`.
-            // Workaround: Use the current logged in user IF they are HR, or use the generic HR Signatory.
-            // BETTER: If the feature requires the signer's specific esignature, we need to know WHO verified.
-            // Assumption: The logged in user generating the PDF is likely the HR processing it, so we use their signature.
-            // Or use the static 'verifier' model signature if available.
-            // For this request: "${HRSIGN}"
-            if ($application->status != 'Pending HR') {
-                // Try to use the current user if they are HR
-                $hrUser = auth()->user();
-                if ($hrUser && ($hrUser->isHR() || $hrUser->isHeadHR())) {
-                    $setImage('HRSIGN', $hrUser);
-                } else {
-                    // Fallback: If typical user is viewing history, we might not have the HR's ID stored.
-                    // This is a limitation of the current schema lacking `verifier_id`.
-                    // We will leave blank for now unless generated by HR.
-                    $templateProcessor->setValue('HRSIGN', '');
-                }
+            if ($hrSignUser) {
+                $setImage('HRSIGN', $hrSignUser);
             } else {
-                 $templateProcessor->setValue('HRSIGN', '');
+                $templateProcessor->setValue('HRSIGN', '');
             }
 
 
             $setVal('OFFICE', $user->office_station);
             $setVal('office', $user->office_station);
 
-            $setVal('DATE_FILING', $application->date_filing->format('m/d/Y'));
-            $setVal('date_filing', $application->date_filing->format('m/d/Y'));
+            $setVal('DATE_FILING', $application->date_filing ? \Carbon\Carbon::parse($application->date_filing)->format('m/d/Y') : '');
+            $setVal('date_filing', $application->date_filing ? \Carbon\Carbon::parse($application->date_filing)->format('m/d/Y') : '');
 
             // --- DATES & DAYS ---
             $inclusiveDates = '';
@@ -373,9 +393,9 @@ class LeaveController extends Controller
                 $inclusiveDates = implode(', ', $formatted);
             } else {
                 // Fallback for legacy or range-based
-                $inclusiveDates = $application->start_date->format('m/d/Y');
-                if ($application->start_date->ne($application->end_date)) {
-                    $inclusiveDates .= ' - ' . $application->end_date->format('m/d/Y');
+                $inclusiveDates = $application->start_date ? \Carbon\Carbon::parse($application->start_date)->format('m/d/Y') : '';
+                if ($application->start_date && $application->end_date && \Carbon\Carbon::parse($application->start_date)->ne(\Carbon\Carbon::parse($application->end_date))) {
+                    $inclusiveDates .= ' - ' . \Carbon\Carbon::parse($application->end_date)->format('m/d/Y');
                 }
             }
 
@@ -452,6 +472,94 @@ class LeaveController extends Controller
             // --- 4. 6.C COMMUTATION ---
             $setVal('commutation_yes', ($application->commutation === 'Requested') ? '☑' : '☐');
             $setVal('commutation_no', ($application->commutation === 'Not Requested') ? '☑' : '☐');
+            
+            // --- 5. 6.D CREDIT COMPUTATION ---
+            // Get current credits for VL and SL
+            $vlType = LeaveType::where('type_name', 'Vacation Leave')->first();
+            $slType = LeaveType::where('type_name', 'Sick Leave')->first();
+            
+            // Fetch current credit balance
+            $vlCredit = 0;
+            if ($vlType) {
+                $checkVl = \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id)->first();
+                $vlCredit = $checkVl ? $checkVl->credits : 0;
+            }
+            
+            $slCredit = 0;
+            if ($slType) {
+                $checkSl = \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id)->first();
+                $slCredit = $checkSl ? $checkSl->credits : 0;
+            }
+            
+            // Logic: Determine deduction based on application
+            $appTypeName = $application->leaveType->type_name;
+            $daysApplied = $application->days_applied;
+            
+            $lessVl = 0;
+            $lessSl = 0;
+            
+            // Check if application is VL or SL to apply deduction logic
+            // Note: Mandatory/Forced Leave usually deducts from VL too, but strict prompt logic:
+            if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false) {
+                 $lessVl = $daysApplied;
+            } elseif (stripos($appTypeName, 'Sick') !== false) {
+                 $lessSl = $daysApplied;
+            }
+            
+            // Calculate Balances
+            $vlBalance = $vlCredit - $lessVl;
+            $slBalance = $slCredit - $lessSl;
+            
+            // Format for display (remove decimal if zero)
+            $fmt = function($val) { 
+                return (float)$val + 0; 
+            };
+            
+            $setVal('VL_CREDIT', $fmt($vlCredit));
+            $setVal('LESSVL_CREDIT', $fmt($lessVl));
+            $setVal('VL_BALANCE', $fmt($vlBalance));
+            
+            $setVal('SL_CREDIT', $fmt($slCredit));
+            $setVal('LESSSL_CREDIT', $fmt($lessSl));
+            $setVal('SL_BALANCE', $fmt($slBalance));
+            
+            // Also set total date as of usually current date
+            $setVal('DATE_AS_OF', now()->format('F d, Y'));
+            
+            
+            // --- F. DISAPPROVAL REASONS ---
+            $recoDisapprove = '';
+            $approDisapprove = '';
+            
+            if ($application->status === 'Disapproved' && $application->rejection_remarks) {
+                // Determine who disapproved based on flow state
+                // If recommended_at is NULL, it likely failed at Recommending stage (or HR verification, but let's assume Recommending for form purposes)
+                if (!$application->recommended_at) {
+                    $recoDisapprove = $application->rejection_remarks;
+                } else {
+                    // If recommended but not approved
+                    $approDisapprove = $application->rejection_remarks;
+                }
+            }
+            
+            $setVal('reco_disapprove', strtoupper($recoDisapprove));
+            $setVal('appro_disapprove', strtoupper($approDisapprove));
+
+            // --- G. APPROVED FOR DETAILS ---
+            // Formatted values for check/blank
+            $daysWithPay = $application->days_with_pay;
+            $daysWithoutPay = $application->days_without_pay;
+            $othersRemarks = $application->others_remarks;
+
+            // Helper to format as whole number if integer, or float if needed, but request said "just a whole number"
+            // Interpreting as removing .00 and "days" string
+            $fmtNum = function($val) {
+                return $val ? (string)((float)$val + 0) : '';
+            };
+
+            $setVal('DAYWPAY', $fmtNum($daysWithPay));
+            $setVal('DAYWOPAY', $fmtNum($daysWithoutPay));
+            $setVal('OTHERS', $othersRemarks ? strtoupper($othersRemarks) : '');
 
             // --- PDF GENERATION LOGIC ---
             if (request('format') === 'pdf') {

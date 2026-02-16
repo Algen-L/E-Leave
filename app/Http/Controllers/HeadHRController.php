@@ -84,7 +84,7 @@ class HeadHRController extends Controller
 
         if ($status === 'approved') {
             $updRequest->status = 'Approved';
-            $updRequest->approver_id = auth()->id();
+            $updRequest->approver_id = \Illuminate\Support\Facades\Auth::id();
             $updRequest->save();
 
             // Unlock the credit record
@@ -95,7 +95,7 @@ class HeadHRController extends Controller
             return back()->with('success', 'Request approved. Credit record unlocked.');
         } else {
             $updRequest->status = 'Rejected';
-            $updRequest->approver_id = auth()->id();
+            $updRequest->approver_id = \Illuminate\Support\Facades\Auth::id();
             $updRequest->save();
 
             return back()->with('success', 'Request rejected.');

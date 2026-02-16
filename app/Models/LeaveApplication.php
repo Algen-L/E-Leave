@@ -26,6 +26,9 @@ class LeaveApplication extends Model
         'approved_at',
         'rejected_at',
         'rejection_remarks',
+        'days_with_pay',
+        'days_without_pay',
+        'others_remarks',
     ];
 
     protected $casts = [
@@ -33,6 +36,10 @@ class LeaveApplication extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'dates' => 'array',
+        'hr_verified_at' => 'datetime',
+        'recommended_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -63,15 +70,5 @@ class LeaveApplication extends Model
     public function details(): HasOne
     {
         return $this->hasOne(LeaveDetailsForm6::class);
-    }
-
-    public function recommendingOfficer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'recommending_officer_id');
-    }
-
-    public function approvingOfficer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approving_officer_id');
     }
 }

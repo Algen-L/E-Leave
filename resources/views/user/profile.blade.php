@@ -92,7 +92,7 @@
                 <div class="info-icon"><i class="fas fa-shield-alt"></i></div>
                 <div class="info-content">
                     <div class="info-label">Account Status</div>
-                    <div class="info-value" style="color: {{ $user->is_active ? '#22c55e' : '#dc2626' }}; font-weight: 700;">
+                    <div class="info-value" style="color: <?php echo $user->is_active ? '#22c55e' : '#dc2626'; ?>; font-weight: 700;">
                         <i class="fas fa-circle" style="font-size: 0.5rem; vertical-align: middle; margin-right: 4px;"></i>
                         {{ $user->is_active ? 'Active' : 'Inactive' }}
                     </div>
@@ -288,11 +288,11 @@
 
                     <!-- Draw Area -->
                     <div id="drawArea" style="display: none;">
-                        <div style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; position: relative;">
-                             <canvas id="sigCanvas" height="200" style="width: 100%; display: block; cursor: crosshair; touch-action: none;"></canvas>
+                        <div style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; position: relative; width: 300px; height: 300px; margin: 0 auto;">
+                             <canvas id="sigCanvas" width="300" height="300" style="display: block; cursor: crosshair; touch-action: none;"></canvas>
                         </div>
-                        <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <small class="text-gray-500">Sign within the box above using your mouse or touch screen.</small>
+                        <div style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 20px;">
+                            <small class="text-gray-500">Sign within the box</small>
                             <button type="button" onclick="clearSigCanvas()" style="color: #dc2626; background: transparent; border: none; cursor: pointer; font-weight: 600;">
                                 <i class="fas fa-eraser"></i> Clear
                             </button>
@@ -331,7 +331,7 @@
         // Handle resizing for high DPI
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 200;
+        canvas.height = rect.height;
         
         ctx.lineWidth = 2;
         ctx.lineJoin = 'round';
@@ -410,8 +410,8 @@
             tabUpload.style.background = '#eef2ff';
             tabUpload.style.color = '#6366f1';
             
-            tabDraw.style.background = 'white';
-            tabDraw.style.color = 'black';
+            tabDraw.style.background = 'white'; // Here
+            tabDraw.style.color = 'black'; // Here
             
             areaUpload.style.display = 'block';
             areaDraw.style.display = 'none';
@@ -419,8 +419,8 @@
             tabDraw.style.background = '#eef2ff';
             tabDraw.style.color = '#6366f1';
             
-            tabUpload.style.background = 'white';
-            tabUpload.style.color = 'black';
+            tabUpload.style.background = 'white'; // Here
+            tabUpload.style.color = 'black'; // Here
 
             areaUpload.style.display = 'none';
             areaDraw.style.display = 'block';

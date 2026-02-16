@@ -273,13 +273,13 @@
         }
         
         // Show session messages as toasts
-        @if(session('success'))
-            showToast("{{ session('success') }}", 'success');
-        @endif
+        <?php if(session('success')): ?>
+            showToast("<?php echo session('success'); ?>", 'success');
+        <?php endif; ?>
         
-        @if(session('error'))
-            showToast("{{ session('error') }}", 'error');
-        @endif
+        <?php if(session('error')): ?>
+            showToast("<?php echo session('error'); ?>", 'error');
+        <?php endif; ?>
         
         // Live Clock
         function updateClock() {

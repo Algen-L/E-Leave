@@ -128,6 +128,11 @@
         border-collapse: collapse;
     }
     
+    .table tr:hover {
+        background-color: #f8fafc;
+        cursor: pointer;
+    }
+    
     .table th {
         text-align: left;
         padding: 16px 24px;
@@ -252,7 +257,7 @@
                          else $s3 = 'rejected';
                     }
                 @endphp
-                <tr>
+                <tr onclick="window.location='{{ route('user.leave.show', $app->id) }}'" style="cursor: pointer;">
                     <td>
                         <div class="font-bold">{{ $app->date_filing->format('M d, Y') }}</div>
                         <div class="text-xs text-gray-500">{{ $app->created_at->format('h:i A') }}</div>
@@ -286,12 +291,9 @@
                         </span>
                     </td>
                     <td>
-                        <div class="flex gap-2">
-                            <a href="{{ route('user.leave.form6', $app->id) }}" class="action-btn download-form text-blue-600" title="Download Form 6 (Word)">
-                                <i class="fas fa-file-word fa-lg"></i>
-                            </a>
-                            <a href="{{ route('user.leave.form6', ['id' => $app->id, 'format' => 'pdf']) }}" class="action-btn download-pdf text-red-600" title="Save as PDF">
-                                <i class="fas fa-file-pdf fa-lg"></i>
+                        <div class="flex gap-2" onclick="event.stopPropagation()">
+                            <a href="{{ route('user.leave.show', $app->id) }}" class="action-btn text-blue-600" title="View Application">
+                                <i class="fas fa-eye fa-lg"></i>
                             </a>
                         </div>
                     </td>

@@ -137,10 +137,12 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/leave/apply', [App\Http\Controllers\LeaveController::class, 'showApplyForm'])->name('leave.apply');
     Route::post('/leave/apply', [App\Http\Controllers\LeaveController::class, 'submitApplication'])->name('leave.submit');
     Route::get('/leave/history', [App\Http\Controllers\LeaveController::class, 'myApplications'])->name('leave.history');
+    Route::get('/leave/view/{id}', [App\Http\Controllers\LeaveController::class, 'show'])->name('leave.show');
     Route::get('/leave/form6/{id}', [App\Http\Controllers\LeaveController::class, 'generateForm6'])->name('leave.form6');
 
     // Approval Workflow
     Route::get('/leave/approvals', [App\Http\Controllers\LeaveApprovalController::class, 'index'])->name('leave.approvals');
+    Route::get('/leave/approvals/{id}', [App\Http\Controllers\LeaveApprovalController::class, 'show'])->name('leave.approvals.show');
     Route::post('/leave/approvals/{id}/verify', [App\Http\Controllers\LeaveApprovalController::class, 'verify'])->name('leave.verify');
     Route::post('/leave/approvals/{id}/recommend', [App\Http\Controllers\LeaveApprovalController::class, 'recommend'])->name('leave.recommend');
     Route::post('/leave/approvals/{id}/approve', [App\Http\Controllers\LeaveApprovalController::class, 'approve'])->name('leave.approve');

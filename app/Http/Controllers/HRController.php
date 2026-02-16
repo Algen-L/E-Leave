@@ -92,7 +92,9 @@ class HRController extends Controller
 
                 // If locked, skip or error
                 // Exception: Head HR can edit locked credits directly
-                $isHeadHR = Auth::user()->isHeadHR();
+                $currentUser = Auth::user();
+                /** @var \App\Models\User $currentUser */
+                $isHeadHR = $currentUser->isHeadHR();
                 
                 if ($creditRecord->exists && $creditRecord->is_locked && !$isHeadHR) {
                     continue; // Skip locked records silently or handle error
@@ -188,6 +190,7 @@ class HRController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $updateData = [];
 

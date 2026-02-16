@@ -164,39 +164,9 @@
                 
                 <!-- 6. Actions Column -->
                 <div class="approval-actions">
-                    <!-- PDF View -->
-                    <a href="{{ route('user.leave.form6', $app->id) }}?format=pdf" target="_blank" class="btn-icon-only btn-pdf" title="View Form 6">
-                        <i class="fas fa-file-pdf"></i>
+                    <a href="{{ route('user.leave.approvals.show', $app->id) }}" class="btn-approve" style="background: #eff6ff; color: #2563eb; width: auto; padding: 6px 16px;">
+                        <i class="fas fa-eye mr-2"></i> Review Application
                     </a>
-
-                    <!-- Logic for Action Button -->
-                    @if($app->status == 'Pending HR' && in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin']))
-                        <form action="{{ route('user.leave.verify', $app->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-approve" title="Verify">
-                                <i class="fas fa-check"></i> Verify
-                            </button>
-                        </form>
-                    @elseif($app->status == 'Pending Recommending' && $app->recommending_officer_id == Auth::id())
-                        <form action="{{ route('user.leave.recommend', $app->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-approve" title="Recommend">
-                                <i class="fas fa-thumbs-up"></i> Rec.
-                            </button>
-                        </form>
-                    @elseif($app->status == 'Pending Approval' && $app->approving_officer_id == Auth::id())
-                        <form action="{{ route('user.leave.approve', $app->id) }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-approve" title="Approve">
-                                <i class="fas fa-signature"></i> Approve
-                            </button>
-                        </form>
-                    @endif
-
-                    <!-- Reject -->
-                    <button type="button" onclick="openRejectModal('{{ $app->id }}')" class="btn-icon-only btn-reject" title="Disapprove">
-                        <i class="fas fa-times"></i>
-                    </button>
                 </div>
             </div>
         @empty

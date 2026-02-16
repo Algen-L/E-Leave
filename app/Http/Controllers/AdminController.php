@@ -251,6 +251,7 @@ class AdminController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $updateData = [];
 

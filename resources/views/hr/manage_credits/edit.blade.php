@@ -249,8 +249,10 @@
         @csrf
         
         @php
-            $creditLeaves = $leaveTypes->where('category', 'Credit');
-            $statutoryLeaves = $leaveTypes->where('category', '!=', 'Credit');
+            // Ensure $leaveTypes is a collection if it's not already
+            $leaveTypesColl = is_array($leaveTypes) ? collect($leaveTypes) : $leaveTypes;
+            $creditLeaves = $leaveTypesColl->where('category', 'Credit');
+            $statutoryLeaves = $leaveTypesColl->where('category', '!=', 'Credit');
         @endphp
 
         <!-- Section A: Credit-Based Leaves -->
@@ -311,7 +313,7 @@
                         
                         <div class="action-area">
                             @if($isLocked)
-                                <button type="button" onclick="requestUnlock({{ $type->id }}, '{{ $type->type_name }}')" class="btn-request">
+                                <button type="button" onclick="requestUnlock(<?php echo $type->id; ?>, '<?php echo addslashes($type->type_name); ?>')" class="btn-request">
                                     <i class="fas fa-key mr-1"></i> Request Unlock
                                 </button>
                             @else
@@ -383,7 +385,7 @@
                         
                         <div class="action-area">
                              @if($isLocked)
-                                <button type="button" onclick="requestUnlock({{ $type->id }}, '{{ $type->type_name }}')" class="btn-request">
+                                <button type="button" onclick="requestUnlock(<?php echo $type->id; ?>, '<?php echo addslashes($type->type_name); ?>')" class="btn-request">
                                     <i class="fas fa-key mr-1"></i> Request Unlock
                                 </button>
                             @else
