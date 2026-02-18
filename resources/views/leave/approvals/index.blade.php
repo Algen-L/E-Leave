@@ -116,7 +116,7 @@
                 <div class="user-info">
                     <div class="user-avatar">
                         @if($app->user->profile_picture)
-                            <img src="{{ asset($app->user->profile_picture) }}" alt="{{ $app->user->full_name }}">
+                            <img src="{{ storage_url($app->user->profile_picture) }}" alt="{{ $app->user->full_name }}">
                         @else
                             {{ strtoupper(substr($app->user->full_name, 0, 2)) }}
                         @endif

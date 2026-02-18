@@ -13,7 +13,7 @@
     <div class="profile-banner-content">
         <div class="profile-banner-avatar">
             @if($user->profile_picture)
-                <img src="{{ asset($user->profile_picture) }}" alt="{{ $user->full_name }}">
+                <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}">
             @else
                 <div class="banner-avatar-placeholder">
                     {{ strtoupper(substr($user->full_name, 0, 1)) }}
@@ -256,7 +256,7 @@
                     <label class="field-label">Current Signature</label>
                     <div class="signature-preview" style="border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 20px; background: #f8fafc;">
                         @if($user->esignature)
-                            <img src="{{ asset($user->esignature) }}" alt="E-Signature" style="max-height: 100px; max-width: 100%;">
+                            <img src="{{ storage_url($user->esignature) }}" alt="E-Signature" style="max-height: 100px; max-width: 100%;">
                         @else
                             <p class="text-gray-400">No signature uploaded yet.</p>
                         @endif

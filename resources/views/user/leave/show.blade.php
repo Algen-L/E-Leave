@@ -277,7 +277,7 @@
                     {{-- Check if signature exists --}}
                     @if($application->user->esignature)
                         <div class="mb-1 relative h-16 w-full flex items-end justify-start">
-                            <img src="{{ asset($application->user->esignature) }}" alt="Signature" class="h-full max-w-[200px] object-contain object-left scale-150 origin-bottom-left -ml-2 mb-2">
+                            <img src="{{ storage_url($application->user->esignature) }}" alt="Signature" class="h-full max-w-[200px] object-contain object-left scale-150 origin-bottom-left -ml-2 mb-2">
                         </div>
                         <div class="font-bold underline uppercase text-sm">{{ $application->user->full_name }}</div>
                     @else

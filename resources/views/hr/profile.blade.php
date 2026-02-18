@@ -13,7 +13,7 @@
     <div class="profile-banner-content">
         <div class="profile-banner-avatar">
             @if($user->profile_picture)
-                <img src="{{ asset($user->profile_picture) }}" alt="{{ $user->full_name }}">
+                <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}">
             @else
                 <div class="banner-avatar-placeholder">
                     {{ strtoupper(substr($user->full_name, 0, 1)) }}

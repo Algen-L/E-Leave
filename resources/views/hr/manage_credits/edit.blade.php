@@ -249,10 +249,13 @@
         @csrf
         
         @php
-            // Ensure $leaveTypes is a collection if it's not already
-            $leaveTypesColl = is_array($leaveTypes) ? collect($leaveTypes) : $leaveTypes;
-            $creditLeaves = $leaveTypesColl->where('category', 'Credit');
-            $statutoryLeaves = $leaveTypesColl->where('category', '!=', 'Credit');
+            // Use otherTypes if available (from controller), otherwise fallback (shouldn't happen with new controller)
+            $typesList = isset($otherTypes) ? $otherTypes : (isset($leaveTypes) ? $leaveTypes : []);
+            $typesColl = is_array($typesList) ? collect($typesList) : $typesList;
+            
+            $creditLeaves = $typesColl->where('category', 'Credit');
+            // Everything else is Statutory/Special (excluding CTO which is handled below)
+            $statutoryLeaves = $typesColl->where('category', '!=', 'Credit');
         @endphp
 
         <!-- Section A: Credit-Based Leaves -->
@@ -406,6 +409,81 @@
             </button>
         </div>
     </form>
+
+    <!-- Section C: Compensatory Time Off (Manual Entry) -->
+    @if(isset($ctoType) && $ctoType)
+        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-8 mt-10">
+            <h3 class="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-200 text-indigo-700 flex items-center justify-center text-sm">
+                    <i class="fas fa-clock"></i>
+                </span>
+                Compensatory Time Off (CTO) Management
+            </h3>
+            <p class="text-sm text-indigo-600 mb-6 pl-10 -mt-2">
+                Manually add CTO credits with specific expiration dates. Max total limit: 15 credits.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Add Form -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-indigo-100">
+                    <h4 class="font-bold text-gray-700 mb-4 border-b pb-2">Add New Credits</h4>
+                    <form action="{{ route('hr-staff.manage-credits.add-cto', $user->id) }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Credit Amount (Hours/Days)</label>
+                            <input type="number" step="0.1" name="credit_amount" class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 p-2 border" required placeholder="0.0">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                            <input type="date" name="expiration_date" class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 p-2 border" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Remarks (Optional)</label>
+                            <input type="text" name="remarks" class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 p-2 border" placeholder="Reason for credit...">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2 rounded hover:bg-indigo-700 transition">
+                            <i class="fas fa-plus-circle mr-1"></i> Add CTO Credits
+                        </button>
+                    </form>
+                </div>
+
+                <!-- History Table -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-indigo-100">
+                     <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h4 class="font-bold text-gray-700">Active Credit Batches</h4>
+                        <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-bold">
+                            Total: {{ $ctoCredits->sum('remaining_credits') }}
+                        </span>
+                    </div>
+                    
+                    @if($ctoCredits->isEmpty())
+                        <div class="text-center py-8 text-gray-400 italic">No active CTO credits found.</div>
+                    @else
+                        <div class="overflow-y-auto max-h-60">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0">
+                                    <tr>
+                                        <th class="px-3 py-2">Added</th>
+                                        <th class="px-3 py-2">Expires</th>
+                                        <th class="px-3 py-2 text-right">Remaining</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    @foreach($ctoCredits as $batch)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-3 py-2 text-gray-600">{{ $batch->created_at->format('M d, Y') }}<br><span class="text-xs text-gray-400">{{ $batch->remarks }}</span></td>
+                                            <td class="px-3 py-2 text-red-600 font-medium">{{ $batch->expiration_date->format('M d, Y') }}</td>
+                                            <td class="px-3 py-2 text-right font-bold text-gray-800">{{ $batch->remaining_credits }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
 <!-- Modal -->

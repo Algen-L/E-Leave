@@ -49,14 +49,89 @@ class HRController extends Controller
      */
     public function editCredits(User $user)
     {
-        $leaveTypes = LeaveType::all();
+        // Ensure CTO type exists (with Statutoty category so it doesn't mix with Credit/Vacation leaves)
+        $ctoType = LeaveType::firstOrCreate(
+            ['type_name' => 'Compensatory Time Off'],
+            ['description' => 'CTO - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
+        );
+
+        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)->get();
         
+        $ctoCredits = \App\Models\CompensatoryLeaveCredit::where('user_id', $user->id)
+            ->where('status', 'Active')
+            ->where('remaining_credits', '>', 0)
+            ->orderBy('expiration_date', 'asc')
+            ->get();
+
         // Load existing credits keyed by type ID
         $existingCredits = LeaveCredit::where('user_id', $user->id)
             ->get()
             ->keyBy('leave_type_id');
 
-        return view('hr.manage_credits.edit', compact('user', 'leaveTypes', 'existingCredits'));
+        return view('hr.manage_credits.edit', compact('user', 'ctoType', 'otherTypes', 'existingCredits', 'ctoCredits'));
+    }
+
+    /**
+     * Store new CTO credit
+     */
+    public function addCtoCredit(Request $request, User $user)
+    {
+        $request->validate([
+            'credit_amount' => 'required|numeric|min:0.1',
+            'expiration_date' => 'required|date|after:today',
+            'remarks' => 'nullable|string|max:255',
+        ]);
+
+        $ctoType = LeaveType::firstOrCreate(
+            ['type_name' => 'Compensatory Time Off'],
+            ['description' => 'CTO - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
+        );
+
+        // Check Max Limit (15)
+        // Correctly calculate current balance from active batches or LeaveCredit table
+        // But since LeaveCredit stores total, we use that.
+        $currentTotal = LeaveCredit::where('user_id', $user->id)
+            ->where('leave_type_id', $ctoType->id)
+            ->value('credits') ?? 0;
+            
+        if (($currentTotal + $request->credit_amount) > 15) {
+            return back()->with('error', "Cannot add credits. Total CTO would exceed the limit of 15. Current: $currentTotal");
+        }
+
+        DB::transaction(function () use ($request, $user, $ctoType, $currentTotal) {
+            // 1. Create Batch Record
+            \App\Models\CompensatoryLeaveCredit::create([
+                'user_id' => $user->id,
+                'leave_type_id' => $ctoType->id,
+                'credits' => $request->credit_amount,
+                'remaining_credits' => $request->credit_amount,
+                'expiration_date' => $request->expiration_date,
+                'remarks' => $request->remarks,
+                'status' => 'Active',
+            ]);
+
+            // 2. Update Total Balance
+            $creditRecord = LeaveCredit::firstOrNew([
+                'user_id' => $user->id,
+                'leave_type_id' => $ctoType->id
+            ]);
+            $creditRecord->credits = $currentTotal + $request->credit_amount;
+            $creditRecord->is_locked = false; 
+            $creditRecord->save();
+
+            // 3. Log
+            LeaveCreditAuditLog::create([
+                'actor_id' => Auth::id(),
+                'target_user_id' => $user->id,
+                'action' => 'add_cto',
+                'leave_type_name' => 'Compensatory Time Off',
+                'previous_value' => $currentTotal,
+                'new_value' => $creditRecord->credits,
+                'reason' => 'Added CTO batch: ' . $request->credit_amount . ' expiring ' . $request->expiration_date,
+            ]);
+        });
+        
+        return back()->with('success', 'Compensatory Time Off added successfully.');
     }
 
     /**
@@ -64,7 +139,7 @@ class HRController extends Controller
      */
     public function updateCredits(Request $request, User $user)
     {
-        // 1. Identify which types are being updated
+        // 1. Identify which types are being updated (exclude CTO which is handled separately)
         $submittedCredits = $request->input('credits', []); // [type_id => amount]
 
         DB::beginTransaction();
@@ -75,6 +150,9 @@ class HRController extends Controller
 
                 $type = LeaveType::find($typeId);
                 if (!$type) continue;
+                
+                // Skip CTO in this loop if it accidentally gets here
+                if ($type->type_name === 'Compensatory Time Off') continue;
 
                 // Check policy limits
                 $policy = LeaveCreditPolicy::where('leave_type_id', $typeId)->first();

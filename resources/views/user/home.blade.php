@@ -16,7 +16,7 @@
             <div class="profile-summary-body">
                 <div class="profile-summary-avatar">
                     @if($user->profile_picture)
-                        <img src="{{ asset($user->profile_picture) }}" alt="{{ $user->full_name }}">
+                        <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}">
                     @else
                         <div class="avatar-placeholder">
                             {{ strtoupper(substr($user->full_name, 0, 1)) }}
@@ -61,7 +61,7 @@
                     <div class="notif-item" data-id="{{ $notification->id }}">
                         <div class="notif-avatar">
                             @if($notification->sender && $notification->sender->profile_picture)
-                                <img src="{{ asset($notification->sender->profile_picture) }}" alt="">
+                                <img src="{{ storage_url($notification->sender->profile_picture) }}" alt="">
                             @else
                                 <div class="notif-avatar-placeholder">
                                     {{ strtoupper(substr($notification->sender->full_name ?? 'S', 0, 1)) }}

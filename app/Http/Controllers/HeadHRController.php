@@ -18,6 +18,33 @@ class HeadHRController extends Controller
     }
 
     /**
+     * Store a new leave type.
+     */
+    public function storeLeaveType(Request $request)
+    {
+        $request->validate([
+            'type_name' => 'required|string|max:255|unique:leave_types,type_name',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $leaveType = LeaveType::create([
+            'type_name' => $request->type_name,
+            'description' => $request->description,
+            'is_active' => true,
+        ]);
+
+        // Create a default policy entry so it's ready to be configured
+        LeaveCreditPolicy::create([
+            'leave_type_id' => $leaveType->id,
+            'accrual_rate' => 0,
+            'accrual_period' => 'None',
+            'expiration_rule' => 'None',
+        ]);
+
+        return back()->with('success', 'New leave type created successfully.');
+    }
+
+    /**
      * Manage leave credit policies.
      */
     public function policies()

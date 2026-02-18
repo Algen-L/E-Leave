@@ -69,7 +69,7 @@
                     </a>
                     @endif
 
-                    @if(auth()->user()->isHeadHR())
+                    @if(auth()->user()->isHeadHR() || auth()->user()->isSuperAdmin())
                     <a href="{{ route('head-hr.leave-policies') }}" class="nav-item {{ request()->routeIs('head-hr.leave-policies*') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="fas fa-sliders-h"></i></span>
                         <span class="nav-text">Credit Policies</span>
@@ -80,7 +80,7 @@
                     </a>
                     @endif
 
-                    @if(auth()->user()->isHR() || auth()->user()->isSuperAdmin())
+                    @if(auth()->user()->isHR())
                     <a href="{{ route('user.leave.approvals') }}" class="nav-item {{ request()->routeIs('user.leave.approvals') ? 'active' : '' }}">
                         <span class="nav-icon"><i class="fas fa-check-double"></i></span>
                         <span class="nav-text">Pending Approvals</span>
@@ -129,7 +129,7 @@
                 <a href="{{ auth()->user()->isAdmin() || auth()->user()->isHR() ? route('admin.profile') : route('user.profile') }}" class="user-info-link">
                     <div class="user-info">
                         @if(auth()->user()->profile_picture)
-                            <img src="{{ asset(auth()->user()->profile_picture) }}" alt="Profile" class="user-avatar">
+                            <img src="{{ storage_url(auth()->user()->profile_picture) }}" alt="Profile" class="user-avatar">
                         @else
                             <div class="user-avatar-placeholder">
                                 {{ strtoupper(substr(auth()->user()->full_name, 0, 1)) }}
@@ -273,13 +273,19 @@
         }
         
         // Show session messages as toasts
-        <?php if(session('success')): ?>
-            showToast("<?php echo session('success'); ?>", 'success');
-        <?php endif; ?>
+        @if(session('success'))
+            showToast("{{ session('success') }}", 'success');
+        @endif
         
-        <?php if(session('error')): ?>
-            showToast("<?php echo session('error'); ?>", 'error');
-        <?php endif; ?>
+        @if(session('error'))
+            showToast("{{ session('error') }}", 'error');
+        @endif
+        
+        @if ($errors->any())
+            @foreach ($errors->all() as $error)
+                showToast("{{ $error }}", 'error');
+            @endforeach
+        @endif
         
         // Live Clock
         function updateClock() {

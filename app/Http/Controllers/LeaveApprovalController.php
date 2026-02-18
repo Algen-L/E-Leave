@@ -93,8 +93,21 @@ class LeaveApprovalController extends Controller
         // 2. Determine Deduction
         $lessVl = 0;
         $lessSl = 0;
+
+        // Check for specific leave types or special conditions like Compensatory Time Off
+        $isCompensatory = optional($application->details)->other_purpose === 'COMPENSATORY TIME OFF';
+        $vlRelatedTypes = ['Vacation', 'Forced', 'Mandatory'];
         
-        if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false) {
+        // Helper to check if type matches any of the keywords
+        $isVlRelated = false;
+        foreach ($vlRelatedTypes as $keyword) {
+             if (stripos($appTypeName, $keyword) !== false) {
+                 $isVlRelated = true;
+                 break;
+             }
+        }
+
+        if ($isVlRelated || $isCompensatory) {
              $lessVl = $daysApplied;
         } elseif (stripos($appTypeName, 'Sick') !== false) {
              $lessSl = $daysApplied;

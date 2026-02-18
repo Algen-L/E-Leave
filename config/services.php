@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | LibreOffice (for DOCX to PDF conversion)
+    |--------------------------------------------------------------------------
+    |
+    | Path to soffice executable. Required for PDF generation from Word templates.
+     | Windows: "C:/Program Files/LibreOffice/program/soffice.exe"
+    | Linux: "libreoffice" or "/usr/bin/libreoffice"
+    |
+    */
+    'libreoffice_path' => env('LIBREOFFICE_PATH', 'soffice'),
+
 ];

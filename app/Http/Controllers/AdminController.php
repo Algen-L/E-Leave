@@ -249,6 +249,7 @@ class AdminController extends Controller
             'position' => 'nullable|string|max:100',
             'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'esignature' => 'nullable|image|mimes:png|max:1024',
         ]);
 
         /** @var \App\Models\User $user */
@@ -273,6 +274,36 @@ class AdminController extends Controller
         if ($request->hasFile('profile_picture')) {
             $path = $request->file('profile_picture')->store('profile_pics', 'public');
             $updateData['profile_picture'] = 'storage/' . $path;
+        }
+
+        // Handle e-signature upload
+        if ($request->hasFile('esignature')) {
+            $path = $request->file('esignature')->store('esignatures', 'public');
+            $updateData['esignature'] = 'storage/' . $path;
+        } elseif ($request->filled('esignature_data')) {
+            // Handle base64 drawn signature
+            $data = $request->esignature_data;
+            // Extract the base64 part
+            if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
+                $data = substr($data, strpos($data, ',') + 1);
+                $type = strtolower($type[1]); // jpg, png, gif
+                
+                if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                    // Invalid image type, or handle error
+                } else {
+                    $data = base64_decode($data);
+                    if ($data === false) {
+                        // Base64 decode failed
+                    } else {
+                        $filename = 'esignature_' . time() . '.' . $type;
+                        $path = 'esignatures/' . $filename;
+                        
+                        // Save to public disk
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $data);
+                        $updateData['esignature'] = 'storage/' . $path;
+                    }
+                }
+            }
         }
 
         if (!empty($updateData)) {

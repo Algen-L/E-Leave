@@ -62,7 +62,7 @@
             @forelse($auditTrail as $log)
                 <div class="feed-item {{ strtolower($log->user->office_station ?? '') }}">
                     @if($log->user->profile_picture)
-                        <img src="{{ asset('storage/' . $log->user->profile_picture) }}" alt="" class="feed-avatar">
+                        <img src="{{ storage_url($log->user->profile_picture) }}" alt="" class="feed-avatar">
                     @else
                         <div class="feed-avatar-placeholder">
                             {{ strtoupper(substr($log->user->full_name ?? 'U', 0, 1)) }}

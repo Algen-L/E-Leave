@@ -19,8 +19,30 @@ class LeaveController extends Controller
     public function showApplyForm()
     {
         $user = Auth::user();
-        $leaveTypes = LeaveType::where('is_active', true)->get();
-        
+        $allLeaveTypes = LeaveType::where('is_active', true)->get();
+
+        // Define Standard CSC Types
+        $standardNames = [
+            'Vacation Leave', 'Mandatory/Forced Leave', 'Sick Leave', 'Maternity Leave', 
+            'Paternity Leave', 'Special Privilege Leave', 'Solo Parent Leave', 
+            'Study Leave', 'VAWC Leave', 'Rehabilitation Leave', 
+            'Special Leave Benefits for Women', 'Special Emergency (Calamity) Leave', 
+            'Adoption Leave', 'Terminal Leave'
+        ];
+
+        // Filter types
+        $standardTypes = $allLeaveTypes->filter(function($type) use ($standardNames) {
+            // Check if type name matches any standard name (loose match for things like "VAWC Leave (RA 9262)")
+            foreach ($standardNames as $name) {
+                if (stripos($type->type_name, $name) !== false) return true;
+                // Handle "Mandatory" or "Forced" appearing as separate or combined
+                if (($name === 'Mandatory/Forced Leave') && (stripos($type->type_name, 'Mandatory') !== false || stripos($type->type_name, 'Forced') !== false)) return true;
+            }
+            return false;
+        });
+
+        $otherTypes = $allLeaveTypes->diff($standardTypes);
+
         // Fetch Recommending Officers (CID Chief, SGOD Chief, AO, ASDS)
         $recommendingOfficers = User::whereIn('role', ['cid_chief', 'sgod_chief', 'ao', 'asds'])
             ->where('is_active', true)
@@ -32,8 +54,8 @@ class LeaveController extends Controller
             ->where('is_active', true)
             ->orderBy('last_name')
             ->get();
-        
-        return view('user.leave.apply', compact('user', 'leaveTypes', 'recommendingOfficers', 'finalApprovers'));
+
+        return view('user.leave.apply', compact('user', 'standardTypes', 'otherTypes', 'recommendingOfficers', 'finalApprovers'));
     }
 
     /**
@@ -41,6 +63,29 @@ class LeaveController extends Controller
      */
     public function submitApplication(Request $request)
     {
+        // Special Handling for "Others" category
+        // If leave_type_id is empty (from main dropdown), check if 'others_type' was selected
+        $leaveTypeId = $request->leave_type_id;
+        $othersType = $request->others_type;
+
+        // If the main dropdown was "Others" (so hidden ID is empty) but a sub-radio was chosen
+        if (empty($leaveTypeId) && !empty($othersType)) {
+             if (is_numeric($othersType)) {
+                 // Dynamic Type ID
+                 $leaveTypeId = $othersType;
+             } elseif ($othersType === 'COMPENSATORY TIME OFF') {
+                 // Map to CTO Type
+                 $ctoType = LeaveType::firstOrCreate(['type_name' => 'Compensatory Time Off'], ['description' => 'CTO']);
+                 $leaveTypeId = $ctoType->id;
+             } elseif ($othersType === 'Specify') {
+                 // Map to Others Type
+                 $othersLeave = LeaveType::firstOrCreate(['type_name' => 'Others'], ['description' => 'Other purposes']);
+                 $leaveTypeId = $othersLeave->id;
+             }
+             // Merge the resolved ID back into request for validation
+             $request->merge(['leave_type_id' => $leaveTypeId]);
+        }
+        
         $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
             'selected_dates' => 'required|string',
@@ -50,7 +95,7 @@ class LeaveController extends Controller
         $user = Auth::user();
 
         // Validate that the user has configured their approvers
-        if (!$user->recommending_officer_id || !$user->approving_officer_id) {
+        if (! $user->recommending_officer_id || ! $user->approving_officer_id) {
             return back()->with('error', 'Please configure your Recommending and Approving Officers in your Profile before applying.')->withInput();
         }
 
@@ -58,6 +103,27 @@ class LeaveController extends Controller
             DB::beginTransaction();
 
             $leaveType = LeaveType::find($request->leave_type_id);
+
+            // Validation: Wellness Leave Max 3 Days
+            if ($leaveType->type_name === 'Wellness Leave' && $request->days_applied > 3) {
+                 return back()->with('error', 'Wellness Leave applications cannot exceed 3 days.')->withInput();
+            }
+
+            // Validation: Mandatory/Forced Leave Max 5 Days Per Year
+            if (stripos($leaveType->type_name, 'Mandatory') !== false || stripos($leaveType->type_name, 'Forced') !== false) {
+                $currentYear = now()->year;
+                
+                // Count approved and pending applications for this year
+                $used = LeaveApplication::where('user_id', $user->id)
+                    ->where('leave_type_id', $leaveType->id)
+                    ->whereYear('start_date', $currentYear)
+                    ->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval', 'Approved']) // Count pending to prevent over-application
+                    ->sum('days_applied');
+
+                if (($used + $request->days_applied) > 5) {
+                    return back()->with('error', 'Mandatory/Forced Leave cannot exceed 5 days per year. You have used/applied for ' . $used . ' days.')->withInput();
+                }
+            }
 
             // Process dates
             $dates = array_filter(explode(',', $request->selected_dates));
@@ -81,24 +147,28 @@ class LeaveController extends Controller
             ]);
 
             // 2. Create Details (Form 6 specific)
+            $otherPurpose = $request->input('others_type') === 'COMPENSATORY TIME OFF' 
+                ? 'COMPENSATORY TIME OFF' 
+                : $request->input('other_purpose');
+
             LeaveDetailsForm6::create([
                 'leave_application_id' => $application->id,
                 'leave_type_name' => $leaveType->type_name,
-                
+
                 'vacation_loc_type' => $request->input('vacation_loc_type'),
                 'vacation_loc_details' => $request->input('vacation_loc_details'),
-                
+
                 'sick_loc_type' => $request->input('sick_loc_type'),
                 'sick_illness' => $request->input('sick_illness'),
-                
+
                 'women_illness' => $request->input('women_illness'),
-                
+
                 'study_type' => $request->input('study_type'),
                 'study_details' => $request->input('study_details'),
-                
-                'other_purpose' => $request->input('other_purpose'),
+
+                'other_purpose' => $otherPurpose,
             ]);
-            
+
             // Notify HR (using a simple notification for now, can be expanded)
             // \App\Models\Notification::sendToRole('hr', ...); // Placeholder
 
@@ -108,7 +178,8 @@ class LeaveController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error submitting application: ' . $e->getMessage())->withInput();
+
+            return back()->with('error', 'Error submitting application: '.$e->getMessage())->withInput();
         }
     }
 
@@ -118,7 +189,7 @@ class LeaveController extends Controller
     public function myApplications()
     {
         $user = Auth::user();
-        
+
         $applications = LeaveApplication::with('leaveType')
             ->where('user_id', $user->id)
             ->orderBy('date_filing', 'desc')
@@ -154,7 +225,7 @@ class LeaveController extends Controller
     public function generateForm6($id)
     {
         $application = LeaveApplication::with(['leaveType', 'details', 'user', 'recommendingOfficer', 'approvingOfficer'])->findOrFail($id);
-        
+
         // Check authorization
         if ($application->user_id !== Auth::id() && Auth::user()->role === 'user') {
             abort(403, 'Unauthorized action.');
@@ -166,7 +237,7 @@ class LeaveController extends Controller
 
         try {
             $templatePath = public_path('assets/WORDFORM-6.docx');
-            if (!file_exists($templatePath)) {
+            if (! file_exists($templatePath)) {
                 return back()->with('error', 'Word template not found.');
             }
 
@@ -174,9 +245,11 @@ class LeaveController extends Controller
 
             // --- HELPER: EXPAND POSITIONS ---
             $expandPos = function ($pos) {
-                if (empty($pos)) return '';
+                if (empty($pos)) {
+                    return '';
+                }
                 $pos = strtoupper(trim($pos));
-                
+
                 $map = [
                     'SGOD CHIEF' => 'CHIEF OF SCHOOL GOVERNANCE OPERATION DIVISION',
                     'CID CHIEF' => 'CHIEF OF CURRICULUM IMPLEMENTATION DIVISION',
@@ -194,17 +267,23 @@ class LeaveController extends Controller
             };
 
             // --- HELPER: SET IMAGE ---
-            $setImage = function($placeholder, $user) use ($templateProcessor) {
-                if ($user && $user->esignature && file_exists(public_path($user->esignature))) {
+            $setImage = function ($placeholder, $user) use ($templateProcessor) {
+                if (! $user || ! $user->esignature) {
+                    $templateProcessor->setValue($placeholder, '');
+
+                    return;
+                }
+                $esignaturePath = storage_path('app/public/'.preg_replace('#^storage/#', '', $user->esignature));
+                if (file_exists($esignaturePath)) {
                     try {
                         $templateProcessor->setImageValue($placeholder, [
-                            'path' => public_path($user->esignature), 
-                            'width' => 100, 
-                            'height' => 50, 
-                            'ratio' => false
+                            'path' => $esignaturePath,
+                            'width' => 100,
+                            'height' => 50,
+                            'ratio' => false,
                         ]);
                     } catch (\Exception $e) {
-                         // Fallback if image replacement fails
+                        // Fallback if image replacement fails
                     }
                 } else {
                     $templateProcessor->setValue($placeholder, '');
@@ -213,17 +292,17 @@ class LeaveController extends Controller
 
             // --- 1. PERSONAL INFO ---
             // Use separate fields if available, otherwise fallback to existing full_name split logic (backward compat)
-            if (!empty($user->last_name) && !empty($user->first_name)) {
+            if (! empty($user->last_name) && ! empty($user->first_name)) {
                 $lastName = $user->last_name;
                 $firstName = $user->first_name;
                 $middleName = $user->middle_name ?? '';
-                
+
                 // Construct standard format
-                $fullNameFormatted = "$lastName, $firstName" . ($middleName ? " " . substr($middleName, 0, 1) . "." : "");
-                
+                $fullNameFormatted = "$lastName, $firstName".($middleName ? ' '.substr($middleName, 0, 1).'.' : '');
+
                 $setVal('NAME', strtoupper($fullNameFormatted));
                 $setVal('name', strtoupper($fullNameFormatted));
-                
+
                 $setVal('LASTNAME', strtoupper($lastName));
                 $setVal('lastname', strtoupper($lastName));
 
@@ -232,19 +311,19 @@ class LeaveController extends Controller
 
                 $setVal('MIDNAME', strtoupper($middleName));
                 $setVal('midname', strtoupper($middleName));
-                
-                $setVal('FULLNAME', strtoupper($user->full_name)); 
+
+                $setVal('FULLNAME', strtoupper($user->full_name));
                 // Removed explicit clearing of SIGNAME here to allow setImage to find the placeholder
                 $setImage('SIGNAME', $user);
                 $setImage('SIG_NAME', $user);
 
             } else {
-                $fullName = strtoupper($user->full_name); 
-                
+                $fullName = strtoupper($user->full_name);
+
                 $parts = explode(' ', $user->full_name);
                 $lastName = array_pop($parts);
                 $firstName = implode(' ', $parts);
-                
+
                 $setVal('NAME', strtoupper("$lastName, $firstName"));
                 $setVal('name', strtoupper("$lastName, $firstName"));
 
@@ -253,7 +332,7 @@ class LeaveController extends Controller
 
                 $setVal('FIRSTNAME', strtoupper($firstName));
                 $setVal('firstname', strtoupper($firstName));
-                
+
                 // Cannot reliably get middle name from exploded string
                 $setVal('MIDNAME', '');
                 $setVal('midname', '');
@@ -278,20 +357,20 @@ class LeaveController extends Controller
             // Recommending Officer
             $recName = $recommenderRequest ? $recommenderRequest->full_name : '';
             // If the user has a position defined, use it. Otherwise, use their role expanded.
-            $recPos  = $recommenderRequest ? ($recommenderRequest->position ?: $expandPos($recommenderRequest->role)) : '';
+            $recPos = $recommenderRequest ? ($recommenderRequest->position ?: $expandPos($recommenderRequest->role)) : '';
 
             $setVal('RECOMMENDING_NAME', strtoupper($recName));
             $setVal('RECOMMENDING_POSITION', strtoupper($recPos));
 
             // Final Approver
             $finalName = $approverRequest ? $approverRequest->full_name : '';
-            $finalPos  = $approverRequest ? ($approverRequest->position ?: $expandPos($approverRequest->role)) : '';
+            $finalPos = $approverRequest ? ($approverRequest->position ?: $expandPos($approverRequest->role)) : '';
 
             $setVal('FINAL_NAME', strtoupper($finalName));
             $setVal('FINAL_POSITION', strtoupper($finalPos));
-            
+
             // --- VERIFIER OF LEAVE CREDITS ---
-            // Assuming the current user (HR) generating this form might be the verifier, 
+            // Assuming the current user (HR) generating this form might be the verifier,
             // OR we should look up the HR who actually verified it in `hr_verified_by` (if we tracked it).
             // For now, let's assume the 'Verifier' is a static Role -> HR.
             $verifier = \App\Models\Signatory::where('position', 'Verifier of Leave Credits')->first();
@@ -301,11 +380,10 @@ class LeaveController extends Controller
             // --- E-SIGNATURES LOGIC ---
             // (Helper $setImage defined above)
 
-
             // 1. HR Verifier Signature (${HRSIGN})
             // Logic: If HR has verified logic (time is set), we try to get the verifier.
             if ($application->hr_verified_at) {
-                $hrVerifier = $application->hrVerifier; 
+                $hrVerifier = $application->hrVerifier;
                 // If tracked in DB, use it. usage of 'Signatory' model as fallback optional if desired.
                 $setImage('HRSIGN', $hrVerifier);
             } else {
@@ -316,7 +394,7 @@ class LeaveController extends Controller
             // Logic: If status is beyond 'Pending Recommending' (meaning Recommended or Approved or Disapproved at high level),
             // BUT usually recommending sig appears if recommended.
             if ($application->recommended_at || ($application->status != 'Pending HR' && $application->status != 'Pending Recommending' && $application->status != 'Disapproved')) {
-                 $setImage('RECOSIGN', $recommenderRequest);
+                $setImage('RECOSIGN', $recommenderRequest);
             } else {
                 $templateProcessor->setValue('RECOSIGN', '');
             }
@@ -332,12 +410,15 @@ class LeaveController extends Controller
             // Clean up old placeholders if they exist in template to be safe
             $oldPlaceholders = ['CIDSIGN', 'SGODSIGN', 'AOSIGN', 'ASDS', 'SDS'];
             foreach ($oldPlaceholders as $ph) {
-                try { $templateProcessor->setValue($ph, ''); } catch(\Exception $e){}
+                try {
+                    $templateProcessor->setValue($ph, '');
+                } catch (\Exception $e) {
+                }
             }
-            
+
             // Save file logic below...
-                $templateProcessor->setValue('SDS', '');
-                // We don't clear ASDS here if it was set by Recommender logic above.
+            $templateProcessor->setValue('SDS', '');
+            // We don't clear ASDS here if it was set by Recommender logic above.
 
             // 3. HR Signature (${HRSIGN})
             // Logic: If status is not Pending HR, it implies it has been verified.
@@ -351,9 +432,9 @@ class LeaveController extends Controller
                 } else {
                     /** @var \App\Models\User|null $currentUser */
                     $currentUser = \Illuminate\Support\Facades\Auth::user();
-                    
+
                     if ($currentUser && ($currentUser->isHR() || $currentUser->isHeadHR())) {
-                         // Priority 2: The current HR user (fallback for legacy records without verifier_id)
+                        // Priority 2: The current HR user (fallback for legacy records without verifier_id)
                         $hrSignUser = $currentUser;
                     }
                 }
@@ -365,7 +446,6 @@ class LeaveController extends Controller
                 $templateProcessor->setValue('HRSIGN', '');
             }
 
-
             $setVal('OFFICE', $user->office_station);
             $setVal('office', $user->office_station);
 
@@ -375,18 +455,18 @@ class LeaveController extends Controller
             // --- DATES & DAYS ---
             $inclusiveDates = '';
             // Check if 'dates' column is populated and is an array (due to cast)
-            if (!empty($application->dates) && is_array($application->dates) && count($application->dates) > 0) {
+            if (! empty($application->dates) && is_array($application->dates) && count($application->dates) > 0) {
                 // Determine if we should attempt to group ranges or just list them.
-                // For simplicity, let's list them properly formatted. 
+                // For simplicity, let's list them properly formatted.
                 // Advanced: Group consecutive dates.
                 $sortedDates = $application->dates;
                 sort($sortedDates);
-                
+
                 $formatted = [];
                 foreach ($sortedDates as $d) {
                     $formatted[] = \Carbon\Carbon::parse($d)->format('m/d/Y');
                 }
-                
+
                 // If many dates, checking for range might be better, but user asked for "multiple dates not range".
                 // However, "inclusive dates" field usually expects a summary.
                 // If logic detects consecutive block, we could simplify. Use comma for now.
@@ -395,7 +475,7 @@ class LeaveController extends Controller
                 // Fallback for legacy or range-based
                 $inclusiveDates = $application->start_date ? \Carbon\Carbon::parse($application->start_date)->format('m/d/Y') : '';
                 if ($application->start_date && $application->end_date && \Carbon\Carbon::parse($application->start_date)->ne(\Carbon\Carbon::parse($application->end_date))) {
-                    $inclusiveDates .= ' - ' . \Carbon\Carbon::parse($application->end_date)->format('m/d/Y');
+                    $inclusiveDates .= ' - '.\Carbon\Carbon::parse($application->end_date)->format('m/d/Y');
                 }
             }
 
@@ -424,6 +504,7 @@ class LeaveController extends Controller
             $setVal('type_women', (stripos($typeName, 'Benefits for Women') !== false) ? '☑' : '☐');
             $setVal('type_calamity', (stripos($typeName, 'Calamity') !== false) ? '☑' : '☐');
             $setVal('type_adoption', (stripos($typeName, 'Adoption') !== false) ? '☑' : '☐');
+            $setVal('type_wellness', (stripos($typeName, 'Wellness') !== false) ? '☑' : '☐');
             $setVal('type_others', ($typeName === 'Others') ? '☑' : '☐');
 
             // --- 3. 6.B DETAILS OF LEAVE ---
@@ -446,7 +527,7 @@ class LeaveController extends Controller
                 $setVal('detail_study_masters', ($details->study_type === 'Masters') ? '☑' : '☐');
                 $setVal('detail_study_bar', ($details->study_type === 'Bar') ? '☑' : '☐');
                 $setVal('study_specify', $details->study_details ?? '');
-                
+
                 // Other Purpose
                 $setVal('other_specify', $details->other_purpose ?? '');
             } else {
@@ -465,83 +546,84 @@ class LeaveController extends Controller
                 $setVal('other_specify', '');
             }
 
-             $setVal('type_monetization', (stripos($typeName, 'Monetization') !== false) ? '☑' : '☐');
-             $setVal('type_terminal', (stripos($typeName, 'Terminal') !== false) ? '☑' : '☐');
-
+            $setVal('type_monetization', (stripos($typeName, 'Monetization') !== false) ? '☑' : '☐');
+            $setVal('type_terminal', (stripos($typeName, 'Terminal') !== false) ? '☑' : '☐');
 
             // --- 4. 6.C COMMUTATION ---
             $setVal('commutation_yes', ($application->commutation === 'Requested') ? '☑' : '☐');
             $setVal('commutation_no', ($application->commutation === 'Not Requested') ? '☑' : '☐');
-            
+
             // --- 5. 6.D CREDIT COMPUTATION ---
             // Get current credits for VL and SL
             $vlType = LeaveType::where('type_name', 'Vacation Leave')->first();
             $slType = LeaveType::where('type_name', 'Sick Leave')->first();
-            
+
             // Fetch current credit balance
             $vlCredit = 0;
             if ($vlType) {
                 $checkVl = \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id)->first();
                 $vlCredit = $checkVl ? $checkVl->credits : 0;
             }
-            
+
             $slCredit = 0;
             if ($slType) {
                 $checkSl = \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id)->first();
                 $slCredit = $checkSl ? $checkSl->credits : 0;
             }
-            
+
             // Logic: Determine deduction based on application
             $appTypeName = $application->leaveType->type_name;
             $daysApplied = $application->days_applied;
-            
+
             $lessVl = 0;
             $lessSl = 0;
-            
+
             // Check if application is VL or SL to apply deduction logic
             // Note: Mandatory/Forced Leave usually deducts from VL too, but strict prompt logic:
-            if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false) {
-                 $lessVl = $daysApplied;
-            } elseif (stripos($appTypeName, 'Sick') !== false) {
-                 $lessSl = $daysApplied;
-            }
             
+            $isCompensatory = optional($details)->other_purpose === 'COMPENSATORY TIME OFF';
+
+            if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false || $isCompensatory) {
+                $lessVl = $daysApplied;
+            } elseif (stripos($appTypeName, 'Sick') !== false) {
+                $lessSl = $daysApplied;
+            }
+
             // Calculate Balances
             $vlBalance = $vlCredit - $lessVl;
             $slBalance = $slCredit - $lessSl;
-            
+
             // Format for display (remove decimal if zero)
-            $fmt = function($val) { 
-                return (float)$val + 0; 
+            $fmt = function ($val) {
+                return (float) $val + 0;
             };
-            
+
             $setVal('VL_CREDIT', $fmt($vlCredit));
             $setVal('LESSVL_CREDIT', $fmt($lessVl));
             $setVal('VL_BALANCE', $fmt($vlBalance));
-            
+
             $setVal('SL_CREDIT', $fmt($slCredit));
             $setVal('LESSSL_CREDIT', $fmt($lessSl));
             $setVal('SL_BALANCE', $fmt($slBalance));
-            
+
             // Also set total date as of usually current date
             $setVal('DATE_AS_OF', now()->format('F d, Y'));
-            
-            
+
             // --- F. DISAPPROVAL REASONS ---
             $recoDisapprove = '';
             $approDisapprove = '';
-            
+
             if ($application->status === 'Disapproved' && $application->rejection_remarks) {
                 // Determine who disapproved based on flow state
                 // If recommended_at is NULL, it likely failed at Recommending stage (or HR verification, but let's assume Recommending for form purposes)
-                if (!$application->recommended_at) {
+                if (! $application->recommended_at) {
                     $recoDisapprove = $application->rejection_remarks;
                 } else {
                     // If recommended but not approved
                     $approDisapprove = $application->rejection_remarks;
                 }
             }
-            
+
             $setVal('reco_disapprove', strtoupper($recoDisapprove));
             $setVal('appro_disapprove', strtoupper($approDisapprove));
 
@@ -553,69 +635,103 @@ class LeaveController extends Controller
 
             // Helper to format as whole number if integer, or float if needed, but request said "just a whole number"
             // Interpreting as removing .00 and "days" string
-            $fmtNum = function($val) {
-                return $val ? (string)((float)$val + 0) : '';
+            $fmtNum = function ($val) {
+                return $val ? (string) ((float) $val + 0) : '';
             };
 
             $setVal('DAYWPAY', $fmtNum($daysWithPay));
             $setVal('DAYWOPAY', $fmtNum($daysWithoutPay));
             $setVal('OTHERS', $othersRemarks ? strtoupper($othersRemarks) : '');
 
+            // --- CERTIFY DATES (Sequential Replacement) ---
+            // The template uses ${CertifyDate} in three places (HR, Recommending, Approving)
+            // We replace them sequentially using limit=1.
+            
+            $formatCertDate = function($date) {
+                if (!$date) return ''; // Empty if not approved yet
+                return sprintf("Electronically Approved in this %s by:", \Carbon\Carbon::parse($date)->format('F d, Y'));
+            };
+
+            // 1. HR Certification
+            // If HR date is missing but recommended date exists, it implies HR passed. Use recommended date as fallback or keep empty?
+            // Usually strict: use hr_verified_at.
+            $templateProcessor->setValue('CertifyDate', $formatCertDate($application->hr_verified_at), 1);
+
+            // 2. Recommending Approval
+            $templateProcessor->setValue('CertifyDate', $formatCertDate($application->recommended_at), 1);
+
+            // 3. Final Approval
+            $templateProcessor->setValue('CertifyDate', $formatCertDate($application->approved_at), 1);
+
             // --- PDF GENERATION LOGIC ---
             if (request('format') === 'pdf') {
                 $tempDir = storage_path('app/temp');
-                if (!file_exists($tempDir)) {
+                if (! file_exists($tempDir)) {
                     mkdir($tempDir, 0755, true);
                 }
 
                 $timestamp = time();
-                $baseName = 'Leave_' . $application->id . '_' . $timestamp;
-                $tempDocx = $tempDir . '/' . $baseName . '.docx';
-                $outputPdf = $tempDir . '/' . $baseName . '.pdf';
+                $baseName = 'Leave_'.$application->id.'_'.$timestamp;
+                $tempDocx = $tempDir.'/'.$baseName.'.docx';
+                $outputPdf = $tempDir.'/'.$baseName.'.pdf';
 
                 try {
                     // Save DOCX first
                     $templateProcessor->saveAs($tempDocx);
 
-                    // Execute LibreOffice command
-                    // Ensure 'soffice' is in your System PATH or defined in .env as LIBREOFFICE_PATH
-                    // Example Windows Path: "C:\Program Files\LibreOffice\program\soffice.exe"
-                    $sofficePath = env('LIBREOFFICE_PATH', 'soffice'); 
-                    
+                    // LibreOffice path from config (set LIBREOFFICE_PATH in .env)
+                    $sofficePath = config('services.libreoffice_path', 'soffice');
+                    if (empty($sofficePath)) {
+                        $sofficePath = 'soffice';
+                    }
+
+                    // Normalize paths for Windows (LibreOffice prefers forward slashes)
+                    $tempDirNorm = str_replace('\\', '/', $tempDir);
+                    $tempDocxNorm = str_replace('\\', '/', $tempDocx);
+
                     // Command: soffice --headless --convert-to pdf --outdir <output_dir> <input_file>
-                    $cmd = "\"{$sofficePath}\" --headless --convert-to pdf --outdir \"{$tempDir}\" \"{$tempDocx}\"";
-                    
+                    // 2>&1 captures stderr for better error messages
+                    $cmd = '"'.str_replace('"', '\\"', $sofficePath).'" --headless --convert-to pdf --outdir "'.str_replace('"', '\\"', $tempDirNorm).'" "'.str_replace('"', '\\"', $tempDocxNorm).'" 2>&1';
+
                     exec($cmd, $output, $returnVar);
 
                     if (file_exists($outputPdf)) {
-                        $filename = 'Leave_Form6_' . $lastName . '_' . $application->id . '.pdf';
+                        $filename = 'Leave_Form6_'.$lastName.'_'.$application->id.'.pdf';
+
                         return response()->file($outputPdf, [
                             'Content-Type' => 'application/pdf',
-                            'Content-Disposition' => 'inline; filename="' . $filename . '"'
+                            'Content-Disposition' => 'inline; filename="'.$filename.'"',
                         ])->deleteFileAfterSend(true);
                     } else {
-                        throw new \Exception("PDF generation failed. Output: " . implode("\n", $output));
+                        $outputStr = implode("\n", $output) ?: '(no output)';
+                        $hint = '';
+                        if (! file_exists($sofficePath) && $sofficePath !== 'soffice') {
+                            $hint = ' LibreOffice not found at: '.$sofficePath.'. Install LibreOffice and set LIBREOFFICE_PATH in .env.';
+                        } elseif (empty($outputStr) || str_contains($outputStr, 'command not found') || str_contains($outputStr, 'not recognized')) {
+                            $hint = ' Install LibreOffice and set LIBREOFFICE_PATH in .env (e.g. "C:\Program Files\LibreOffice\program\soffice.exe" on Windows).';
+                        }
+                        throw new \Exception('PDF generation failed. '.$hint.' Output: '.$outputStr);
                     }
                 } finally {
                     // Cleanup DOCX (PDF is cleaned up by deleteFileAfterSend if successful, otherwise explicitly here?)
-                    // Actually deleteFileAfterSend only works if response is returned. 
+                    // Actually deleteFileAfterSend only works if response is returned.
                     if (file_exists($tempDocx)) {
                         unlink($tempDocx);
                     }
                 }
             }
-            
-            $filename = 'Leave_Form6_' . $lastName . '_' . $application->id . '.docx';
-            
+
+            $filename = 'Leave_Form6_'.$lastName.'_'.$application->id.'.docx';
+
             header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Content-Disposition: attachment;filename="'.$filename.'"');
             header('Cache-Control: max-age=0');
-            
+
             $templateProcessor->saveAs('php://output');
             exit;
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Error generating Word file: ' . $e->getMessage());
+            return back()->with('error', 'Error generating Word file: '.$e->getMessage());
         }
     }
 }

@@ -101,7 +101,7 @@
                                 <div class="user-cell">
                                     <div class="user-avatar-sm {{ $record->user ? '' : 'guest' }}">
                                         @if($record->user && $record->user->profile_picture)
-                                            <img src="{{ asset('storage/' . $record->user->profile_picture) }}" alt="">
+                                            <img src="{{ storage_url($record->user->profile_picture) }}" alt="">
                                         @else
                                             {{ strtoupper(substr($record->user->full_name ?? $record->email[0], 0, 1)) }}
                                         @endif

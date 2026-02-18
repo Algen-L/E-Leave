@@ -81,6 +81,30 @@
 
 @section('content')
 <div class="leave-form-container">
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Success!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="mb-8 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">New Leave Application</h1>
@@ -106,18 +130,20 @@
             <div class="form-group-custom">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Select Leave Type</label>
                 <div class="relative">
-                    <select name="leave_type_id" id="leave_type_id" class="field-input w-full p-3 bg-white border rounded-xl appearance-none cursor-pointer text-gray-700 font-medium" required onchange="toggleDetails()">
+                    <select name="selected_option_only" id="leave_type_select" class="field-input w-full p-3 bg-white border rounded-xl appearance-none cursor-pointer text-gray-700 font-medium" onchange="toggleDetails()">
                         <option value="" disabled selected>-- Choose a leave type --</option>
-                        @foreach($leaveTypes as $type)
-                            <option value="{{ $type->id }}" data-name="{{ $type->type_name }}">
+                        @foreach($standardTypes as $type)
+                            <option value="{{ $type->id }}" data-name="{{ $type->type_name }}" {{ old('leave_type_id') == $type->id ? 'selected' : '' }}>
                                 {{ $type->type_name }}
                             </option>
                         @endforeach
+                        <option value="Others" data-name="Others" {{ old('leave_type_id') === 'Others' ? 'selected' : '' }}>Others</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                         <i class="fas fa-chevron-down"></i>
                     </div>
                 </div>
+                <input type="hidden" name="leave_type_id" id="real_leave_type_id" value="{{ old('leave_type_id') }}" required>
                 <p class="text-sm text-blue-500 mt-2 italic" id="type_description"></p>
             </div>
             
@@ -203,8 +229,34 @@
                 <!-- Other Details -->
                 <div id="details_others" class="details-group">
                     <h4 class="text-gray-800 font-bold mb-3">Others Details</h4>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Specify Purpose</label>
-                    <input type="text" name="other_purpose" class="field-input w-full p-3 border rounded-lg" placeholder="Specify purpose...">
+                    
+                    <div class="flex flex-col gap-3">
+                        <!-- Dynamic Other Leave Types -->
+                        @foreach($otherTypes as $other)
+                            <label class="radio-option flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                                <input type="radio" name="others_type" value="{{ $other->id }}" data-is-custom="true" onchange="setOtherLeaveId(this, '{{ $other->id }}')" class="w-5 h-5 text-indigo-600">
+                                <span class="text-gray-700 font-medium">{{ $other->type_name }}</span>
+                            </label>
+                        @endforeach
+
+                        <!-- Compensatory Time Off (Special Case) -->
+                        <label class="radio-option flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                            <input type="radio" name="others_type" value="COMPENSATORY TIME OFF" data-is-custom="false" onchange="setOtherLeaveId(this, 'cto')" class="w-5 h-5 text-gray-600">
+                             <div>
+                                <span class="text-gray-700 font-bold text-indigo-700">COMPENSATORY TIME OFF</span>
+                                <p class="text-xs text-gray-500">Note: This will be deducted from Mandatory/Forced Leave credits.</p>
+                             </div>
+                        </label>
+                        
+                        <!-- Specify (Free Text) -->
+                        <div class="w-full max-w-xl pl-2 pt-2 border-t border-gray-100 mt-2">
+                             <label class="radio-option flex items-center gap-3 cursor-pointer mb-2">
+                                <input type="radio" name="others_type" value="Specify" data-is-custom="false" onchange="setOtherLeaveId(this, 'specify')" class="w-5 h-5 text-gray-600">
+                                <span class="text-gray-700 font-medium">Specify Purpose</span>
+                            </label>
+                            <input type="text" name="other_purpose" id="others_specify" class="field-input w-full p-2 border rounded-md ml-8" placeholder="Specify purpose..." disabled oninput="document.getElementById('real_leave_type_id').value = 'Specify:' + this.value">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -349,14 +401,23 @@
     }
 
     function toggleDetails() {
-        const select = document.getElementById('leave_type_id');
+        const select = document.getElementById('leave_type_select'); // Get the main dropdown
+        if (!select) return; // Exit if not found
+        
         const selectedOption = select.options[select.selectedIndex];
         const selectedText = selectedOption.getAttribute('data-name');
+        const leaveTypeId = selectedOption.value;
 
-        // Hide all first
+        // Update hidden leave_type_id input
+        const hiddenInput = document.getElementById('real_leave_type_id');
+        if (selectedText !== 'Others') {
+             hiddenInput.value = leaveTypeId; // Set to the selected standard type ID
+        } else {
+             hiddenInput.value = ''; // Clear it, user must select sub-option in details
+        }
+
+        // Hide all details groups first
         document.querySelectorAll('.details-group').forEach(el => el.classList.remove('active'));
-        
-        // Reset inputs within groups to disabled/empty? Maybe not to preserve data if user switches back.
 
         if (!selectedText) return;
 
@@ -371,6 +432,32 @@
             document.getElementById('details_study').classList.add('active');
         } else if (selectedText === 'Others') {
             document.getElementById('details_others').classList.add('active');
+        }
+    }
+
+    // Helper to set ID when selecting from "Others" radio group
+    function setOtherLeaveId(radio, value) {
+        const hiddenInput = document.getElementById('real_leave_type_id');
+        const specifyInput = document.getElementById('others_specify');
+        
+        if (value === 'specify') {
+            specifyInput.disabled = false;
+            specifyInput.focus();
+            // We set a flag or keep empty? Validation requires a valid ID or handling.
+            // Backend will likely need to handle 'Specify' case if it's not a real ID.
+            // But if user types, we might need a way to pass that.
+            // For now, let's assume the backend handles specific logic if ID is missing but 'other_purpose' is set. 
+            // Or we create a dummy "Others" leave type in DB.
+        } else if (value === 'cto') {
+            specifyInput.disabled = true;
+            specifyInput.value = '';
+            // Backend check: $request->other_purpose === 'COMPENSATORY TIME OFF'
+            // We need to pass something that passes 'exists:leave_types,id' OR modify backend validation.
+        } else {
+            // It is a real dynamic Leave Type ID (e.g., 5, 8, etc.)
+            specifyInput.disabled = true;
+            specifyInput.value = '';
+            hiddenInput.value = value;
         }
     }
 
