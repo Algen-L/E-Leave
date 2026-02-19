@@ -47,8 +47,8 @@ return new class extends Migration
         // 3. Leave Credit Audit Logs (For Head HR to view HR actions)
         Schema::create('leave_credit_audit_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('actor_id'); // Who did it (HR)
-            $table->unsignedBigInteger('target_user_id'); // Who got credits
+            $table->unsignedBigInteger('actor_id')->nullable(); // Who did it (HR)
+            $table->unsignedBigInteger('target_user_id')->nullable(); // Who got credits
             $table->string('action'); // 'allocate', 'update', 'deduct'
             $table->string('leave_type_name');
             $table->decimal('previous_value', 8, 2)->nullable();
@@ -56,26 +56,26 @@ return new class extends Migration
             $table->text('reason')->nullable();
             $table->timestamps();
             
-            $table->foreign('actor_id')->references('id')->on('users');
-            $table->foreign('target_user_id')->references('id')->on('users');
+            $table->foreign('actor_id')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('target_user_id')->references('id')->on('users')->nullOnDelete();
         });
         
         // 4. Leave Credit Update Requests (HR asking permission to edit again)
         Schema::create('leave_update_requests', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('requester_id'); // HR Staff
+            $table->unsignedBigInteger('requester_id')->nullable(); // HR Staff
             $table->unsignedBigInteger('approver_id')->nullable(); // Head HR
-            $table->unsignedBigInteger('target_user_id'); 
-            $table->unsignedBigInteger('leave_type_id');
+            $table->unsignedBigInteger('target_user_id')->nullable(); 
+            $table->unsignedBigInteger('leave_type_id')->nullable();
             
             $table->text('reason');
             $table->string('status')->default('Pending'); // Pending, Approved, Rejected
             $table->timestamps();
             
-            $table->foreign('requester_id')->references('id')->on('users');
-            $table->foreign('approver_id')->references('id')->on('users');
-            $table->foreign('target_user_id')->references('id')->on('users');
-            $table->foreign('leave_type_id')->references('id')->on('leave_types');
+            $table->foreign('requester_id')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('approver_id')->references('id')->on('users')->nullOnDelete();
+            $table->foreign('target_user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('leave_type_id')->references('id')->on('leave_types')->nullOnDelete();
         });
     }
 

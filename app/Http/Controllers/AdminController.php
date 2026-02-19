@@ -112,6 +112,9 @@ class AdminController extends Controller
             $query->where('office_station', $filters['office']);
         }
 
+        // Exclude current super admin from the list
+        $query->where('id', '!=', Auth::id());
+
         // View-based filter
         if ($view === 'active') {
             $query->where('is_active', true);

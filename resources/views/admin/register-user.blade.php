@@ -160,7 +160,10 @@
                     
                     <div class="form-group">
                         <label class="form-label">Position</label>
-                        <input type="text" class="form-control" name="position" value="{{ old('position') }}" placeholder="Enter position/title">
+                        <select class="form-select" id="position" name="position">
+                            <option value="">Select Position</option>
+                        </select>
+                        <input type="hidden" id="custom_position" name="custom_position_input" disabled>
                     </div>
                 </div>
                 
@@ -190,10 +193,145 @@
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    new TomSelect('#office_station', {
+    // Office to Position Mapping
+    const positionsMap = {
+        // OFFICE OF THE SCHOOLS DIVISION SUPERINTENDENT
+        'ADMINISTRATIVE': [
+            'Administrative Officer V', 'Administrative Officer II', 'Administrative Assistant I', 
+            'Administrative Assistant II', 'Administrative Assistant III', 'Administrative Support II',
+            'Administrative Aide I', 'Administrative Aide IV', 'Administrative Aide VI',
+            'Division Driver', 'LSB Clerk', 'LSB Utility', 'LSB Watchman', 'LSB Driver'
+        ],
+        // LEGAL UNIT
+        'LEGAL': ['Attorney III', 'Legal Assistant I'],
+        
+        // PLANNING AND RESEARCH
+        'SGOD (PLANNING AND RESEARCH)': ['Planning Officer III', 'Planning Development Officer II'],
+
+        // HUMAN RESOURCE DEVELOPMENT, PERSONNEL
+        'ADMINISTRATIVE (PERSONEL)': [
+            'Administrative Officer IV', 'Administrative Officer II', 'Administrative Assistant III', 
+            'Administrative Aide VI', 'LSB Clerk'
+        ],
+        
+        // FINANCE DIVISION (Accounting and Budget)
+        'FINANCE (ACCOUNTING)': [
+            'Administrative Officer IV', 'Accountant III', 'Administrative Assistant III', 'Administrative Aide VI'
+        ],
+        'FINANCE (BUDGET)': [ // Assuming Budget matches Accounting or is similar
+            'Administrative Officer IV', 'Accountant III', 'Administrative Assistant III', 'Administrative Aide VI'
+        ],
+        // FINANCE DIVISION (Cash) -> Administrative (Cash)
+        'ADMINISTRATIVE (CASH)': ['LSB Utility'],
+        
+        // FINANCE DIVISION (Procurement) -> Administrative (Procurement)
+        'ADMINISTRATIVE (PROCUREMENT)': [
+            'Administrative Officer IV', 'Administrative Assistant III', 'Administrative Aide VI', 'LSB Clerk'
+        ],
+        
+        // FINANCE DIVISION (Property and Supply Records)
+        'ADMINISTRATIVE (PROPERTY AND SUPPLY)': ['Administrative Officer IV', 'Administrative Aide VI', 'LSB Clerk'],
+        'ADMINISTRATIVE (RECORDS)': ['Administrative Officer IV', 'Administrative Aide VI', 'LSB Clerk'],
+
+        // SCHOOL GOVERNANCE AND OPERATIONS DIVISION (General Services)
+        'ADMINISTRATIVE (GENERAL SERVICES)': [
+            'Administrative Aide VI', 'LSB Clerk', 'LSB Watchman', 'LSB Utility', 'Division Driver'
+        ],
+        
+        // ICT
+        'ICT': ['IT Officer I'],
+        
+        // Social Mobilization and Networking
+        'SGOD (SOCIAL MOBILIZATION AND NETWORKING)': ['Project Development Officer II'],
+        
+        // Disaster Risk Reduction
+        'SGOD (DISASTER RISK REDUCTION AND MANAGEMENT)': ['Engineer III'],
+        
+        // Education Facilities
+        'SGOD (EDUCATION FACILITIES)': ['Senior Education Program Specialist'],
+        
+        // School Management Monitoring and Evaluation
+        'SGOD (SCHOOL MANAGEMENT MONITORING & EVALUATION)': ['Education Program Specialist II'],
+        
+        // School Health and Nutrition - Medical
+        'SGOD (SCHOOL HEALTH AND NUTRITION) (MEDICAL)': ['Medical Officer III', 'Nurse II'],
+        
+        // School Health and Nutrition - Dental
+        'SGOD (SCHOOL HEALTH AND NUTRITION) (DENTAL)': ['Dentist II'],
+        
+        // Alternative Learning System
+        'CID (ALTERNATIVE LEARNING SYSTEM)': ['Education Program Specialist II ALS'],
+        
+        // Instructional Management
+        'CID (INSTRUCTIONAL MANAGEMENT)': ['Education Program Supervisor'],
+        
+        // Learning Resource Management
+        'CID (LEARNING RESOURCES MANAGEMENT)': ['Librarian II', 'Education Program Supervisor LRMDS'],
+        
+        // District Instructional Supervision
+        'CID (DISTRICT INSTRUCTIONAL SUPERVISION)': ['Public Schools District Supervisor'],
+
+        // Additional mappings just in case user selects others:
+        'SGOD (HUMAN RESOURCES DEVELOPMENT)': [ // Often overlaps with Personnel
+            'Senior Education Program Specialist', 'Education Program Specialist II'
+        ]
+    };
+
+    const officeSelect = new TomSelect('#office_station', {
         allowEmptyOption: true,
-        placeholder: 'Select Office/Station'
+        placeholder: 'Select Office/Station',
+        onChange: function(value) {
+            updatePositions(value);
+        }
     });
+
+    const positionSelect = new TomSelect('#position', {
+        create: true,
+        persist: false,
+        createOnBlur: true,
+        placeholder: 'Select or type position...'
+    });
+
+    function updatePositions(officeName) {
+        positionSelect.clear();
+        positionSelect.clearOptions();
+        
+        if (!officeName) return;
+
+        let positions = positionsMap[officeName] || [];
+
+        // Special Handling for CID Instructional Management (Subject Area Supervisors)
+        if (officeName === 'CID (INSTRUCTIONAL MANAGEMENT)') {
+            const supervisors = [
+                'Education Program Supervisor',
+                'Education Program Supervisor Filipino',
+                'Education Program Supervisor English',
+                'Education Program Supervisor Mathematics',
+                'Education Program Supervisor Science',
+                'Education Program Supervisor Araling Panlipunan',
+                'Education Program Supervisor Kindergarten',
+                'Education Program Supervisor TLE',
+                'Education Program Supervisor MAPEH',
+                'Education Program Supervisor Values Education'
+            ];
+            // Merge unique values
+            positions = [...new Set([...positions, ...supervisors])];
+        } else if (officeName.startsWith('FINANCE') || officeName.startsWith('ADMINISTRATIVE (FINANCE)')) { 
+             // Consolidated FINANCE Fallback if specific sub-office fails
+             if (positions.length === 0) {
+                 positions = [
+                    'Administrative Officer IV', 'Accountant III', 'Administrative Assistant III', 'Administrative Aide VI', 'LSB Utility', 'LSB Clerk'
+                 ];
+             }
+        }
+        
+        // Add options
+        positions.forEach(pos => {
+            positionSelect.addOption({value: pos, text: pos});
+        });
+        
+        positionSelect.refreshOptions();
+    }
 });
 
 function togglePassword() {
