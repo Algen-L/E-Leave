@@ -26,7 +26,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
-        
+
         $offices = Office::all()->groupBy('category');
         return view('auth.login', compact('offices'));
     }
@@ -67,7 +67,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             ActivityLog::logAction(Auth::id(), 'Logout', 'User logged out');
         }
-        
+
         Auth::logout();
         Session::invalidate();
         Session::regenerateToken();
@@ -110,7 +110,7 @@ class AuthController extends Controller
 
         // Generate code
         $code = sprintf("%06d", mt_rand(100000, 999999));
-        
+
         $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
 
         // Store in session
@@ -138,7 +138,7 @@ class AuthController extends Controller
         // Send email
         try {
             $this->sendVerificationEmail($request->gmail, $fullName, $code, 'Registration Verification');
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => "Verification code sent to {$request->gmail}."
@@ -204,7 +204,7 @@ class AuthController extends Controller
             // Construct full name if full_name key is missing (legacy session data check not needed as we updated store)
             // But we should pass individual fields to User::create
             // The User model boot method will handle generating 'full_name' and 'name'
-            
+
             $user = User::create([
                 'username' => $regData['username'],
                 'password' => $regData['password'],
@@ -307,7 +307,7 @@ class AuthController extends Controller
             // Resend existing token
             ResetRequestLog::logResend($request->email);
             $tracking->incrementResends();
-            
+
             // Check resend limit (max 3)
             if ($tracking->resends >= 3) {
                 return response()->json([
@@ -315,10 +315,10 @@ class AuthController extends Controller
                     'message' => 'Maximum resend attempts reached. Please wait for the token to expire and try again.'
                 ]);
             }
-            
+
             try {
                 $this->sendVerificationEmail($request->email, $user->full_name, $activeToken->token, 'Password Reset');
-                
+
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Your active verification token has been re-sent to your Gmail.'
@@ -337,7 +337,7 @@ class AuthController extends Controller
 
         try {
             $this->sendVerificationEmail($request->email, $user->full_name, $passwordReset->token, 'Password Reset');
-            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Verification token sent to your Gmail. Note: The token expires in 5 minutes.'
@@ -357,7 +357,7 @@ class AuthController extends Controller
     {
         // Check if this is a verify-only request
         $verifyOnly = $request->boolean('verify_only', false);
-        
+
         if ($verifyOnly) {
             $request->validate([
                 'email' => 'required|email',
@@ -448,7 +448,7 @@ class AuthController extends Controller
     protected function sendVerificationEmail(string $to, string $name, string $code, string $type)
     {
         $subject = "{$type} - Verification Code";
-        
+
         // Define logo paths
         $depEdLogoPath = public_path('images/logo.png');
 

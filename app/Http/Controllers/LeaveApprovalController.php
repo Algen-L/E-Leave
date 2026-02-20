@@ -25,7 +25,7 @@ class LeaveApprovalController extends Controller
                 ->where('status', 'Pending HR')
                 ->orderBy('created_at', 'asc')
                 ->get();
-            
+
             // Allow HR to see these
             $applications = $applications->merge($hrPending);
         }
@@ -55,11 +55,11 @@ class LeaveApprovalController extends Controller
      */
     public function show($id)
     {
-        $application = LeaveApplication::with(['user', 'leaveType', 'details', 'recommendingOfficer', 'approvingOfficer'])->findOrFail($id);
-        
+        $application = LeaveApplication::with(['user', 'leaveType', 'details', 'recommendingOfficer', 'approvingOfficer', 'hrVerifier'])->findOrFail($id);
+
         // Authorization check: User must be involved or HR
         $user = Auth::user();
-        $canView = 
+        $canView =
             in_array($user->role, ['hr', 'head_hr', 'super_admin']) ||
             $application->recommending_officer_id == $user->id ||
             $application->approving_officer_id == $user->id;
@@ -72,18 +72,18 @@ class LeaveApprovalController extends Controller
         $applicant = $application->user;
         $appTypeName = $application->leaveType->type_name ?? '';
         $daysApplied = $application->days_applied;
-        
+
         // Fetch Leave Types for ID lookup
         $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
         $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
-        
+
         // 1. Fetch Current Credits
         $vlCredit = 0;
         if ($vlType) {
             $checkVl = \App\Models\LeaveCredit::where('user_id', $applicant->id)->where('leave_type_id', $vlType->id)->first();
             $vlCredit = $checkVl ? $checkVl->credits : 0;
         }
-        
+
         $slCredit = 0;
         if ($slType) {
             $checkSl = \App\Models\LeaveCredit::where('user_id', $applicant->id)->where('leave_type_id', $slType->id)->first();
@@ -97,26 +97,26 @@ class LeaveApprovalController extends Controller
         // Check for specific leave types or special conditions like Compensatory Time Off
         $isCompensatory = optional($application->details)->other_purpose === 'COMPENSATORY TIME OFF';
         $vlRelatedTypes = ['Vacation', 'Forced', 'Mandatory'];
-        
+
         // Helper to check if type matches any of the keywords
         $isVlRelated = false;
         foreach ($vlRelatedTypes as $keyword) {
-             if (stripos($appTypeName, $keyword) !== false) {
-                 $isVlRelated = true;
-                 break;
-             }
+            if (stripos($appTypeName, $keyword) !== false) {
+                $isVlRelated = true;
+                break;
+            }
         }
 
         if ($isVlRelated || $isCompensatory) {
-             $lessVl = $daysApplied;
+            $lessVl = $daysApplied;
         } elseif (stripos($appTypeName, 'Sick') !== false) {
-             $lessSl = $daysApplied;
+            $lessSl = $daysApplied;
         }
-        
+
         // 3. Calculate Balances
         $vlBalance = $vlCredit - $lessVl;
         $slBalance = $slCredit - $lessSl;
-        
+
         $credits = [
             'vl' => [
                 'current' => $vlCredit,
@@ -139,19 +139,25 @@ class LeaveApprovalController extends Controller
     public function verify(Request $request, $id)
     {
         $application = LeaveApplication::findOrFail($id);
-        
+
         // Ensure user is HR
         if (!in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
             abort(403);
         }
 
-        // Logic to update credits deduction could go here? 
-        // For now, simple transition.
+        $request->validate([
+            'days_with_pay' => 'nullable|numeric|min:0',
+            'days_without_pay' => 'nullable|numeric|min:0',
+            'others_remarks' => 'nullable|string|max:255',
+        ]);
 
         $application->update([
             'status' => 'Pending Recommending',
             'hr_verified_at' => now(),
             'hr_verifier_id' => Auth::id(),
+            'days_with_pay' => $request->days_with_pay,
+            'days_without_pay' => $request->days_without_pay,
+            'others_remarks' => $request->others_remarks,
         ]);
 
         return redirect()->route('user.leave.approvals')->with('success', 'Application verified. Sent to Recommending Officer.');
@@ -163,7 +169,7 @@ class LeaveApprovalController extends Controller
     public function recommend(Request $request, $id)
     {
         $application = LeaveApplication::findOrFail($id);
-        
+
         if ($application->recommending_officer_id != Auth::id()) {
             abort(403);
         }
@@ -181,30 +187,100 @@ class LeaveApprovalController extends Controller
      */
     public function approve(Request $request, $id)
     {
-        $application = LeaveApplication::findOrFail($id);
-        
+        $application = LeaveApplication::with(['leaveType', 'user', 'details'])->findOrFail($id);
+
         if ($application->approving_officer_id != Auth::id()) {
             abort(403);
         }
 
-        $request->validate([
-            'days_with_pay' => 'nullable|numeric|min:0',
-            'days_without_pay' => 'nullable|numeric|min:0',
-            'others_remarks' => 'nullable|string|max:255',
-        ]);
+        // Recommendations are now pre-filled by HR
 
-        $application->update([
-            'status' => 'Approved',
-            'approved_at' => now(),
-            'days_with_pay' => $request->days_with_pay,
-            'days_without_pay' => $request->days_without_pay,
-            'others_remarks' => $request->others_remarks,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Logic: Deduct leave credits here if not done at verification?
-        // Usually final deductions happen on approval.
+            $application->update([
+                'status' => 'Approved',
+                'approved_at' => now(),
+            ]);
 
-        return redirect()->route('user.leave.approvals')->with('success', 'Application successfully APPROVED.');
+            // --- LEAVE CREDIT DEDUCTION LOGIC ---
+            $user = $application->user;
+            $leaveType = $application->leaveType;
+            $daysToDeduct = (float) $application->days_applied;
+
+            // 1. Determine which credit pool to deduct from
+            $isVlRelated = false;
+            $vlKeywords = ['Vacation', 'Forced', 'Mandatory'];
+            foreach ($vlKeywords as $kw) {
+                if (stripos($leaveType->type_name, $kw) !== false) {
+                    $isVlRelated = true;
+                    break;
+                }
+            }
+
+            $isSick = stripos($leaveType->type_name, 'Sick') !== false;
+            $isCTO = (stripos($leaveType->type_name, 'Compensatory') !== false);
+
+            if ($isVlRelated || $isSick || $isCTO) {
+                // Find IDs
+                $targetTypeName = $isCTO ? 'Compensatory Over-Time Credit' : ($isSick ? 'Sick Leave' : 'Vacation Leave');
+                $targetType = \App\Models\LeaveType::where('type_name', $targetTypeName)->first();
+
+                if ($targetType) {
+                    // Update Main Credits Table
+                    $credit = \App\Models\LeaveCredit::where('user_id', $user->id)
+                        ->where('leave_type_id', $targetType->id)
+                        ->first();
+
+                    if ($credit) {
+                        $oldCredits = (float) $credit->credits;
+                        $credit->credits = max(0, $oldCredits - $daysToDeduct);
+                        $credit->save();
+
+                        // Log the deduction
+                        \App\Models\LeaveCreditAuditLog::create([
+                            'actor_id' => Auth::id(),
+                            'target_user_id' => $user->id,
+                            'action' => 'deduction',
+                            'leave_type_name' => $targetType->type_name,
+                            'previous_value' => $oldCredits,
+                            'new_value' => $credit->credits,
+                            'reason' => 'Leave Approved: ' . $application->id,
+                        ]);
+                    }
+
+                    // Special Batch Handling for CTO
+                    if ($isCTO) {
+                        $batches = \App\Models\CompensatoryLeaveCredit::where('user_id', $user->id)
+                            ->where('status', 'Active')
+                            ->where('remaining_credits', '>', 0)
+                            ->orderBy('expiration_date', 'asc')
+                            ->get();
+
+                        $remainingToDeduct = $daysToDeduct;
+                        foreach ($batches as $batch) {
+                            if ($remainingToDeduct <= 0)
+                                break;
+
+                            $deductFromBatch = min($remainingToDeduct, (float) $batch->remaining_credits);
+                            $batch->remaining_credits -= $deductFromBatch;
+                            if ($batch->remaining_credits <= 0) {
+                                $batch->status = 'Used';
+                            }
+                            $batch->save();
+                            $remainingToDeduct -= $deductFromBatch;
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('user.leave.approvals')->with('success', 'Application successfully APPROVED and credits updated.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Critical Error during approval: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -217,9 +293,9 @@ class LeaveApprovalController extends Controller
         ]);
 
         $application = LeaveApplication::findOrFail($id);
-        
+
         // Authorization check: User must be involved
-        $canReject = 
+        $canReject =
             in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin']) ||
             $application->recommending_officer_id == Auth::id() ||
             $application->approving_officer_id == Auth::id();

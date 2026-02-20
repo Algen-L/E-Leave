@@ -23,12 +23,15 @@ class User extends Authenticatable
             // Only update full_name if parts are present.
             if (!empty($user->first_name) || !empty($user->last_name)) {
                 $parts = [];
-                if (!empty($user->first_name)) $parts[] = $user->first_name;
-                if (!empty($user->middle_name)) $parts[] = $user->middle_name;
-                if (!empty($user->last_name)) $parts[] = $user->last_name;
-                
+                if (!empty($user->first_name))
+                    $parts[] = $user->first_name;
+                if (!empty($user->middle_name))
+                    $parts[] = $user->middle_name;
+                if (!empty($user->last_name))
+                    $parts[] = $user->last_name;
+
                 $user->full_name = implode(' ', $parts);
-                
+
                 // Also update the 'name' field if it is not set or generic
                 if (empty($user->name) || $user->name == $user->getOriginal('full_name')) {
                     $user->name = $user->full_name;

@@ -4,199 +4,117 @@
 @section('page-title', 'Policies Configuration')
 
 @push('styles')
+<link rel="stylesheet" href="{{ asset('css/policies.css') }}">
 <style>
-    /* Global Layout */
-    .policy-wrapper { max-width: 1000px; margin: 0 auto; }
-    
-    /* Policy Card Container */
-    .policy-card {
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        margin-bottom: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        transition: box-shadow 0.2s;
-    }
-    .policy-card:hover { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-
-    /* Header */
-    .policy-header {
-        padding: 16px 24px;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: #fff;
-        border-left: 4px solid transparent;
-        transition: all 0.2s;
-    }
-    .policy-header:hover { background: #fdfdfd; }
-    .policy-header.active-header { border-left-color: #3b82f6; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
-
-    /* Collapsible Body */
-    .policy-body { 
-        padding: 32px 40px; 
-        background: #fdfdfd;
-        display: none; 
-    }
-    .policy-body.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-    
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Internal Cards */
-    .settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        margin-bottom: 32px;
-    }
-    .setting-card {
-        background: white;
-        border: 1px solid #eef2f6;
-        border-radius: 8px;
-        padding: 24px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
-    .setting-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #1e293b;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 16px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #f1f5f9;
+    .policy-actions-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
     }
 
-    /* Form Elements */
-    .input-group { margin-bottom: 16px; }
-    .input-group:last-child { margin-bottom: 0; }
-    
-    .lbl { 
-        display: block; 
-        font-size: 0.85rem; 
-        font-weight: 600; 
-        color: #475569; 
-        margin-bottom: 6px; 
+    .btn-delete-type {
+        width: 36px !important;
+        height: 36px !important;
+        border-radius: 10px !important;
+        background: #fff !important;
+        color: #ef4444 !important;
+        border: 1px solid #fee2e2 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: 0 1px 2px rgba(239, 68, 68, 0.05) !important;
     }
-    .input-std {
-        width: 100%;
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        color: #334155;
-        background: #fff;
-        border: 1px solid #cbd5e1;
-        border-radius: 4px;
-        transition: border 0.2s, box-shadow 0.2s;
-    }
-    .input-std:focus {
-        border-color: #3b82f6;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+
+    .btn-delete-type:hover {
+        background: #ef4444 !important;
+        color: #fff !important;
+        border-color: #ef4444 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
     }
     
-    /* Specific Input Widths */
-    .w-short { max-width: 120px; }
-    .w-medium { max-width: 240px; }
-
-    .help-text {
-        font-size: 0.75rem;
-        color: #94a3b8;
-        margin-top: 5px;
-        font-style: italic;
+    .action-divider {
+        width: 1px !important;
+        height: 24px !important;
+        background: #e2e8f0 !important;
+        margin: 0 4px !important;
     }
 
-    /* Bottom Section */
-    .limit-section {
-        max-width: 500px;
-        margin: 0 auto 32px auto;
-        padding-top: 24px;
-        border-top: 1px dashed #e2e8f0;
-        text-align: center;
-    }
-    .limit-input-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .toggle-trigger {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 6px 12px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s !important;
+        color: #64748b !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
     }
 
-    /* Action Footer */
-    .form-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding-top: 20px;
-        border-top: 1px solid #eee;
+    .policy-header:hover .toggle-trigger {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
     }
-    .btn-save {
-        background: #0f172a;
-        color: white;
-        padding: 10px 24px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: background 0.2s;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .btn-save:hover { background: #1e293b; }
-
-    /* Typography & Icons */
-    .title-text { font-size: 1rem; font-weight: 700; color: #334155; }
-    .badge-status {
-        font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-        padding: 4px 10px; border-radius: 20px; letter-spacing: 0.03em;
-    }
-    .bg-green { background: #ecfdf5; color: #047857; }
-    .bg-gray { background: #f1f5f9; color: #64748b; }
-
-    .chevron { color: #cbd5e1; transition: transform 0.2s; }
-    .chevron.active { transform: rotate(180deg); color: #64748b; }
 </style>
 @endpush
 
 @section('content')
 <div class="policy-wrapper">
-    <div class="mb-8 flex justify-between items-end">
-        <div>
-            <h2 class="text-xl font-bold text-gray-800">Leave Credit Policies</h2>
-            <p class="text-sm text-gray-500 mt-1">Configure accumulation and expiration rules for each leave type.</p>
+    <div class="page-header-card">
+        <div class="header-info-group">
+            <div class="header-icon-box">
+                <i class="fas fa-sliders-h"></i>
+            </div>
+            <div class="header-title-text">
+                <h2>Leave Credit Policies</h2>
+                <p>Configure accumulation and expiration rules for each leave type.</p>
+            </div>
         </div>
-        <button onclick="toggleCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium transition-colors flex items-center gap-2">
-            <i class="fas fa-plus"></i> New Leave Type
+        <button onclick="toggleCreateModal()" class="btn-create-leave">
+            <i class="fas fa-plus-circle"></i>
+            <span>New Leave Type</span>
         </button>
     </div>
 
     <!-- Create Leave Type Modal -->
-    <div id="createLeaveModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Create New Leave Type</h3>
-                <form action="{{ route('head-hr.leave-types.store') }}" method="POST" class="mt-4 text-left">
-                    @csrf
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="type_name">
-                            Leave Type Name
-                        </label>
-                        <input type="text" name="type_name" id="type_name" required 
-                               class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">
-                            Description (Optional)
-                        </label>
-                        <textarea name="description" id="description" rows="3" 
-                                  class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-                    </div>
-                    <div class="flex items-center justify-end mt-4 gap-2">
-                        <button type="button" onclick="toggleCreateModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">Create</button>
-                    </div>
-                </form>
+    <div id="createLeaveModal" class="modal-overlay" onclick="handleOutsideClick(event)">
+        <div class="modal-content-new">
+            <div class="modal-header-new">
+                <h3>Create New Leave Type</h3>
+                <p>Define a new category of leave for the system.</p>
+                <button type="button" onclick="toggleCreateModal()" class="modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
+            <form action="{{ route('head-hr.leave-types.store') }}" method="POST">
+                @csrf
+                <div class="modal-body-new">
+                    <div class="form-group-new">
+                        <label class="form-label-new" for="type_name">Leave Type Name</label>
+                        <div class="input-wrapper-new">
+                            <i class="fas fa-tag input-icon-new"></i>
+                            <input type="text" name="type_name" id="type_name" required 
+                                   placeholder="e.g. Special Privilege Leave"
+                                   class="input-new">
+                        </div>
+                    </div>
+                    <div class="form-group-new">
+                        <label class="form-label-new" for="description">Description (Optional)</label>
+                        <textarea name="description" id="description" rows="3" 
+                                  placeholder="Provide context or rules for this leave type..."
+                                  class="input-new textarea-new"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer-new">
+                    <button type="button" onclick="toggleCreateModal()" class="btn-new btn-cancel-new">Cancel</button>
+                    <button type="submit" class="btn-new btn-submit-new">Create Leave Type</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -221,25 +139,49 @@
                     'details' => '7 days per childbirth',
                     'usage' => 'Used per delivery of spouse'
                 ],
+                'Adoption Leave' => [
+                    'details' => '60 days per approved adoption',
+                    'usage' => 'Used upon legal placement of child'
+                ],
                 'VAWC Leave' => [
-                    'details' => '10 days per valid case',
-                    'usage' => 'Used when needed'
+                    'details' => 'Up to 10 days per year (extendable)',
+                    'usage' => 'Used for victims of violence'
+                ],
+                'VAWC Leave (RA 9262)' => [
+                    'details' => 'Up to 10 days per year (extendable)',
+                    'usage' => 'Used for victims of violence'
+                ],
+                '10-Day VAWC Leave' => [
+                    'details' => '10 days per incident',
+                    'usage' => 'Used for victims of violence'
                 ],
                 'Rehabilitation Leave' => [
                     'details' => 'Up to 6 months',
-                    'usage' => 'Based on medical recommendation'
+                    'usage' => 'Based on injury sustained in performance of duty'
+                ],
+                'Rehabilitation Privilege' => [
+                    'details' => 'Up to 6 months',
+                    'usage' => 'Based on injury sustained in performance of duty'
                 ],
                 'Special Leave Benefits for Women' => [
                     'details' => 'Up to 2 months',
                     'usage' => 'Used per gynecological surgery'
                 ],
-                'Terminal Leave' => [
-                    'details' => 'Based on total unused leave credits',
-                    'usage' => 'Used upon resignation or retirement'
+                'Special Emergency (Calamity) Leave' => [
+                    'details' => '5 days per year',
+                    'usage' => 'Used during natural calamities/disasters'
                 ],
-                'Adoption Leave' => [
-                    'details' => 'Used per approved adoption',
-                    'usage' => ''
+                'Study Leave' => [
+                    'details' => 'Up to 6 months or 1 year',
+                    'usage' => 'Used for bar/board exam review or completion of degree'
+                ],
+                'Terminal Leave' => [
+                    'details' => 'Lump sum of accumulated credits',
+                    'usage' => 'Used upon separation from service'
+                ],
+                'Monetization of Leave Credits' => [
+                    'details' => 'Conversion of credits to cash',
+                    'usage' => 'Used for emergency or financial needs (subject to budget)'
                 ],
             ];
             
@@ -264,6 +206,8 @@
                         <div class="mt-1">
                             @if($isMandatory)
                                 <span class="badge-status bg-blue-100 text-blue-800">System Managed</span>
+                            @elseif($specialType)
+                                <span class="badge-status bg-indigo-100 text-indigo-800">Per-Instance</span>
                             @elseif($isConfigured)
                                 <span class="badge-status bg-green">Configured</span>
                             @else
@@ -272,9 +216,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-xs text-gray-400 font-medium">Click to manage</span>
-                    <i class="fas fa-chevron-down chevron" id="chevron-{{ $type->id }}"></i>
+                <div class="policy-actions-group">
+                    @if(auth()->user()->isSuperAdmin())
+                        <form action="{{ route('head-hr.leave-types.delete', $type->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this leave type? This will also remove any associated credit policies.')" style="margin: 0;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-delete-type" title="Delete Leave Type" onclick="event.stopPropagation()">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                        <div class="action-divider"></div>
+                    @endif
+                    <div class="toggle-trigger">
+                        <span>Click to manage</span>
+                        <i class="fas fa-chevron-down chevron" id="chevron-{{ $type->id }}"></i>
+                    </div>
                 </div>
             </div>
             
@@ -326,27 +282,31 @@
                             </div>
                         </div>
                     </div>
-                @else
-                    @if($specialType)
-                        <div class="bg-indigo-50 border border-indigo-100 rounded-md p-4 mb-6">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-info-circle text-indigo-500 mt-0.5"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-indigo-800">LEAVES WITH NO YEARLY EXPIRATION</h3>
-                                    <div class="mt-2 text-sm text-indigo-700">
-                                        <p class="font-bold">{{ $specialType['details'] }}</p>
-                                        @if($specialType['usage'])
-                                            <p>{{ $specialType['usage'] }}</p>
-                                        @endif
-                                        <p class="mt-1 text-xs text-indigo-500 italic">These depend on event or case. They do not expire at the end of the year.</p>
+                @elseif($specialType)
+                    <div class="bg-indigo-50 border border-indigo-100 rounded-md p-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-calendar-check text-indigo-500 mt-1"></i>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-bold text-indigo-800">Event-Based / Per-Instance Policy</h3>
+                                <div class="mt-2 text-sm text-indigo-700 space-y-2">
+                                    <p>This leave type is granted based on specific life events, medical conditions, or legal entitlements rather than monthly accrual.</p>
+                                    <ul class="list-disc pl-5 mt-3 space-y-1">
+                                        <li><strong>Entitlement:</strong> {{ $specialType['details'] }}</li>
+                                        <li><strong>Trigger:</strong> {{ $specialType['usage'] }}</li>
+                                        <li>This leave does <strong>not expire</strong> annually; it is available whenever the qualifying event occurs.</li>
+                                        <li>Credits are not "earned" over time but are available in full upon validation of the required documents.</li>
+                                    </ul>
+                                    <div class="mt-4 p-3 bg-white bg-opacity-60 rounded border border-indigo-100">
+                                        <p class="font-medium text-indigo-900"><i class="fas fa-check-circle mr-1"></i> No Credit Configuration Required</p>
+                                        <p class="text-xs text-indigo-600 mt-1">The system bypasses manual credit allocation for this category.</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    @endif
-
+                    </div>
+                @else
                     <form action="{{ route('head-hr.leave-policies.update') }}" method="POST">
                         @csrf
                         <input type="hidden" name="leave_type_id" value="{{ $type->id }}">
@@ -445,7 +405,22 @@
 
     function toggleCreateModal() {
         const modal = document.getElementById('createLeaveModal');
-        modal.classList.toggle('hidden');
+        modal.classList.toggle('active');
+        
+        if (modal.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                document.getElementById('type_name').focus();
+            }, 300);
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+
+    function handleOutsideClick(event) {
+        if (event.target.id === 'createLeaveModal') {
+            toggleCreateModal();
+        }
     }
 </script>
 @endsection

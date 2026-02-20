@@ -35,8 +35,8 @@ class HRController extends Controller
         $users = User::where('role', '!=', 'super_admin')
             ->when($search, function ($query, $search) {
                 return $query->where('first_name', 'like', "%{$search}%")
-                             ->orWhere('last_name', 'like', "%{$search}%")
-                             ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             })
             ->orderBy('last_name')
             ->paginate(15);
@@ -49,14 +49,43 @@ class HRController extends Controller
      */
     public function editCredits(User $user)
     {
-        // Ensure CTO type exists (with Statutoty category so it doesn't mix with Credit/Vacation leaves)
-        $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'Compensatory Time Off'],
-            ['description' => 'CTO - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
-        );
+        // Ensure COC type exists (with Statutory category)
+        $ctoType = LeaveType::where('type_name', 'Compensatory Time Off')->first();
+        if ($ctoType) {
+            $ctoType->update(['type_name' => 'Compensatory Over-Time Credit', 'description' => 'COC - Manual Entry']);
+        } else {
+            $ctoType = LeaveType::firstOrCreate(
+                ['type_name' => 'Compensatory Over-Time Credit'],
+                ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
+            );
+        }
 
-        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)->get();
-        
+        // Exclude types that don't need manual credit allocation (event-based or per-instance)
+        $excludedNames = [
+            'Maternity Leave',
+            'Paternity Leave',
+            'Adoption Leave',
+            'VAWC Leave',
+            '10-Day VAWC Leave',
+            'Rehabilitation Leave',
+            'Rehabilitation Privilege',
+            'Special Leave Benefits for Women',
+            'Special Emergency (Calamity) Leave',
+            'Study Leave',
+            'Terminal Leave',
+            'Monetization of Leave Credits'
+        ];
+
+        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)
+            ->where(function ($query) use ($excludedNames) {
+                foreach ($excludedNames as $name) {
+                    $query->where('type_name', 'NOT LIKE', "%$name%");
+                }
+            })
+            ->where('type_name', '!=', 'Others')
+            ->where('is_active', true)
+            ->get();
+
         $ctoCredits = \App\Models\CompensatoryLeaveCredit::where('user_id', $user->id)
             ->where('status', 'Active')
             ->where('remaining_credits', '>', 0)
@@ -83,8 +112,8 @@ class HRController extends Controller
         ]);
 
         $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'Compensatory Time Off'],
-            ['description' => 'CTO - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
+            ['type_name' => 'Compensatory Over-Time Credit'],
+            ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
         );
 
         // Check Max Limit (15)
@@ -93,9 +122,9 @@ class HRController extends Controller
         $currentTotal = LeaveCredit::where('user_id', $user->id)
             ->where('leave_type_id', $ctoType->id)
             ->value('credits') ?? 0;
-            
+
         if (($currentTotal + $request->credit_amount) > 15) {
-            return back()->with('error', "Cannot add credits. Total CTO would exceed the limit of 15. Current: $currentTotal");
+            return back()->with('error', "Cannot add credits. Total COC would exceed the limit of 15. Current: $currentTotal");
         }
 
         DB::transaction(function () use ($request, $user, $ctoType, $currentTotal) {
@@ -116,7 +145,7 @@ class HRController extends Controller
                 'leave_type_id' => $ctoType->id
             ]);
             $creditRecord->credits = $currentTotal + $request->credit_amount;
-            $creditRecord->is_locked = false; 
+            $creditRecord->is_locked = false;
             $creditRecord->save();
 
             // 3. Log
@@ -130,7 +159,7 @@ class HRController extends Controller
                 'reason' => 'Added CTO batch: ' . $request->credit_amount . ' expiring ' . $request->expiration_date,
             ]);
         });
-        
+
         return back()->with('success', 'Compensatory Time Off added successfully.');
     }
 
@@ -149,10 +178,12 @@ class HRController extends Controller
                 $amount = is_numeric($rawAmount) ? (float) $rawAmount : 0.0;
 
                 $type = LeaveType::find($typeId);
-                if (!$type) continue;
-                
+                if (!$type)
+                    continue;
+
                 // Skip CTO in this loop if it accidentally gets here
-                if ($type->type_name === 'Compensatory Time Off') continue;
+                if ($type->type_name === 'Compensatory Time Off')
+                    continue;
 
                 // Check policy limits
                 $policy = LeaveCreditPolicy::where('leave_type_id', $typeId)->first();
@@ -173,7 +204,7 @@ class HRController extends Controller
                 $currentUser = Auth::user();
                 /** @var \App\Models\User $currentUser */
                 $isHeadHR = $currentUser->isHeadHR();
-                
+
                 if ($creditRecord->exists && $creditRecord->is_locked && !$isHeadHR) {
                     continue; // Skip locked records silently or handle error
                 }
@@ -205,7 +236,7 @@ class HRController extends Controller
                     "Updated {$type->type_name} credits for {$user->full_name} from {$oldValue} to {$newValue}." . ($isHeadHR ? " (Head HR Override)" : "")
                 );
             }
-            
+
             DB::commit();
             return redirect()->route('hr-staff.manage-credits.edit', $user->id)
                 ->with('success', 'Credits updated successfully.');

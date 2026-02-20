@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 // Serve storage files (profile pics, e-signatures) via /media/ - avoids conflict with storage directory
 $storageHandler = function (string $path) {
     $path = trim($path, '/');
-    if (! Storage::disk('public')->exists($path)) {
+    if (!Storage::disk('public')->exists($path)) {
         abort(404);
     }
 
@@ -114,6 +114,7 @@ Route::prefix('head-hr')->name('head-hr.')->middleware(['auth', 'role:head_hr,su
     Route::get('/leave-policies', [App\Http\Controllers\HeadHRController::class, 'policies'])->name('leave-policies');
     Route::post('/leave-policies', [App\Http\Controllers\HeadHRController::class, 'updatePolicy'])->name('leave-policies.update');
     Route::post('/leave-types', [App\Http\Controllers\HeadHRController::class, 'storeLeaveType'])->name('leave-types.store');
+    Route::delete('/leave-types/{id}', [App\Http\Controllers\HeadHRController::class, 'deleteLeaveType'])->name('leave-types.delete');
     Route::get('/audit-logs', [App\Http\Controllers\HeadHRController::class, 'auditLogs'])->name('audit-logs');
     Route::post('/requests/{id}', [App\Http\Controllers\HeadHRController::class, 'handleRequest'])->name('requests.handle');
 });

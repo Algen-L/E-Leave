@@ -51,7 +51,7 @@ class HeadHRController extends Controller
     {
         $types = LeaveType::all();
         $policies = LeaveCreditPolicy::with('leaveType')->get()->keyBy('leave_type_id');
-        
+
         return view('head_hr.policies', compact('types', 'policies'));
     }
 
@@ -126,6 +126,39 @@ class HeadHRController extends Controller
             $updRequest->save();
 
             return back()->with('success', 'Request rejected.');
+        }
+    }
+    /**
+     * Delete a leave type (Superadmin ONLY)
+     */
+    public function deleteLeaveType($id)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            abort(403, 'Unauthorized action. Only Superadmins can delete leave types.');
+        }
+
+        $type = LeaveType::findOrFail($id);
+
+        // Check if there are existing applications for this leave type
+        if (\App\Models\LeaveApplication::where('leave_type_id', $id)->exists()) {
+            return back()->with('error', 'Cannot delete "' . $type->type_name . '" because it has existing applications. Consider deactivating it instead.');
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::beginTransaction();
+
+            // Delete dependents
+            LeaveCreditPolicy::where('leave_type_id', $id)->delete();
+            \App\Models\LeaveCredit::where('leave_type_id', $id)->delete();
+
+            // Delete the type itself
+            $type->delete();
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Leave type "' . $type->type_name . '" deleted successfully.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Error deleting leave type: ' . $e->getMessage());
         }
     }
 }

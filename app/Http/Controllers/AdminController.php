@@ -49,6 +49,8 @@ class AdminController extends Controller
      */
     private function getDashboardStats(): array
     {
+        $user = Auth::user();
+
         // Total users
         $totalUsers = User::count();
 
@@ -68,13 +70,38 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
+        // --- PERSONAL LEAVE DATA (For non-superadmins) ---
+        $credits = null;
+        $leaveSummary = null;
+
+        if ($user->role !== 'super_admin' && !in_array($user->role, ['hr', 'head_hr'])) {
+            $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
+            $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
+            $ctoType = \App\Models\LeaveType::where('type_name', 'Compensatory Time Off')->first();
+
+            $credits = [
+                'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
+                'sl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id ?? 0)->value('credits') ?? 0,
+                'cto' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $ctoType->id ?? 0)->value('credits') ?? 0,
+            ];
+
+            $leaveSummary = [
+                'pending' => \App\Models\LeaveApplication::where('user_id', $user->id)->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval'])->count(),
+                'approved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Approved')->count(),
+                'disapproved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Disapproved')->count(),
+                'total' => \App\Models\LeaveApplication::where('user_id', $user->id)->count(),
+            ];
+        }
+
         return [
             'totalUsers' => $totalUsers,
             'activeToday' => $activeToday,
             'newRegistrations' => $newRegistrations,
             'auditTrail' => $auditTrail,
-            'user' => Auth::user(),
+            'user' => $user,
             'unreadCount' => Notification::getUnreadCount(Auth::id()),
+            'credits' => $credits,
+            'leaveSummary' => $leaveSummary,
         ];
     }
 
@@ -97,8 +124,8 @@ class AdminController extends Controller
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('full_name', 'like', "%{$search}%")
-                  ->orWhere('username', 'like', "%{$search}%")
-                  ->orWhere('gmail', 'like', "%{$search}%");
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('gmail', 'like', "%{$search}%");
             });
         }
 
@@ -114,6 +141,11 @@ class AdminController extends Controller
 
         // Exclude current super admin from the list
         $query->where('id', '!=', Auth::id());
+
+        // Additionally exclude all Superadmins if the logged-in user is Head HR
+        if (Auth::user()->isHeadHR()) {
+            $query->where('role', '!=', 'super_admin');
+        }
 
         // View-based filter
         if ($view === 'active') {
@@ -167,7 +199,7 @@ class AdminController extends Controller
         // Authorization check for restricted roles
         $restrictedRoles = ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'];
         if (in_array($request->role, $restrictedRoles) && Auth::user()->role !== 'super_admin') {
-             return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign this role.');
+            return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign this role.');
         }
 
         $updateData = [
@@ -181,7 +213,7 @@ class AdminController extends Controller
             'office_station' => $request->office_station,
             'is_active' => $request->is_active,
         ];
-        
+
         // Note: 'full_name' and 'name' are automatically updated by the User model's boot method
         // upon saving first/middle/last.
 
@@ -290,7 +322,7 @@ class AdminController extends Controller
             if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
                 $data = substr($data, strpos($data, ',') + 1);
                 $type = strtolower($type[1]); // jpg, png, gif
-                
+
                 if (!in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
                     // Invalid image type, or handle error
                 } else {
@@ -300,7 +332,7 @@ class AdminController extends Controller
                     } else {
                         $filename = 'esignature_' . time() . '.' . $type;
                         $path = 'esignatures/' . $filename;
-                        
+
                         // Save to public disk
                         \Illuminate\Support\Facades\Storage::disk('public')->put($path, $data);
                         $updateData['esignature'] = 'storage/' . $path;
@@ -495,10 +527,10 @@ class AdminController extends Controller
         $query = SecurityTracking::query()
             ->where(function ($q) {
                 $q->where('page_visits', '>', 0)
-                  ->orWhere('otp_requests', '>', 0)
-                  ->orWhere('otp_inputs', '>', 0)
-                  ->orWhere('resends', '>', 0)
-                  ->orWhere('is_blocked', true);
+                    ->orWhere('otp_requests', '>', 0)
+                    ->orWhere('otp_inputs', '>', 0)
+                    ->orWhere('resends', '>', 0)
+                    ->orWhere('is_blocked', true);
             });
 
         // Apply search filter
@@ -547,7 +579,7 @@ class AdminController extends Controller
     public function authResetDetails($id)
     {
         $record = SecurityTracking::findOrFail($id);
-        
+
         return response()->json([
             'email' => $record->email,
             'page_visits' => $record->page_visits,
@@ -565,7 +597,7 @@ class AdminController extends Controller
     public function authResetCounters($id)
     {
         $record = SecurityTracking::findOrFail($id);
-        
+
         $record->update([
             'page_visits' => 0,
             'otp_requests' => 0,

@@ -46,7 +46,7 @@ class CSCLeaveTypesSeeder extends Seeder
             [
                 'name' => 'Paternity Leave',
                 'description' => '7 days for married male employees.',
-                'accrual_rate' => 0, 
+                'accrual_rate' => 0,
                 'accrual_period' => 'None', // Per instance, not accrued
                 'expiration_rule' => 'None',
                 'max_credits' => 7,
@@ -124,6 +124,24 @@ class CSCLeaveTypesSeeder extends Seeder
                 'max_credits' => null,
                 'category' => 'Statutory',
             ],
+            [
+                'name' => 'Monetization of Leave Credits',
+                'description' => 'Payment in cash of the money value of the unused vacation/sick leave credits of an employee.',
+                'accrual_rate' => 0,
+                'accrual_period' => 'None',
+                'expiration_rule' => 'None',
+                'max_credits' => null,
+                'category' => 'Statutory',
+            ],
+            [
+                'name' => 'Terminal Leave',
+                'description' => 'Leave credits of an employee who retires, resigns, or is separated from the service through no fault of his own.',
+                'accrual_rate' => 0,
+                'accrual_period' => 'None',
+                'expiration_rule' => 'None',
+                'max_credits' => null,
+                'category' => 'Statutory',
+            ],
         ];
 
         foreach ($types as $typeData) {
@@ -132,7 +150,7 @@ class CSCLeaveTypesSeeder extends Seeder
                 ['type_name' => $typeData['name']],
                 ['description' => $typeData['description']]
             );
-            
+
             // Explicitly update category since duplicate names might exist
             $type->category = $typeData['category'];
             $type->save();

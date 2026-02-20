@@ -32,10 +32,38 @@ class UserController extends Controller
 
         $notifications = Notification::getUnreadForUser($user->id);
 
+        // --- FETCH LEAVE CREDITS ---
+        $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
+        $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
+        $ctoType = \App\Models\LeaveType::where('type_name', 'Compensatory Time Off')->first();
+
+        $credits = [
+            'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
+            'sl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id ?? 0)->value('credits') ?? 0,
+            'cto' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $ctoType->id ?? 0)->value('credits') ?? 0,
+        ];
+
+        // --- FETCH LEAVE SUMMARY ---
+        $leaveSummary = [
+            'pending' => \App\Models\LeaveApplication::where('user_id', $user->id)->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval'])->count(),
+            'approved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Approved')->count(),
+            'disapproved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Disapproved')->count(),
+            'total' => \App\Models\LeaveApplication::where('user_id', $user->id)->count(),
+        ];
+
+        // --- CHECK PROFILE COMPLETION ---
+        $profileIncomplete = empty($user->position) ||
+            empty($user->salary) ||
+            empty($user->recommending_officer_id) ||
+            empty($user->approving_officer_id);
+
         return view('user.home', [
             'user' => $user,
             'notifications' => $notifications,
             'unreadCount' => $notifications->count(),
+            'credits' => $credits,
+            'leaveSummary' => $leaveSummary,
+            'profileIncomplete' => $profileIncomplete,
         ]);
     }
 
@@ -115,26 +143,25 @@ class UserController extends Controller
             $path = $file->storeAs('profile_pics', $fileName, 'public');
             $updateData['profile_picture'] = 'storage/' . $path;
         }
-        
+
         // Handle E-Signature upload or draw
         $sigMode = $request->input('esignature_mode');
-        
+
         if ($sigMode === 'draw' && $request->input('esignature_data')) {
             $base64Image = $request->input('esignature_data');
-            
+
             // Basic validation of base64 string
             if (preg_match('/^data:image\/(\w+);base64,/', $base64Image)) {
                 $data = substr($base64Image, strpos($base64Image, ',') + 1);
                 $data = base64_decode($data);
-                
+
                 $fileName = 'sign_' . $user->id . '_' . time() . '.png';
                 Storage::disk('public')->put('esignatures/' . $fileName, $data);
                 $updateData['esignature'] = 'storage/esignatures/' . $fileName;
             }
-        }
-        elseif ($request->hasFile('esignature')) {
+        } elseif ($request->hasFile('esignature')) {
             $file = $request->file('esignature');
-            
+
             // Basic validation for PNG
             if (strtolower($file->getClientOriginalExtension()) === 'png') {
                 $fileName = 'sign_' . $user->id . '_' . time() . '.png';
