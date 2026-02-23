@@ -35,7 +35,7 @@ class UserController extends Controller
         // --- FETCH LEAVE CREDITS ---
         $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
         $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
-        $ctoType = \App\Models\LeaveType::where('type_name', 'Compensatory Time Off')->first();
+        $ctoType = \App\Models\LeaveType::where('type_name', 'COC Compensatory Overtime Credit')->first();
 
         $credits = [
             'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
@@ -45,7 +45,7 @@ class UserController extends Controller
 
         // --- FETCH LEAVE SUMMARY ---
         $leaveSummary = [
-            'pending' => \App\Models\LeaveApplication::where('user_id', $user->id)->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval'])->count(),
+            'pending' => \App\Models\LeaveApplication::where('user_id', $user->id)->whereIn('status', ['Pending', 'Pending HR', 'Pending Recommending', 'Pending Approval'])->count(),
             'approved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Approved')->count(),
             'disapproved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Disapproved')->count(),
             'total' => \App\Models\LeaveApplication::where('user_id', $user->id)->count(),
@@ -110,6 +110,7 @@ class UserController extends Controller
             'approving_officer_id' => 'nullable|exists:users,id',
             'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
 
         /** @var \App\Models\User $user */
@@ -134,6 +135,10 @@ class UserController extends Controller
         }
         if ($request->has('approving_officer_id')) {
             $updateData['approving_officer_id'] = $request->approving_officer_id;
+        }
+
+        if ($request->has('employee_number')) {
+            $updateData['employee_number'] = $request->employee_number;
         }
 
         // Handle profile picture upload

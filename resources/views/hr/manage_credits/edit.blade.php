@@ -17,7 +17,7 @@
         .credit-row {
             background: white;
             border-bottom: 1px solid #f1f5f9;
-            padding: 20px 28px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -71,9 +71,9 @@
         .field-input {
             width: 100%;
             border: 1px solid #cbd5e1;
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             color: #1e293b;
             text-align: right;
@@ -150,6 +150,225 @@
             background-color: #1d4ed8;
             transform: translateY(-1px);
             box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Scrollable Statutory Section */
+        .statutory-scroll-container {
+            max-height: 420px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+
+        .statutory-scroll-container::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .statutory-scroll-container::-webkit-scrollbar-track {
+            background: #f8fafc;
+        }
+
+        .statutory-scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        .statutory-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* COC Specific Premium Styles */
+        .coc-section-card {
+            background: #f8faff;
+            border: 1px solid #e0e7ff;
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 24px;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.05);
+        }
+
+        .coc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .coc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .coc-inner-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .coc-input-group {
+            margin-bottom: 12px;
+        }
+
+        .coc-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .coc-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #1e293b;
+            transition: all 0.2s;
+            background: #fcfcfc;
+        }
+
+        .coc-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .coc-btn-add {
+            width: 100%;
+            background: #4f46e5;
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .coc-btn-add:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+
+        .coc-table-container {
+            overflow-y: auto;
+            max-height: 280px;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .coc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .coc-table th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .coc-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+        }
+
+        .coc-table tr:hover {
+            background: #fdfdfd;
+        }
+
+        .coc-batch-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .coc-batch-date {
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .coc-batch-remarks {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .coc-expiry-badge {
+            display: inline-flex;
+            padding: 4px 10px;
+            background: #fef2f2;
+            color: #ef4444;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .coc-remaining {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #4f46e5;
+        }
+
+        /* Collapsible COC Section */
+        .coc-header {
+            cursor: pointer;
+            user-select: none;
+            padding: 16px;
+            margin: -24px -24px 0 -24px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .coc-header:hover {
+            background: #f1f5ff;
+        }
+
+        .coc-header.active-header {
+            border-bottom: 1px solid #eef2ff;
+            border-radius: 20px 20px 0 0;
+            background: #fcfdff;
+        }
+
+        .coc-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0, 1, 0, 1);
+            opacity: 0;
+        }
+
+        .coc-content.active {
+            max-height: 2000px;
+            opacity: 1;
+            transition: max-height 0.4s ease-in, opacity 0.3s ease-in;
+        }
+
+        .coc-chevron {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .coc-chevron.rotate {
+            transform: rotate(180deg);
         }
 
         /* Modal Styling (Native CSS) */
@@ -229,214 +448,71 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        /* Notice Box */
-        .info-notice {
-            background: #f0f7ff;
-            border-left: 4px solid #3b82f6;
-            padding: 24px;
-            margin-bottom: 32px;
-            border-radius: 0 12px 12px 0;
+        /* Header Styling */
+        .card-header {
+            background: #f8fafc;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
-            gap: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-
-        .info-notice-icon {
-            color: #3b82f6;
-            font-size: 1.25rem;
-            margin-top: 2px;
-        }
-
-        .info-notice-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #1e3a8a;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        .info-notice-text {
-            font-size: 0.875rem;
-            color: #1e40af;
-            line-height: 1.6;
-        }
-
-        /* CTO Section */
-        .cto-section {
-            background: #f5f3ff;
-            border: 1px solid #ddd6fe;
-            border-radius: 12px;
-            padding: 28px;
-            margin-top: 48px;
-            margin-bottom: 40px;
-        }
-
-        .cto-header {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 14px;
-            margin-bottom: 8px;
         }
 
-        .cto-icon-box {
-            width: 40px;
-            height: 40px;
-            background: #e0e7ff;
-            color: #20278aff;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        .cto-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #000000ff;
-        }
-
-        .cto-subtitle {
-            font-size: 0.85rem;
-            color: #000000ff;
-            margin-left: 54px;
-            margin-bottom: 24px;
-            opacity: 0.8;
-        }
-
-        .cto-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
-        }
-
-        .cto-card {
-            background: white;
-            border: 1px solid #e0e7ff;
-            padding: 24px;
-            border-radius: 12px;
-            flex: 1;
-            min-width: 320px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        }
-
-        .cto-card-title {
-            font-size: 0.95rem;
+        .header-title {
+            font-size: 0.75rem;
             font-weight: 800;
-            color: #374151;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #f3f4f6;
             text-transform: uppercase;
-            letter-spacing: 0.025em;
-        }
-
-        .cto-form-group {
-            margin-bottom: 20px;
-        }
-
-        .cto-label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #4b5563;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .cto-input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            transition: all 0.2s;
-        }
-
-        .cto-input:focus {
-            outline: none;
-            border-color: #212381ff;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-        }
-
-        .btn-cto-submit {
-            width: 100%;
-            background: #0e479cff;
-            color: white;
-            font-weight: 700;
-            padding: 14px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
+            color: #64748b;
+            letter-spacing: 0.08em;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
         }
 
-        .btn-cto-submit:hover {
-            background: #211979ff;
-            transform: translateY(-1px);
+        /* Two-Column Page Layout */
+        .page-layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
         }
 
-        /* Generic Utilities */
-        .section-heading-custom {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #1f2937;
-            margin-bottom: 12px;
-            margin-top: 40px;
+        .layout-column {
             display: flex;
-            align-items: center;
-            gap: 12px;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        .section-subtext {
-            font-size: 0.85rem;
-            color: #64748b;
-            margin-bottom: 20px;
-            padding-left: 44px;
-            margin-top: -8px;
-        }
-
-        .icon-box-blue {
-            background: #dbeafe;
-            color: #2563eb;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-        }
-
-        .icon-box-emerald {
-            background: #dcfce7;
-            color: #059669;
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
+        @media (max-width: 1024px) {
+            .page-layout-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 @endpush
 
 @section('content')
-    <div class="max-w-4xl mx-auto">
-        <div class="mb-8 flex items-center gap-4">
-            <a href="{{ route('hr-staff.manage-credits') }}"
-                class="w-10 h-10 rounded-full bg-white border flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors shadow-sm text-lg">
-                <i class="fas fa-arrow-left"></i>
-            </a>
-            <div>
-                <h2 class="text-2xl font-bold text-gray-800">{{ $user->full_name }}</h2>
-                <p class="text-gray-500 text-sm mt-1">{{ $user->email }} • {{ $user->position ?? 'No Position' }}</p>
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="bg-gradient-to-r from-slate-100 to-slate-200 p-5 rounded-2xl mb-6 border border-white shadow-sm">
+            <div class="flex items-center gap-6">
+                <a href="{{ route('hr-staff.manage-credits') }}"
+                    class="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-gray-500 hover:text-indigo-600 transition-all hover:shadow-lg transform hover:-translate-x-1">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="w-12 h-12 rounded-full bg-white border-2 border-white shadow-md flex items-center justify-center text-xl font-bold text-indigo-600">
+                        {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-slate-800 tracking-tight">{{ $user->full_name }}</h2>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span
+                                class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded uppercase tracking-wider">{{ $user->position ?? 'No Position' }}</span>
+                            <span class="text-slate-400 text-sm italic">{{ $user->email }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -455,291 +531,315 @@
             </div>
         @endif
 
-        <!-- Info rmation Notice -->
-        <div class="info-notice">
-            <div class="info-notice-icon">
-                <i class="fas fa-info-circle"></i>
-            </div>
-            <div>
-                <span class="info-notice-title">Information on Leave Type Visibility</span>
-                <p class="info-notice-text">
-                    Event-based leave types (such as <span class="font-semibold text-blue-900">Maternity, Paternity, VAWC, Rehabilitation, etc.</span>) are not listed on this page. These types do not follow manual accrual or starting balance logic; instead, they are granted per-instance based on specific childbirth, medical, or legal events.
-                </p>
-            </div>
-        </div>
+        <form action="{{ route('hr-staff.manage-credits.update', $user->id) }}" method="POST" id="manageCreditsForm">
+            @csrf
+        </form>
 
-            <form action="{{ route('hr-staff.manage-credits.update', $user->id) }}" method="POST" id="creditsForm">
-                @csrf
+        @php
+            $typesList = isset($otherTypes) ? $otherTypes : (isset($leaveTypes) ? $leaveTypes : []);
+            $typesColl = is_array($typesList) ? collect($typesList) : $typesList;
 
-                @php
-                    // Use otherTypes if available (from controller), otherwise fallback (shouldn't happen with new controller)
-                    $typesList = isset($otherTypes) ? $otherTypes : (isset($leaveTypes) ? $leaveTypes : []);
-                    $typesColl = is_array($typesList) ? collect($typesList) : $typesList;
+            $creditLeaves = $typesColl->where('category', 'Credit');
+            $statutoryLeaves = $typesColl->where('category', '!=', 'Credit');
+            $eventBasedLeaves = ['Maternity Leave', 'Paternity Leave', 'VAWC Leave', 'Adoption Leave', 'Rehabilitation Leave', 'Special Leave Benefits for Women', 'Monetization of Leave Credits', 'Terminal Leave'];
+        @endphp
 
-                    $creditLeaves = $typesColl->where('category', 'Credit');
-                    // Everything else is Statutory/Special (excluding CTO which is handled below)
-                    $statutoryLeaves = $typesColl->where('category', '!=', 'Credit');
-                @endphp
-
+        <div class="page-layout-grid">
+            <!-- Left Column: Credit Base & COC -->
+            <div class="layout-column">
                 <!-- Section A: Credit-Based Leaves -->
-            <h3 class="section-heading-custom">
-                <span class="icon-box-blue">
-                    <i class="fas fa-coins"></i>
-                </span>
-                Credit-Based Leaves
-            </h3>
-            <p class="section-subtext">Leaves that accrue monthly (Vacation & Sick Leave).</p>
+                <div class="section-container">
+                    <h3 class="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                        <span
+                            class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm shadow-lg shadow-blue-100">
+                            <i class="fas fa-coins"></i>
+                        </span>
+                        Credit-Based Leaves
+                    </h3>
 
-                <div class="credits-card-container mb-10">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-layer-group text-blue-400 text-sm"></i> 
-                            <span>Leave Type</span>
-                        </div>
-                        <div class="header-title pr-14">
-                            <i class="fas fa-calculator text-blue-400 text-sm"></i>
-                            <span>Current Balance</span>
-                        </div>
-                    </div>
-
-                    @foreach($creditLeaves as $type)
-                        @php
-                            $credit = $existingCredits->get($type->id);
-                            $dbLocked = $credit && $credit->is_locked;
-                            // Locked effectively if DB locked AND not Head HR
-                            $isLocked = $dbLocked && !auth()->user()->isHeadHR();
-                            $currentVal = $credit ? $credit->credits : '';
-                        @endphp
-
-                        <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
-                            <div class="field-label">
-                                {{ $type->type_name }}
-                                @if($isLocked)
-                                    <div class="status-badge status-locked mt-1 w-max">
-                                        <i class="fas fa-lock text-[10px]"></i> Locked
-                                    </div>
-                                @elseif($dbLocked)
-                                    <div class="status-badge bg-orange-100 text-orange-600 border border-orange-200 mt-1 w-max">
-                                        <i class="fas fa-unlock-alt text-[10px]"></i> Unlocked (Head HR)
-                                    </div>
-                                @else
-                                    <span class="field-sublabel">Accrues 1.25/month</span>
-                                @endif
+                    <div class="credits-card-container">
+                        <div class="card-header bg-blue-50/50">
+                            <div class="header-title">
+                                <i class="fas fa-layer-group text-blue-500 text-sm"></i>
+                                <span>Leave Type</span>
                             </div>
+                            <div class="header-title pr-14">
+                                <i class="fas fa-calculator text-blue-500 text-sm"></i>
+                                <span>Balance</span>
+                            </div>
+                        </div>
 
-                            <div class="flex items-center gap-6">
-                                <div class="input-wrapper">
-                                    <input type="number" step="0.001" min="0" 
-                                        name="credits[{{ $type->id }}]" 
-                                        value="{{ $currentVal }}" 
-                                        class="field-input" 
-                                        placeholder="0.000" 
-                                        {{ $isLocked ? 'readonly' : '' }}>
-                                </div>
+                        @foreach($creditLeaves as $type)
+                            @php
+                                $credit = $existingCredits->get($type->id);
+                                $dbLocked = $credit && $credit->is_locked;
+                                $isLocked = $dbLocked && !auth()->user()->isHeadHR();
+                                $currentVal = $credit ? $credit->credits : '';
+                            @endphp
 
-                                <div class="action-area">
+                            <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
+                                <div class="field-label min-w-[150px]">
+                                    <span class="font-bold text-slate-700">{{ $type->type_name }}</span>
                                     @if($isLocked)
-                                        <button type="button" onclick="requestUnlock(<?php        echo $type->id; ?>, '<?php        echo addslashes($type->type_name); ?>')" class="btn-request">
-                                            <i class="fas fa-key mr-1"></i> Request Unlock
-                                        </button>
-                                    @else
-                                        <span class="text-xs text-gray-400">
-                                            <i class="fas fa-pen mr-1"></i> Editable
-                                        </span>
+                                        <div class="status-badge status-locked mt-1 w-max">
+                                            <i class="fas fa-lock text-[10px]"></i> Locked
+                                        </div>
                                     @endif
                                 </div>
+
+                                <div class="flex items-center gap-4">
+                                    <div class="input-wrapper w-[110px]">
+                                        <input type="number" step="0.001" min="0" name="credits[{{ $type->id }}]"
+                                            value="{{ $currentVal }}" form="manageCreditsForm" class="field-input text-right"
+                                            placeholder="0.000" {{ $isLocked ? 'readonly' : '' }}>
+                                    </div>
+                                    <div class="action-area w-[30px]">
+                                        @if($isLocked)
+                                            <button type="button"
+                                                onclick="requestUnlock({{ $type->id }}, '{{ addslashes($type->type_name) }}')"
+                                                class="text-indigo-400 hover:text-indigo-600 transition-colors">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
 
-                <!-- Section B: Statutory / Special Leaves -->
-            <h3 class="section-heading-custom">
-                <span class="icon-box-emerald">
-                    <i class="fas fa-file-contract"></i>
-                </span>
-                Statutory / Special Leaves
-            </h3>
-            <p class="section-subtext">Fixed allocations reset annually (SPL, Solo Parent, Forced Leave).</p>
-
-                <div class="credits-card-container mb-8">
-                    <div class="card-header">
-                        <div class="header-title">
-                            <i class="fas fa-layer-group text-emerald-500 text-sm"></i> 
-                            <span>Leave Type</span>
-                        </div>
-                        <div class="header-title pr-14">
-                            <i class="fas fa-calendar-check text-emerald-500 text-sm"></i>
-                            <span>Allocation / Limit</span>
-                        </div>
-                    </div>
-
-                    @foreach($statutoryLeaves as $type)
-                        @php
-                            $credit = $existingCredits->get($type->id);
-                            $dbLocked = $credit && $credit->is_locked;
-                            // Locked effectively if DB locked AND not Head HR
-                            $isLocked = $dbLocked && !auth()->user()->isHeadHR();
-                            $currentVal = $credit ? $credit->credits : '';
-                        @endphp
-
-                        <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
-                            <div class="field-label">
-                                {{ $type->type_name }}
-                                @if($isLocked)
-                                    <div class="status-badge status-locked mt-1 w-max">
-                                        <i class="fas fa-lock text-[10px]"></i> Locked
-                                    </div>
-                                @elseif($dbLocked)
-                                    <div class="status-badge bg-orange-100 text-orange-600 border border-orange-200 mt-1 w-max">
-                                        <i class="fas fa-unlock-alt text-[10px]"></i> Unlocked (Head HR)
-                                    </div>
-                                @else
-                                    <span class="field-sublabel">{{ $type->description }}</span>
-                                @endif
-                            </div>
-
-                            <div class="flex items-center gap-6">
-                                <div class="input-wrapper">
-                                    <input type="number" step="1" min="0" 
-                                        name="credits[{{ $type->id }}]" 
-                                        value="{{ $currentVal }}" 
-                                        class="field-input" 
-                                        placeholder="0" 
-                                        {{ $isLocked ? 'readonly' : '' }}>
+                <!-- Section C: COC Management (Expandable) -->
+                @if(isset($ctoType) && $ctoType)
+                    <div class="coc-section-card !mt-0 !p-5 shadow-xl shadow-indigo-50 border-indigo-100">
+                        <div class="coc-header active-header flex items-center justify-between !m-0 !p-0 !bg-transparent border-none"
+                            onclick="toggleCocContent()">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
+                                    <i class="fas fa-clock"></i>
                                 </div>
+                                <div>
+                                    <h3 class="text-xl font-black text-indigo-950 tracking-tight">COC Management</h3>
+                                    <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">Manual Batch Entry
+                                    </p>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-down text-indigo-400 coc-chevron rotate" id="cocChevron"></i>
+                        </div>
 
-                                <div class="action-area">
-                                     @if($isLocked)
-                                        <button type="button" onclick="requestUnlock(<?php        echo $type->id; ?>, '<?php        echo addslashes($type->type_name); ?>')" class="btn-request">
-                                            <i class="fas fa-key mr-1"></i> Request Unlock
+                        <div class="coc-content active" id="cocContent">
+                            <div class="space-y-4 mt-4 pt-4 border-t border-indigo-50">
+                                <!-- Add Form -->
+                                <div class="coc-inner-card !p-5 !bg-white/50 border border-indigo-100/50">
+                                    <h4 class="font-bold text-gray-800 mb-3 text-xs flex items-center gap-2">
+                                        <i class="fas fa-plus-circle text-indigo-500"></i> Add New Credits
+                                    </h4>
+                                    <form action="{{ route('hr-staff.manage-credits.add-cto', $user->id) }}" method="POST"
+                                        class="space-y-3">
+                                        @csrf
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="coc-label !text-[10px]">Amount</label>
+                                                <input type="number" step="0.1" name="credit_amount"
+                                                    class="coc-input !py-2 !text-sm" required placeholder="0.0">
+                                            </div>
+                                            <div>
+                                                <label class="coc-label !text-[10px]">Expiry</label>
+                                                <input type="date" name="expiration_date" class="coc-input !py-2 !text-sm"
+                                                    required>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="coc-label !text-[10px]">Remarks</label>
+                                            <input type="text" name="remarks" class="coc-input !py-2 !text-sm"
+                                                placeholder="e.g., OT Nov 2023">
+                                        </div>
+                                        <button type="submit"
+                                            class="coc-btn-add !py-2.5 !rounded-xl text-sm shadow-lg shadow-indigo-100 transform active:scale-95 transition-all">
+                                            <i class="fas fa-save mr-1"></i> Add COC Credits
                                         </button>
-                                    @else
-                                        <span class="text-xs text-gray-400">
-                                            <i class="fas fa-pen mr-1"></i> Editable
-                                        </span>
-                                    @endif
+                                    </form>
+                                </div>
+
+                                <!-- Active Batches -->
+                                <div class="coc-inner-card !p-5">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h4 class="font-bold text-gray-800 text-xs">Active Credit Batches</h4>
+                                        <div class="px-2 py-1 bg-indigo-600 text-white text-[10px] font-black rounded-lg">
+                                            TOTAL: {{ number_format($ctoCredits->sum('remaining_credits'), 2) }}
+                                        </div>
+                                    </div>
+                                    <div class="coc-table-container !max-h-[200px]">
+                                        @if($ctoCredits->isEmpty())
+                                            <p class="text-[11px] text-gray-400 italic text-center py-6">No active COC credits.</p>
+                                        @else
+                                            <table class="coc-table !text-[11px]">
+                                                <tbody>
+                                                    @foreach($ctoCredits as $batch)
+                                                        <tr class="!border-b border-slate-50">
+                                                            <td class="!py-3 !px-0">
+                                                                <div class="font-bold text-slate-700">
+                                                                    {{ $batch->created_at->format('M d, Y') }}
+                                                                </div>
+                                                                <div class="text-[9px] text-slate-400 truncate max-w-[120px]">
+                                                                    {{ $batch->remarks ?: 'No remarks' }}
+                                                                </div>
+                                                            </td>
+                                                            <td class="!py-3 !px-0 text-red-500 font-medium whitespace-nowrap">
+                                                                <i
+                                                                    class="fas fa-history mr-1 opacity-50"></i>{{ $batch->expiration_date->format('M d, Y') }}
+                                                            </td>
+                                                            <td class="!py-2 !px-0 text-right font-black text-indigo-600 text-xl">
+                                                                {{ number_format($batch->remaining_credits, 1) }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-
-
-            </form>
-
-            <!-- Section C: Compensatory Time Off (Manual Entry) -->
-        @if(isset($ctoType) && $ctoType)
-            <div class="cto-section">
-                <div class="cto-header">
-                    <div class="cto-icon-box">
-                        <i class="fas fa-clock"></i>
                     </div>
-                    <h3 class="cto-title">Compensatory Over-Time Credit Management</h3>
-                </div>
-                <p class="cto-subtitle">
-                    Manually add COC credits with specific expiration dates. Max total limit: 15 credits.
-                </p>
-                <div class="cto-grid">
-                    <!-- Add Form -->
-                    <div class="cto-card">
-                        <h4 class="cto-card-title">Add New Credits</h4>
-                        <form action="{{ route('hr-staff.manage-credits.add-cto', $user->id) }}" method="POST">
-                            @csrf
-                            <div class="cto-form-group">
-                                <label class="cto-label">Credit Amount (Hours/Days)</label>
-                                <input type="number" step="0.1" name="credit_amount" class="cto-input" required placeholder="0.0">
+                @endif
+            </div>
+
+            <!-- Right Column: Statutory / Special Leaves -->
+            <div class="layout-column">
+                <div class="section-container">
+                    <h3 class="text-xl font-black text-slate-800 mb-3 flex items-center gap-2">
+                        <span
+                            class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm shadow-lg shadow-emerald-100">
+                            <i class="fas fa-file-contract"></i>
+                        </span>
+                        Statutory / Special Leaves
+                    </h3>
+
+                    <div class="credits-card-container">
+                        <div class="card-header bg-emerald-50/50">
+                            <div class="header-title">
+                                <i class="fas fa-layer-group text-emerald-500 text-sm"></i>
+                                <span>Leave Type</span>
                             </div>
-                            <div class="cto-form-group">
-                                <label class="cto-label">Expiration Date</label>
-                                <input type="date" name="expiration_date" class="cto-input" required>
+                            <div class="header-title pr-14">
+                                <i class="fas fa-calendar-check text-emerald-500 text-sm"></i>
+                                <span>Allocation</span>
                             </div>
-                            <div class="cto-form-group">
-                                <label class="cto-label">Remarks (Optional)</label>
-                                <input type="text" name="remarks" class="cto-input" placeholder="Reason for credit...">
-                            </div>
-                            <button type="submit" class="btn-cto-submit">
-                                <i class="fas fa-plus-circle"></i> Add CTO Credits
-                            </button>
-                        </form>
-                    </div>
-                    <!-- History Table -->
-                    <div class="cto-card">
-                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f3f4f6;">
-                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 800; color: #374151; text-transform: uppercase;">Active Credit Batches</h4>
-                            <span style="font-size: 0.75rem; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 6px; font-weight: 700;">
-                                Total: {{ $ctoCredits->sum('remaining_credits') }}
-                            </span>
                         </div>
-                        @if($ctoCredits->isEmpty())
-                            <div style="text-align: center; padding: 40px 0; color: #9ca3af; font-style: italic; font-size: 0.875rem;">No active CTO credits found.</div>
-                        @else
-                            <div style="max-height: 240px; overflow-y: auto;">
-                                <table style="width: 100%; font-size: 0.875rem; border-collapse: collapse;">
-                                    <thead style="background: #f9fafb; position: sticky; top: 0;">
-                                        <tr>
-                                            <th style="padding: 10px; text-align: left; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 0.7rem;">Added</th>
-                                            <th style="padding: 10px; text-align: left; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 0.7rem;">Expires</th>
-                                            <th style="padding: 10px; text-align: right; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 0.7rem;">Rem.</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody style="border-top: 1px solid #f3f4f6;">
-                                        @foreach($ctoCredits as $batch)
-                                            <tr style="border-bottom: 1px solid #f3f4f6;">
-                                                <td style="padding: 10px; color: #4b5563;">{{ $batch->created_at->format('M d, Y') }}<br><span style="font-size: 0.7rem; color: #9ca3af;">{{ $batch->remarks }}</span></td>
-                                                <td style="padding: 10px; color: #ef4444; font-weight: 600;">{{ $batch->expiration_date->format('M d, Y') }}</td>
-                                                <td style="padding: 10px; text-align: right; font-weight: 700; color: #111827;">{{ $batch->remaining_credits }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @endif
+
+                        <div class="statutory-scroll-container">
+                            @foreach($statutoryLeaves as $type)
+                                @php
+                                    $credit = $existingCredits->get($type->id);
+                                    $dbLocked = $credit && $credit->is_locked;
+                                    $isLocked = $dbLocked && !auth()->user()->isHeadHR();
+                                    $currentVal = $credit ? $credit->credits : '';
+                                    $isEventBased = in_array($type->type_name, $eventBasedLeaves);
+                                @endphp
+
+                                <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
+                                    <div class="field-label flex-1">
+                                        <div class="font-bold text-slate-700">{{ $type->type_name }}</div>
+                                        <div class="text-[10px] text-slate-400 font-medium mt-0.5 line-clamp-1 italic">
+                                            {{ $type->description }}
+                                        </div>
+                                        @if($isLocked)
+                                            <div class="status-badge status-locked mt-1 w-max">
+                                                <i class="fas fa-lock text-[10px]"></i> Locked
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex items-center gap-4">
+                                        <div class="input-wrapper w-[110px]">
+                                            @if($isEventBased)
+                                                <div
+                                                    class="field-input bg-slate-50 text-slate-400 !border-dashed !font-bold text-[9px] h-[36px] flex items-center justify-center tracking-tighter shadow-inner">
+                                                    EVENT-BASED
+                                                </div>
+                                                <input type="hidden" name="credits[{{ $type->id }}]" value=""
+                                                    form="manageCreditsForm">
+                                            @else
+                                                <input type="number" step="1" min="0" name="credits[{{ $type->id }}]"
+                                                    value="{{ $currentVal }}" form="manageCreditsForm"
+                                                    class="field-input h-[36px] text-right font-bold" placeholder="0" {{ $isLocked ? 'readonly' : '' }}>
+                                            @endif
+                                        </div>
+                                        <div class="action-area w-[30px] flex justify-center">
+                                            @if($isLocked)
+                                                <button type="button"
+                                                    onclick="requestUnlock({{ $type->id }}, '{{ addslashes($type->type_name) }}')"
+                                                    class="text-indigo-400 hover:text-indigo-600 transition-colors transform hover:scale-110">
+                                                    <i class="fas fa-key"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
-        @endif
-
-        <div class="flex justify-end p-6 bg-white rounded-xl border border-gray-100 shadow-sm mt-8">
-            <button type="submit" form="creditsForm" class="btn-primary">
-                <i class="fas fa-save"></i> Save All Credits
-            </button>
         </div>
-    </div>
 
-        <!-- Modal -->
-        <div id="unlockModal" class="modal-overlay">
-            <div class="modal-box">
-                <div class="mb-4">
-                    <h3 class="modal-title">Request Permission to Edit</h3>
-                    <p class="text-gray-500 text-sm">You need approval to modify defaults for <span id="modalTypeName" class="font-bold text-gray-800"></span>.</p>
-                </div>
-
-                <form action="{{ route('hr-staff.manage-credits.unlock-request', $user->id) }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="leave_type_id" id="modalTypeId">
-
-                    <div class="mb-6">
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Reason for Change</label>
-                        <textarea name="reason" rows="3" class="modal-textarea" placeholder="e.g. Correction of typo, policy adjustment, reinstatement..." required></textarea>
-                    </div>
-
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="closeModal()" class="btn-secondary">Cancel</button>
-                        <button type="submit" class="btn-primary" style="padding: 10px 20px; font-size: 0.95rem;">Send Request</button>
-                    </div>
-                </form>
+        <!-- Sticky Save Button Bar -->
+        <div class="flex justify-center mt-8 mb-8">
+                <button type="submit" form="manageCreditsForm"
+                    class="btn-primary px-12 py-4 text-lg font-black rounded-2xl shadow-2xl shadow-indigo-100 hover:shadow-indigo-200 transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3">
+                    <i class="fas fa-save text-2xl"></i> Save All User Credits
+                </button>
             </div>
-        </div>
 
-        <script>
-            function requestUnlock(id, name) {
-                document.getElementById('modalTypeId').value = id;
-                document.getElementById('modalTypeName').innerText = name;
-                document.getElementById('unlockModal').classList.add('open');
-            }
-            function closeModal() {
-                document.getElementById('unlockModal').classList.remove('open');
-            }
-        </script>
+            <!-- Modal -->
+            <div id="unlockModal" class="modal-overlay">
+                <div class="modal-box">
+                    <div class="mb-4">
+                        <h3 class="modal-title">Request Permission to Edit</h3>
+                        <p class="text-gray-500 text-sm">You need approval to modify defaults for <span id="modalTypeName"
+                                class="font-bold text-gray-800"></span>.</p>
+                    </div>
+
+                    <form action="{{ route('hr-staff.manage-credits.unlock-request', $user->id) }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="leave_type_id" id="modalTypeId">
+
+                        <div class="mb-6">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Reason for
+                                Change</label>
+                            <textarea name="reason" rows="3" class="modal-textarea"
+                                placeholder="e.g. Correction of typo, policy adjustment, reinstatement..." required></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3">
+                            <button type="button" onclick="closeModal()" class="btn-secondary">Cancel</button>
+                            <button type="submit" class="btn-primary" style="padding: 10px 20px; font-size: 0.95rem;">Send
+                                Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                function requestUnlock(id, name) {
+                    document.getElementById('modalTypeId').value = id;
+                    document.getElementById('modalTypeName').innerText = name;
+                    document.getElementById('unlockModal').classList.add('open');
+                }
+                function closeModal() {
+                    document.getElementById('unlockModal').classList.remove('open');
+                }
+
+                function toggleCocContent() {
+                    const content = document.getElementById('cocContent');
+                    const chevron = document.getElementById('cocChevron');
+                    const header = document.querySelector('.coc-header');
+
+                    content.classList.toggle('active');
+                    chevron.classList.toggle('rotate');
+                    header.classList.toggle('active-header');
+                }
+            </script>
+        </div>
 @endsection

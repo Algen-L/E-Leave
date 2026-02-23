@@ -98,6 +98,7 @@ class AuthController extends Controller
             'gmail' => 'required|email|unique:users,gmail',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
+            'employee_number' => 'required|string|regex:/^[0-9]{7}$/|unique:users,employee_number',
         ]);
 
         // Check rate limit
@@ -213,6 +214,7 @@ class AuthController extends Controller
                 'last_name' => $lastName,
                 'office_station' => $regData['office_station'],
                 'position' => $regData['position'],
+                'employee_number' => $regData['employee_number'],
                 'gmail' => $regData['gmail'],
                 'is_active' => true,
                 'role' => 'user',

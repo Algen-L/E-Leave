@@ -68,21 +68,21 @@
                         <div class="form-group">
                             <label class="form-label">Role <span class="required">*</span></label>
                             <select class="form-select @error('role') error @enderror" name="role" required>
-                                <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>USER</option>
-                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>HUMAN RESOURCE
-                                    PERSONNEL</option>
+                                <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
+                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="hr" {{ old('role') === 'hr' ? 'selected' : '' }}>HR</option>
+                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>Head HR</option>
+                                <option value="immediate_head" {{ old('role') === 'immediate_head' ? 'selected' : '' }}>
+                                    Immediate Head</option>
                                 @if(auth()->user()->role === 'super_admin')
                                     <optgroup label="High Level Roles">
-                                        <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASST. SCHOOLS DIVISION
-                                            SUPERINTENDENT</option>
-                                        <option value="sds" {{ old('role') === 'sds' ? 'selected' : '' }}>SCHOOLS DIVISION
-                                            SUPERINTENDENT</option>
-                                        <option value="sgod_chief" {{ old('role') === 'sgod_chief' ? 'selected' : '' }}>CHEIF
-                                            EDUCATION SUPERVISOR, SGOD</option>
-                                        <option value="cid_chief" {{ old('role') === 'cid_chief' ? 'selected' : '' }}>CHIEF
-                                            EDUCATION SUPERVISOR, CID</option>
-                                        <option value="ao" {{ old('role') === 'ao' ? 'selected' : '' }}>ADMIN OFFICER IV - ADMIN
-                                            OFFICE</option>
+                                        <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASDS</option>
+                                        <option value="sds" {{ old('role') === 'sds' ? 'selected' : '' }}>SDS</option>
+                                        <option value="sgod_chief" {{ old('role') === 'sgod_chief' ? 'selected' : '' }}>SGOD Chief
+                                        </option>
+                                        <option value="cid_chief" {{ old('role') === 'cid_chief' ? 'selected' : '' }}>CID Chief
+                                        </option>
+                                        <option value="ao" {{ old('role') === 'ao' ? 'selected' : '' }}>AO</option>
                                     </optgroup>
                                 @endif
                             </select>
@@ -152,6 +152,17 @@
 
                     <div class="form-grid-2">
                         <div class="form-group">
+                            <label class="form-label">Employee No. <span class="required">*</span></label>
+                            <input type="text" class="form-control @error('employee_number') error @enderror"
+                                name="employee_number" value="{{ old('employee_number') }}"
+                                placeholder="Enter 7-digit Employee No." pattern="\d{7}" maxlength="7"
+                                title="Must be exactly 7 digits" required>
+                            @error('employee_number')
+                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">Office/Station</label>
                             <select class="form-select" id="office_station" name="office_station">
                                 <option value="">Select Office</option>
@@ -166,7 +177,9 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
 
+                    <div class="form-grid-2" style="margin-top: 20px;">
                         <div class="form-group">
                             <label class="form-label">Position</label>
                             <select class="form-select" id="position" name="position">

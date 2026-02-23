@@ -45,6 +45,52 @@ class HeadHRController extends Controller
     }
 
     /**
+     * Delete a custom leave type (Super Admin only).
+     */
+    public function destroyLeaveType($id)
+    {
+        if (!auth()->user()->isSuperAdmin()) {
+            return back()->with('error', 'Unauthorized Action. Only Super Admin can delete leave types.');
+        }
+
+        $leaveType = LeaveType::findOrFail($id);
+
+        // Define system leaves that shouldn't be deleted
+        $systemLeaves = [
+            'Vacation Leave',
+            'Sick Leave',
+            'Mandatory Leave',
+            'Forced Leave',
+            'COC Compensatory Overtime Credit',
+            'Maternity Leave',
+            'Paternity Leave',
+            'VAWC Leave',
+            'Rehabilitation Leave',
+            'Special Leave Benefits for Women',
+            'Terminal Leave',
+            'Adoption Leave',
+            'Solo Parent Leave',
+            'Special Privilege Leave',
+            'Calamity Leave',
+            'Monetization of Leave Credits',
+            'Wellness Leave'
+        ];
+
+        // Use Str::contains to catch variations or check exact match
+        $isSystem = in_array($leaveType->type_name, $systemLeaves) || \Illuminate\Support\Str::contains($leaveType->type_name, ['Mandatory', 'Forced', 'Sick Leave', 'Vacation Leave']);
+
+        if ($isSystem) {
+            return back()->with('error', 'Cannot delete system default leave types.');
+        }
+
+        // Delete associated policies and then the leave type itself
+        LeaveCreditPolicy::where('leave_type_id', $id)->delete();
+        $leaveType->delete();
+
+        return back()->with('success', 'Custom leave type deleted successfully.');
+    }
+
+    /**
      * Manage leave credit policies.
      */
     public function policies()
@@ -126,39 +172,6 @@ class HeadHRController extends Controller
             $updRequest->save();
 
             return back()->with('success', 'Request rejected.');
-        }
-    }
-    /**
-     * Delete a leave type (Superadmin ONLY)
-     */
-    public function deleteLeaveType($id)
-    {
-        if (!auth()->user()->isSuperAdmin()) {
-            abort(403, 'Unauthorized action. Only Superadmins can delete leave types.');
-        }
-
-        $type = LeaveType::findOrFail($id);
-
-        // Check if there are existing applications for this leave type
-        if (\App\Models\LeaveApplication::where('leave_type_id', $id)->exists()) {
-            return back()->with('error', 'Cannot delete "' . $type->type_name . '" because it has existing applications. Consider deactivating it instead.');
-        }
-
-        try {
-            \Illuminate\Support\Facades\DB::beginTransaction();
-
-            // Delete dependents
-            LeaveCreditPolicy::where('leave_type_id', $id)->delete();
-            \App\Models\LeaveCredit::where('leave_type_id', $id)->delete();
-
-            // Delete the type itself
-            $type->delete();
-
-            \Illuminate\Support\Facades\DB::commit();
-            return back()->with('success', 'Leave type "' . $type->type_name . '" deleted successfully.');
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
-            return back()->with('error', 'Error deleting leave type: ' . $e->getMessage());
         }
     }
 }

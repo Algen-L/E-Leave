@@ -293,7 +293,19 @@
                                 <i class="fas fa-building"></i> Work Information
                             </div>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <label class="form-label">Employee No. <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('employee_number') is-invalid @enderror"
+                                        name="employee_number"
+                                        value="{{ old('employee_number', $editUser->employee_number) }}"
+                                        placeholder="Enter 7-digit ID" pattern="\d{7}" maxlength="7"
+                                        title="Must be exactly 7 digits" required>
+                                    @error('employee_number')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-4">
                                     <label class="form-label">Office/Station</label>
                                     <select class="form-select" id="office_station" name="office_station">
                                         <option value="">Select Office</option>
@@ -309,7 +321,7 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">Role <span class="text-danger">*</span></label>
                                     <select class="form-select @error('role') is-invalid @enderror" name="role" required>
                                         <option value="user" {{ old('role', $editUser->role) === 'user' ? 'selected' : '' }}>

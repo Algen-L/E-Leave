@@ -94,8 +94,8 @@ class LeaveApprovalController extends Controller
         $lessVl = 0;
         $lessSl = 0;
 
-        // Check for specific leave types or special conditions like Compensatory Time Off
-        $isCompensatory = optional($application->details)->other_purpose === 'COMPENSATORY TIME OFF';
+        // Check for specific leave types or special conditions like COC Compensatory Overtime Credit
+        $isCompensatory = optional($application->details)->other_purpose === 'COC COMPENSATORY OVERTIME CREDIT';
         $vlRelatedTypes = ['Vacation', 'Forced', 'Mandatory'];
 
         // Helper to check if type matches any of the keywords
@@ -223,7 +223,7 @@ class LeaveApprovalController extends Controller
 
             if ($isVlRelated || $isSick || $isCTO) {
                 // Find IDs
-                $targetTypeName = $isCTO ? 'Compensatory Over-Time Credit' : ($isSick ? 'Sick Leave' : 'Vacation Leave');
+                $targetTypeName = $isCTO ? 'COC Compensatory Overtime Credit' : ($isSick ? 'Sick Leave' : 'Vacation Leave');
                 $targetType = \App\Models\LeaveType::where('type_name', $targetTypeName)->first();
 
                 if ($targetType) {

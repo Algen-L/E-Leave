@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\LeaveApplication;
-use App\Models\LeaveCredit;
 use App\Models\LeaveDetailsForm6;
 use App\Models\LeaveType;
 use App\Models\User;
@@ -36,7 +35,9 @@ class LeaveController extends Controller
             'Rehabilitation Leave',
             'Special Leave Benefits for Women',
             'Special Emergency (Calamity) Leave',
-            'Adoption Leave'
+            'Adoption Leave',
+            'Terminal Leave',
+            'Monetization of Leave Credits'
         ];
 
         // Filter types
@@ -52,7 +53,9 @@ class LeaveController extends Controller
             return false;
         });
 
-        $otherTypes = $allLeaveTypes->diff($standardTypes);
+        $otherTypes = $allLeaveTypes->diff($standardTypes)->filter(function ($type) {
+            return strtolower($type->type_name) !== 'others';
+        });
 
         // Fetch Recommending Officers (CID Chief, SGOD Chief, AO, ASDS)
         $recommendingOfficers = User::whereIn('role', ['cid_chief', 'sgod_chief', 'ao', 'asds'])
@@ -66,13 +69,7 @@ class LeaveController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        // Fetch User's current VL balance for the "10-day rule" note
-        $vlBalance = LeaveCredit::where('user_id', $user->id)
-            ->whereHas('leaveType', function ($q) {
-                $q->where('type_name', 'Vacation Leave');
-            })->value('credits') ?? 0;
-
-        return view('user.leave.apply', compact('user', 'standardTypes', 'otherTypes', 'recommendingOfficers', 'finalApprovers', 'vlBalance'));
+        return view('user.leave.apply', compact('user', 'standardTypes', 'otherTypes', 'recommendingOfficers', 'finalApprovers'));
     }
 
     /**
@@ -90,6 +87,10 @@ class LeaveController extends Controller
             if (is_numeric($othersType)) {
                 // Dynamic Type ID
                 $leaveTypeId = $othersType;
+            } elseif ($othersType === 'COC COMPENSATORY OVERTIME CREDIT') {
+                // Map to COC Type
+                $ctoType = LeaveType::firstOrCreate(['type_name' => 'COC Compensatory Overtime Credit'], ['description' => 'COC - Manual Entry']);
+                $leaveTypeId = $ctoType->id;
             } elseif ($othersType === 'Specify') {
                 // Map to Others Type
                 $othersLeave = LeaveType::firstOrCreate(['type_name' => 'Others'], ['description' => 'Other purposes']);
@@ -160,7 +161,9 @@ class LeaveController extends Controller
             ]);
 
             // 2. Create Details (Form 6 specific)
-            $otherPurpose = $request->input('other_purpose');
+            $otherPurpose = $request->input('others_type') === 'COC COMPENSATORY OVERTIME CREDIT'
+                ? 'COC COMPENSATORY OVERTIME CREDIT'
+                : $request->input('other_purpose');
 
             LeaveDetailsForm6::create([
                 'leave_application_id' => $application->id,
@@ -210,7 +213,7 @@ class LeaveController extends Controller
         $stats = [
             'total' => $applications->count(),
             'approved' => $applications->where('status', 'Approved')->count(),
-            'pending' => $applications->where('status', 'Pending')->count(),
+            'pending' => $applications->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval', 'Pending'])->count(),
             'disapproved' => $applications->where('status', 'Disapproved')->count(),
         ];
 
@@ -223,7 +226,7 @@ class LeaveController extends Controller
     public function show($id)
     {
         // Fetch application with related data
-        $application = LeaveApplication::with(['leaveType', 'details', 'recommendingOfficer', 'approvingOfficer', 'hrVerifier', 'user'])
+        $application = LeaveApplication::with(['leaveType', 'details', 'recommendingOfficer', 'approvingOfficer'])
             ->where('user_id', Auth::id())
             ->findOrFail($id);
 
@@ -516,20 +519,26 @@ class LeaveController extends Controller
             $setVal('type_calamity', (stripos($typeName, 'Calamity') !== false) ? '☑' : '☐');
             $setVal('type_adoption', (stripos($typeName, 'Adoption') !== false) ? '☑' : '☐');
             $setVal('type_wellness', (stripos($typeName, 'Wellness') !== false) ? '☑' : '☐');
-            $setVal('type_monetization', (stripos($typeName, 'Monetization') !== false) ? '☑' : '☐');
-            $setVal('type_terminal', (stripos($typeName, 'Terminal') !== false) ? '☑' : '☐');
 
-            // type_others displays the name/purpose of the leave for the 'Others' category
-            $othersValue = '';
-            if ($typeName === 'Others') {
-                $othersValue = $details->other_purpose ?? '';
-            } elseif (stripos($typeName, 'Wellness') !== false || stripos($typeName, 'Compensatory') !== false) {
-                // For Wellness or CTO which are also under 'Others'
-                $othersValue = $typeName;
-            }
+            $isStandard = stripos($typeName, 'Vacation') !== false ||
+                stripos($typeName, 'Mandatory') !== false ||
+                stripos($typeName, 'Forced') !== false ||
+                stripos($typeName, 'Sick') !== false ||
+                stripos($typeName, 'Maternity') !== false ||
+                stripos($typeName, 'Paternity') !== false ||
+                stripos($typeName, 'Privilege') !== false ||
+                stripos($typeName, 'Solo Parent') !== false ||
+                stripos($typeName, 'Study') !== false ||
+                stripos($typeName, 'VAWC') !== false ||
+                stripos($typeName, 'Rehabilitation') !== false ||
+                stripos($typeName, 'Benefits for Women') !== false ||
+                stripos($typeName, 'Calamity') !== false ||
+                stripos($typeName, 'Adoption') !== false ||
+                stripos($typeName, 'Wellness') !== false ||
+                stripos($typeName, 'Monetization') !== false ||
+                stripos($typeName, 'Terminal') !== false;
 
-            $setVal('type_others', $othersValue);
-            $setVal('TYPE_OTHERS', $othersValue);
+            $setVal('type_others', !$isStandard ? '☑ ' . $typeName : '☐');
 
             // --- 3. 6.B DETAILS OF LEAVE ---
             if ($details) {
@@ -553,7 +562,11 @@ class LeaveController extends Controller
                 $setVal('study_specify', $details->study_details ?? '');
 
                 // Other Purpose
-                $setVal('other_specify', $details->other_purpose ?? '');
+                $otherSpecifyText = $details->other_purpose ?? '';
+                if (!$isStandard && empty($otherSpecifyText)) {
+                    $otherSpecifyText = $typeName; // Fallback to the custom type name if no specific purpose
+                }
+                $setVal('other_specify', $otherSpecifyText);
             } else {
                 // Clear fields if no details
                 $setVal('detail_vacation_phil', '☐');
@@ -567,7 +580,8 @@ class LeaveController extends Controller
                 $setVal('detail_study_masters', '☐');
                 $setVal('detail_study_bar', '☐');
                 $setVal('study_specify', '');
-                $setVal('other_specify', '');
+
+                $setVal('other_specify', !$isStandard ? $typeName : '');
             }
 
             $setVal('type_monetization', (stripos($typeName, 'Monetization') !== false) ? '☑' : '☐');
@@ -605,7 +619,7 @@ class LeaveController extends Controller
             // Check if application is VL or SL to apply deduction logic
             // Note: Mandatory/Forced Leave usually deducts from VL too, but strict prompt logic:
 
-            $isCompensatory = optional($details)->other_purpose === 'COMPENSATORY TIME OFF';
+            $isCompensatory = optional($details)->other_purpose === 'COC COMPENSATORY OVERTIME CREDIT';
 
             if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false || $isCompensatory) {
                 $lessVl = $daysApplied;
@@ -633,30 +647,27 @@ class LeaveController extends Controller
             // Also set total date as of usually current date
             $setVal('DATE_AS_OF', now()->format('F d, Y'));
 
-            // --- F. RECOMMENDATION SECTION (7.B) ---
-            $forApproval = '☐';
-            $forDisapproval = '☐';
-            $recoDisapproveText = '';
-            $approDisapproveText = '';
+            // --- F. DISAPPROVAL REASONS ---
+            $recoDisapprove = '';
+            $approDisapprove = '';
 
-            if ($application->recommended_at) {
-                // If date exists, they definitely recommended it
-                $forApproval = '☑';
-            } elseif ($application->status === 'Disapproved' && $application->rejection_remarks) {
-                // If rejected and no recommended_at, it likely happened at HR or Recommendation stage
-                $forDisapproval = '☑';
-                $recoDisapproveText = $application->rejection_remarks;
+            if ($application->status === 'Disapproved' && $application->rejection_remarks) {
+                // Determine who disapproved based on flow state
+                // If recommended_at is NULL, it likely failed at Recommending stage (or HR verification, but let's assume Recommending for form purposes)
+                if (!$application->recommended_at) {
+                    $recoDisapprove = $application->rejection_remarks;
+                } else {
+                    // If recommended but not approved
+                    $approDisapprove = $application->rejection_remarks;
+                }
             }
 
-            // Final Approver's Disapproval (7.C/D)
-            if ($application->status === 'Disapproved' && $application->recommended_at) {
-                $approDisapproveText = $application->rejection_remarks;
-            }
+            $setVal('reco_disapprove', strtoupper($recoDisapprove));
+            $setVal('appro_disapprove', strtoupper($approDisapprove));
 
-            $setVal('forapproval', $forApproval);
-            $setVal('fordisapproval', $forDisapproval);
-            $setVal('reco_disapprove', strtoupper($recoDisapproveText));
-            $setVal('appro_disapprove', strtoupper($approDisapproveText));
+            // Set checkboxes for Recommendation
+            $setVal('forapproval', $application->recommended_at ? '☑' : '☐');
+            $setVal('fordisapproval', $recoDisapprove !== '' ? '☑' : '☐');
 
             // --- G. APPROVED FOR DETAILS ---
             // Formatted values for check/blank
@@ -675,20 +686,24 @@ class LeaveController extends Controller
             $setVal('OTHERS', $othersRemarks ? strtoupper($othersRemarks) : '');
 
             // --- CERTIFY DATES ---
-            $formatDate = function ($date, $prefix) {
+
+            $formatString = function ($prefix, $date) {
                 if (!$date)
                     return '';
-                return sprintf("%s on %s", $prefix, \Carbon\Carbon::parse($date)->format('F d, Y'));
+                return sprintf("%s %s by:", $prefix, \Carbon\Carbon::parse($date)->format('F d, Y'));
             };
 
             // 1. HR Certification
-            $templateProcessor->setValue('CertifyDate', $formatDate($application->hr_verified_at, 'Digitally Certified'));
+            // The template uses ${CertifyDate} for HR
+            $templateProcessor->setValue('CertifyDate', $formatString("Digitally Verified in this", $application->hr_verified_at));
 
             // 2. Recommending Approval
-            $templateProcessor->setValue('recoDate', $formatDate($application->recommended_at, 'Digitally Recommended'));
+            // The template uses ${recoDate} for Recommending
+            $templateProcessor->setValue('recoDate', $formatString("Digitally Recommended in this", $application->recommended_at));
 
             // 3. Final Approval
-            $templateProcessor->setValue('ApproDate', $formatDate($application->approved_at, 'Digitally Approved'));
+            // The template uses ${ApproDate} for Final Approval
+            $templateProcessor->setValue('ApproDate', $formatString("Digitally Approved in this", $application->approved_at));
 
             // --- PDF GENERATION LOGIC ---
             if (request('format') === 'pdf') {

@@ -49,42 +49,13 @@ class HRController extends Controller
      */
     public function editCredits(User $user)
     {
-        // Ensure COC type exists (with Statutory category)
-        $ctoType = LeaveType::where('type_name', 'Compensatory Time Off')->first();
-        if ($ctoType) {
-            $ctoType->update(['type_name' => 'Compensatory Over-Time Credit', 'description' => 'COC - Manual Entry']);
-        } else {
-            $ctoType = LeaveType::firstOrCreate(
-                ['type_name' => 'Compensatory Over-Time Credit'],
-                ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
-            );
-        }
+        // Ensure COC type exists (with Statutoty category so it doesn't mix with Credit/Vacation leaves)
+        $ctoType = LeaveType::firstOrCreate(
+            ['type_name' => 'COC Compensatory Overtime Credit'],
+            ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
+        );
 
-        // Exclude types that don't need manual credit allocation (event-based or per-instance)
-        $excludedNames = [
-            'Maternity Leave',
-            'Paternity Leave',
-            'Adoption Leave',
-            'VAWC Leave',
-            '10-Day VAWC Leave',
-            'Rehabilitation Leave',
-            'Rehabilitation Privilege',
-            'Special Leave Benefits for Women',
-            'Special Emergency (Calamity) Leave',
-            'Study Leave',
-            'Terminal Leave',
-            'Monetization of Leave Credits'
-        ];
-
-        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)
-            ->where(function ($query) use ($excludedNames) {
-                foreach ($excludedNames as $name) {
-                    $query->where('type_name', 'NOT LIKE', "%$name%");
-                }
-            })
-            ->where('type_name', '!=', 'Others')
-            ->where('is_active', true)
-            ->get();
+        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)->get();
 
         $ctoCredits = \App\Models\CompensatoryLeaveCredit::where('user_id', $user->id)
             ->where('status', 'Active')
@@ -101,7 +72,7 @@ class HRController extends Controller
     }
 
     /**
-     * Store new CTO credit
+     * Store new COC credit
      */
     public function addCtoCredit(Request $request, User $user)
     {
@@ -112,7 +83,7 @@ class HRController extends Controller
         ]);
 
         $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'Compensatory Over-Time Credit'],
+            ['type_name' => 'COC Compensatory Overtime Credit'],
             ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
         );
 
@@ -152,15 +123,15 @@ class HRController extends Controller
             LeaveCreditAuditLog::create([
                 'actor_id' => Auth::id(),
                 'target_user_id' => $user->id,
-                'action' => 'add_cto',
-                'leave_type_name' => 'Compensatory Time Off',
+                'action' => 'add_coc',
+                'leave_type_name' => 'COC Compensatory Overtime Credit',
                 'previous_value' => $currentTotal,
                 'new_value' => $creditRecord->credits,
-                'reason' => 'Added CTO batch: ' . $request->credit_amount . ' expiring ' . $request->expiration_date,
+                'reason' => 'Added COC batch: ' . $request->credit_amount . ' expiring ' . $request->expiration_date,
             ]);
         });
 
-        return back()->with('success', 'Compensatory Time Off added successfully.');
+        return back()->with('success', 'COC Compensatory Overtime Credit added successfully.');
     }
 
     /**
@@ -181,8 +152,8 @@ class HRController extends Controller
                 if (!$type)
                     continue;
 
-                // Skip CTO in this loop if it accidentally gets here
-                if ($type->type_name === 'Compensatory Time Off')
+                // Skip COC in this loop if it accidentally gets here
+                if ($type->type_name === 'COC Compensatory Overtime Credit')
                     continue;
 
                 // Check policy limits
@@ -297,6 +268,7 @@ class HRController extends Controller
             'position' => 'nullable|string|max:100',
             'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
 
         /** @var \App\Models\User $user */
@@ -311,6 +283,9 @@ class HRController extends Controller
         }
         if ($request->has('position')) {
             $updateData['position'] = $request->position;
+        }
+        if ($request->has('employee_number')) {
+            $updateData['employee_number'] = $request->employee_number;
         }
 
         // Handle password change

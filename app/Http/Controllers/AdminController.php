@@ -49,8 +49,6 @@ class AdminController extends Controller
      */
     private function getDashboardStats(): array
     {
-        $user = Auth::user();
-
         // Total users
         $totalUsers = User::count();
 
@@ -70,38 +68,13 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        // --- PERSONAL LEAVE DATA (For non-superadmins) ---
-        $credits = null;
-        $leaveSummary = null;
-
-        if ($user->role !== 'super_admin' && !in_array($user->role, ['hr', 'head_hr'])) {
-            $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
-            $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
-            $ctoType = \App\Models\LeaveType::where('type_name', 'Compensatory Time Off')->first();
-
-            $credits = [
-                'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
-                'sl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id ?? 0)->value('credits') ?? 0,
-                'cto' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $ctoType->id ?? 0)->value('credits') ?? 0,
-            ];
-
-            $leaveSummary = [
-                'pending' => \App\Models\LeaveApplication::where('user_id', $user->id)->whereIn('status', ['Pending HR', 'Pending Recommending', 'Pending Approval'])->count(),
-                'approved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Approved')->count(),
-                'disapproved' => \App\Models\LeaveApplication::where('user_id', $user->id)->where('status', 'Disapproved')->count(),
-                'total' => \App\Models\LeaveApplication::where('user_id', $user->id)->count(),
-            ];
-        }
-
         return [
             'totalUsers' => $totalUsers,
             'activeToday' => $activeToday,
             'newRegistrations' => $newRegistrations,
             'auditTrail' => $auditTrail,
-            'user' => $user,
+            'user' => Auth::user(),
             'unreadCount' => Notification::getUnreadCount(Auth::id()),
-            'credits' => $credits,
-            'leaveSummary' => $leaveSummary,
         ];
     }
 
@@ -141,11 +114,6 @@ class AdminController extends Controller
 
         // Exclude current super admin from the list
         $query->where('id', '!=', Auth::id());
-
-        // Additionally exclude all Superadmins if the logged-in user is Head HR
-        if (Auth::user()->isHeadHR()) {
-            $query->where('role', '!=', 'super_admin');
-        }
 
         // View-based filter
         if ($view === 'active') {
@@ -194,6 +162,7 @@ class AdminController extends Controller
             'office_station' => 'nullable|string|max:100',
             'is_active' => 'required|boolean',
             'password' => 'nullable|string|min:6|confirmed',
+            'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . $user->id,
         ]);
 
         // Authorization check for restricted roles
@@ -212,6 +181,7 @@ class AdminController extends Controller
             'role' => $request->role,
             'office_station' => $request->office_station,
             'is_active' => $request->is_active,
+            'employee_number' => $request->employee_number,
         ];
 
         // Note: 'full_name' and 'name' are automatically updated by the User model's boot method
@@ -285,6 +255,7 @@ class AdminController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'esignature' => 'nullable|image|mimes:png|max:1024',
+            'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
 
         /** @var \App\Models\User $user */
@@ -299,6 +270,9 @@ class AdminController extends Controller
         }
         if ($request->has('position')) {
             $updateData['position'] = $request->position;
+        }
+        if ($request->has('employee_number')) {
+            $updateData['employee_number'] = $request->employee_number;
         }
 
         if (!empty($request->password)) {
@@ -460,6 +434,7 @@ class AdminController extends Controller
             'gmail' => 'nullable|email|unique:users,gmail',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
+            'employee_number' => 'required|string|regex:/^[0-9]{7}$/|unique:users,employee_number',
             'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head,asds,sds,sgod_chief,cid_chief,ao',
         ]);
 
@@ -478,6 +453,7 @@ class AdminController extends Controller
             'gmail' => $request->gmail,
             'office_station' => $request->office_station,
             'position' => $request->position,
+            'employee_number' => $request->employee_number,
             'role' => $request->role,
             'is_active' => true,
             'created_by' => Auth::id(),
