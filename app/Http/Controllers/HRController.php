@@ -5,24 +5,81 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\LeaveType;
 use App\Models\LeaveCredit;
-use App\Models\LeaveCreditAuditLog;
-use App\Models\LeaveUpdateRequest;
+use App\Models\CompensatoryLeaveCredit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Services\CreditService;
+use App\Http\Requests\Leave\UpdateCreditsRequest;
+use App\Http\Requests\Leave\AddCtoCreditRequest;
+use Illuminate\Support\Facades\Hash; // Keep this for updateProfile
+use App\Models\LeaveApplication;
 use App\Models\LeaveCreditPolicy;
-use App\Models\ActivityLog; // Re-added
-use App\Models\Notification; // Re-added
-use Illuminate\Http\Request; // Re-added
-use Illuminate\Support\Facades\Auth; // Re-added
-use Illuminate\Support\Facades\DB; // Re-added
-use Illuminate\Support\Facades\Hash; // Re-added
+use App\Models\ActivityLog;
+use App\Models\Notification;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class HRController extends Controller
 {
+    protected $creditService;
+
+    public function __construct(CreditService $creditService)
+    {
+        $this->creditService = $creditService;
+    }
+
     /**
-     * HR Dashboard - redirects to admin dashboard
+     * HR Dashboard with analytics
      */
     public function dashboard()
     {
-        return redirect()->route('admin.dashboard');
+        $today = Carbon::today();
+
+        // 1. Metric Cards
+        $stats = [
+            'active_today' => LeaveApplication::where('status', 'approved')
+                ->where('start_date', '<=', $today)
+                ->where('end_date', '>=', $today)
+                ->count(),
+
+            'pending_applications' => LeaveApplication::where('status', 'pending')
+                ->count(),
+
+            'expiring_coc' => CompensatoryLeaveCredit::where('status', 'Active')
+                ->where('remaining_credits', '>', 0)
+                ->where('expiration_date', '<=', $today->copy()->addDays(30))
+                ->where('expiration_date', '>=', $today)
+                ->count(),
+
+            'hoarding_count' => DB::table('leave_credits')
+                ->join('leave_credit_policies', 'leave_credits.leave_type_id', '=', 'leave_credit_policies.leave_type_id')
+                ->whereRaw('leave_credits.credits >= leave_credit_policies.max_credits')
+                ->where('leave_credit_policies.max_credits', '>', 0)
+                ->distinct('user_id')
+                ->count('user_id'),
+        ];
+
+        // 2. Monthly Trends (Last 6 Months)
+        $monthlyTrends = LeaveApplication::where('created_at', '>=', $today->copy()->subMonths(6))
+            ->selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, count(*) as count")
+            ->groupBy('month')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // 3. Leave Type Distribution (Approved Leaves)
+        $distribution = LeaveApplication::where('status', 'approved')
+            ->join('leave_types', 'leave_applications.leave_type_id', '=', 'leave_types.id')
+            ->select('leave_types.type_name as label', DB::raw('count(*) as value'))
+            ->groupBy('leave_types.type_name')
+            ->get();
+
+        // 4. Recent Activity
+        $recentActivities = ActivityLog::with('user')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('hr.dashboard', compact('stats', 'monthlyTrends', 'distribution', 'recentActivities'));
     }
 
     /**
@@ -32,16 +89,18 @@ class HRController extends Controller
     {
         $search = $request->input('search');
 
-        $users = User::where('role', '!=', 'super_admin')
-            ->when($search, function ($query, $search) {
-                return $query->where('first_name', 'like', "%{$search}%")
+        $users = User::when($search, function ($query, $search) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
-            })
+                    ->orWhere('employee_number', 'like', "%{$search}%");
+            });
+        })
+            ->where('role', 'user')
             ->orderBy('last_name')
             ->paginate(15);
 
-        return view('hr.manage_credits.index', compact('users'));
+        return view('hr.manage_credits.index', compact('users', 'search'));
     }
 
     /**
@@ -49,194 +108,46 @@ class HRController extends Controller
      */
     public function editCredits(User $user)
     {
-        // Ensure COC type exists (with Statutoty category so it doesn't mix with Credit/Vacation leaves)
-        $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'COC Compensatory Overtime Credit'],
-            ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
-        );
+        $leaveTypes = LeaveType::where('is_active', true)->get();
+        $userCredits = LeaveCredit::where('user_id', $user->id)->get()->keyBy('leave_type_id');
 
-        $otherTypes = LeaveType::where('id', '!=', $ctoType->id)->get();
+        $ctoType = LeaveType::where('type_name', 'COC Compensatory Overtime Credit')->first();
+        $ctoBatches = [];
+        if ($ctoType) {
+            $ctoBatches = CompensatoryLeaveCredit::where('user_id', $user->id)
+                ->where('status', 'Active')
+                ->orderBy('expiration_date', 'asc')
+                ->get();
+        }
 
-        $ctoCredits = \App\Models\CompensatoryLeaveCredit::where('user_id', $user->id)
-            ->where('status', 'Active')
-            ->where('remaining_credits', '>', 0)
-            ->orderBy('expiration_date', 'asc')
-            ->get();
-
-        // Load existing credits keyed by type ID
-        $existingCredits = LeaveCredit::where('user_id', $user->id)
-            ->get()
-            ->keyBy('leave_type_id');
-
-        return view('hr.manage_credits.edit', compact('user', 'ctoType', 'otherTypes', 'existingCredits', 'ctoCredits'));
+        return view('hr.manage_credits.edit', compact('user', 'leaveTypes', 'userCredits', 'ctoBatches', 'ctoType'));
     }
 
     /**
      * Store new COC credit
      */
-    public function addCtoCredit(Request $request, User $user)
+    public function addCtoCredit(AddCtoCreditRequest $request, User $user)
     {
-        $request->validate([
-            'credit_amount' => 'required|numeric|min:0.1',
-            'expiration_date' => 'required|date|after:today',
-            'remarks' => 'nullable|string|max:255',
-        ]);
-
-        $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'COC Compensatory Overtime Credit'],
-            ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
-        );
-
-        // Check Max Limit (15)
-        // Correctly calculate current balance from active batches or LeaveCredit table
-        // But since LeaveCredit stores total, we use that.
-        $currentTotal = LeaveCredit::where('user_id', $user->id)
-            ->where('leave_type_id', $ctoType->id)
-            ->value('credits') ?? 0;
-
-        if (($currentTotal + $request->credit_amount) > 15) {
-            return back()->with('error', "Cannot add credits. Total COC would exceed the limit of 15. Current: $currentTotal");
+        try {
+            $this->creditService->addCocCredit($user, $request->validated());
+            return back()->with('success', 'COC Compensatory Overtime Credit added successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        DB::transaction(function () use ($request, $user, $ctoType, $currentTotal) {
-            // 1. Create Batch Record
-            \App\Models\CompensatoryLeaveCredit::create([
-                'user_id' => $user->id,
-                'leave_type_id' => $ctoType->id,
-                'credits' => $request->credit_amount,
-                'remaining_credits' => $request->credit_amount,
-                'expiration_date' => $request->expiration_date,
-                'remarks' => $request->remarks,
-                'status' => 'Active',
-            ]);
-
-            // 2. Update Total Balance
-            $creditRecord = LeaveCredit::firstOrNew([
-                'user_id' => $user->id,
-                'leave_type_id' => $ctoType->id
-            ]);
-            $creditRecord->credits = $currentTotal + $request->credit_amount;
-            $creditRecord->is_locked = false;
-            $creditRecord->save();
-
-            // 3. Log
-            LeaveCreditAuditLog::create([
-                'actor_id' => Auth::id(),
-                'target_user_id' => $user->id,
-                'action' => 'add_coc',
-                'leave_type_name' => 'COC Compensatory Overtime Credit',
-                'previous_value' => $currentTotal,
-                'new_value' => $creditRecord->credits,
-                'reason' => 'Added COC batch: ' . $request->credit_amount . ' expiring ' . $request->expiration_date,
-            ]);
-        });
-
-        return back()->with('success', 'COC Compensatory Overtime Credit added successfully.');
     }
 
     /**
      * Update credits (if not locked)
      */
-    public function updateCredits(Request $request, User $user)
+    public function updateCredits(UpdateCreditsRequest $request, User $user)
     {
-        // 1. Identify which types are being updated (exclude CTO which is handled separately)
-        $submittedCredits = $request->input('credits', []); // [type_id => amount]
-
-        DB::beginTransaction();
         try {
-            foreach ($submittedCredits as $typeId => $rawAmount) {
-                // Normalize input to float, default to 0.0
-                $amount = is_numeric($rawAmount) ? (float) $rawAmount : 0.0;
-
-                $type = LeaveType::find($typeId);
-                if (!$type)
-                    continue;
-
-                // Skip COC in this loop if it accidentally gets here
-                if ($type->type_name === 'COC Compensatory Overtime Credit')
-                    continue;
-
-                // Check policy limits
-                $policy = LeaveCreditPolicy::where('leave_type_id', $typeId)->first();
-                if ($policy && $policy->max_credits > 0 && $amount > $policy->max_credits) {
-                    // We can either throw an error or cap it. 
-                    // Let's cap it or fail? Failing might be better to alert user.
-                    // But to keep it simple, let's just fail this validtion.
-                    throw new \Exception("Credit amount for {$type->type_name} exceeds the maximum policy limit of {$policy->max_credits}.");
-                }
-
-                // Check existing
-                $creditRecord = LeaveCredit::firstOrNew(
-                    ['user_id' => $user->id, 'leave_type_id' => $typeId]
-                );
-
-                // If locked, skip or error
-                // Exception: Head HR can edit locked credits directly
-                $currentUser = Auth::user();
-                /** @var \App\Models\User $currentUser */
-                $isHeadHR = $currentUser->isHeadHR();
-
-                if ($creditRecord->exists && $creditRecord->is_locked && !$isHeadHR) {
-                    continue; // Skip locked records silently or handle error
-                }
-
-                $oldValue = $creditRecord->credits ?? 0;
-                // Ensure newValue is not null (default to 0.00)
-                $newValue = is_numeric($amount) ? (float) $amount : 0.0;
-
-                // Update
-                $creditRecord->credits = $newValue;
-                $creditRecord->is_locked = true; // Lock immediately after input
-                $creditRecord->save();
-
-                // Audit Log
-                LeaveCreditAuditLog::create([
-                    'actor_id' => Auth::id(),
-                    'target_user_id' => $user->id,
-                    'action' => $creditRecord->wasRecentlyCreated ? 'allocate' : 'update',
-                    'leave_type_name' => $type->type_name,
-                    'previous_value' => $oldValue,
-                    'new_value' => $newValue,
-                    'reason' => 'Initial credit allocation by HR',
-                ]);
-
-                // Also log to main System Activity Log for Super Admin visibility
-                ActivityLog::logAction(
-                    Auth::id(),
-                    'update_credits',
-                    "Updated {$type->type_name} credits for {$user->full_name} from {$oldValue} to {$newValue}." . ($isHeadHR ? " (Head HR Override)" : "")
-                );
-            }
-
-            DB::commit();
+            $this->creditService->updateUserCredits($user, $request->input('credits', []));
             return redirect()->route('hr-staff.manage-credits.edit', $user->id)
                 ->with('success', 'Credits updated successfully.');
-
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->with('error', 'Error updating credits: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Request unlock for a specific leave type credit
-     */
-    public function requestUnlock(Request $request, User $user)
-    {
-        $request->validate([
-            'leave_type_id' => 'required|exists:leave_types,id',
-            'reason' => 'required|string|max:255',
-        ]);
-
-        LeaveUpdateRequest::create([
-            'requester_id' => Auth::id(),
-            'target_user_id' => $user->id,
-            'leave_type_id' => $request->leave_type_id,
-            'reason' => $request->reason,
-            'status' => 'Pending',
-        ]);
-
-        return back()->with('success', 'Unlock request sent to Head HR.');
     }
 
     /**
@@ -263,10 +174,12 @@ class HRController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'full_name' => 'nullable|string|max:100',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,gmail,' . Auth::id(),
+            'password' => 'nullable|string|min:8|confirmed',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
-            'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);

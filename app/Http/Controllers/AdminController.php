@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -49,6 +51,9 @@ class AdminController extends Controller
      */
     private function getDashboardStats(): array
     {
+        $user = Auth::user();
+        $isSuperAdmin = $user->isSuperAdmin();
+
         // Total users
         $totalUsers = User::count();
 
@@ -68,14 +73,50 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        return [
+        $data = [
             'totalUsers' => $totalUsers,
             'activeToday' => $activeToday,
             'newRegistrations' => $newRegistrations,
             'auditTrail' => $auditTrail,
-            'user' => Auth::user(),
-            'unreadCount' => Notification::getUnreadCount(Auth::id()),
+            'user' => $user,
+            'unreadCount' => Notification::getUnreadCount($user->id),
+            'roleDistribution' => collect([]),
+            'officeDistribution' => collect([]),
+            'userGrowth' => collect([]),
+            'securityStats' => ['total_security_events' => 0, 'blocked_users' => 0, 'avg_visits' => 0]
         ];
+
+        // Superadmin specific data
+        if ($isSuperAdmin) {
+            // 1. Role Distribution
+            $data['roleDistribution'] = User::select('role as label', DB::raw('count(*) as value'))
+                ->groupBy('role')
+                ->get();
+
+            // 2. Office/Station Distribution (Top 5)
+            $data['officeDistribution'] = User::select('office_station as label', DB::raw('count(*) as value'))
+                ->whereNotNull('office_station')
+                ->groupBy('office_station')
+                ->orderBy('value', 'desc')
+                ->limit(5)
+                ->get();
+
+            // 3. User Growth (Last 6 Months)
+            $data['userGrowth'] = User::selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, count(*) as count")
+                ->where('created_at', '>=', now()->subMonths(6))
+                ->groupBy('month')
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            // 4. Security Stats
+            $data['securityStats'] = [
+                'blocked_users' => SecurityTracking::where('is_blocked', true)->count(),
+                'total_security_events' => SecurityTracking::sum('otp_requests') + SecurityTracking::sum('resends'),
+                'avg_visits' => round(SecurityTracking::avg('page_visits') ?? 0, 1)
+            ];
+        }
+
+        return $data;
     }
 
     /**

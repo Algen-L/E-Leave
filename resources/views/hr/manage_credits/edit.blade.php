@@ -572,35 +572,19 @@
                         @foreach($creditLeaves as $type)
                             @php
                                 $credit = $existingCredits->get($type->id);
-                                $dbLocked = $credit && $credit->is_locked;
-                                $isLocked = $dbLocked && !auth()->user()->isHeadHR();
                                 $currentVal = $credit ? $credit->credits : '';
                             @endphp
 
-                            <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
+                            <div class="credit-row">
                                 <div class="field-label min-w-[150px]">
                                     <span class="font-bold text-slate-700">{{ $type->type_name }}</span>
-                                    @if($isLocked)
-                                        <div class="status-badge status-locked mt-1 w-max">
-                                            <i class="fas fa-lock text-[10px]"></i> Locked
-                                        </div>
-                                    @endif
                                 </div>
 
                                 <div class="flex items-center gap-4">
                                     <div class="input-wrapper w-[110px]">
                                         <input type="number" step="0.001" min="0" name="credits[{{ $type->id }}]"
                                             value="{{ $currentVal }}" form="manageCreditsForm" class="field-input text-right"
-                                            placeholder="0.000" {{ $isLocked ? 'readonly' : '' }}>
-                                    </div>
-                                    <div class="action-area w-[30px]">
-                                        @if($isLocked)
-                                            <button type="button"
-                                                onclick="requestUnlock({{ $type->id }}, '{{ addslashes($type->type_name) }}')"
-                                                class="text-indigo-400 hover:text-indigo-600 transition-colors">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                        @endif
+                                            placeholder="0.000">
                                     </div>
                                 </div>
                             </div>
@@ -732,23 +716,16 @@
                             @foreach($statutoryLeaves as $type)
                                 @php
                                     $credit = $existingCredits->get($type->id);
-                                    $dbLocked = $credit && $credit->is_locked;
-                                    $isLocked = $dbLocked && !auth()->user()->isHeadHR();
                                     $currentVal = $credit ? $credit->credits : '';
                                     $isEventBased = in_array($type->type_name, $eventBasedLeaves);
                                 @endphp
 
-                                <div class="credit-row {{ $isLocked ? 'locked-bg' : '' }}">
+                                <div class="credit-row">
                                     <div class="field-label flex-1">
                                         <div class="font-bold text-slate-700">{{ $type->type_name }}</div>
                                         <div class="text-[10px] text-slate-400 font-medium mt-0.5 line-clamp-1 italic">
                                             {{ $type->description }}
                                         </div>
-                                        @if($isLocked)
-                                            <div class="status-badge status-locked mt-1 w-max">
-                                                <i class="fas fa-lock text-[10px]"></i> Locked
-                                            </div>
-                                        @endif
                                     </div>
 
                                     <div class="flex items-center gap-4">
@@ -763,16 +740,7 @@
                                             @else
                                                 <input type="number" step="1" min="0" name="credits[{{ $type->id }}]"
                                                     value="{{ $currentVal }}" form="manageCreditsForm"
-                                                    class="field-input h-[36px] text-right font-bold" placeholder="0" {{ $isLocked ? 'readonly' : '' }}>
-                                            @endif
-                                        </div>
-                                        <div class="action-area w-[30px] flex justify-center">
-                                            @if($isLocked)
-                                                <button type="button"
-                                                    onclick="requestUnlock({{ $type->id }}, '{{ addslashes($type->type_name) }}')"
-                                                    class="text-indigo-400 hover:text-indigo-600 transition-colors transform hover:scale-110">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
+                                                    class="field-input h-[36px] text-right font-bold" placeholder="0">
                                             @endif
                                         </div>
                                     </div>
@@ -786,60 +754,21 @@
 
         <!-- Sticky Save Button Bar -->
         <div class="flex justify-center mt-8 mb-8">
-                <button type="submit" form="manageCreditsForm"
-                    class="btn-primary px-12 py-4 text-lg font-black rounded-2xl shadow-2xl shadow-indigo-100 hover:shadow-indigo-200 transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3">
-                    <i class="fas fa-save text-2xl"></i> Save All User Credits
-                </button>
-            </div>
-
-            <!-- Modal -->
-            <div id="unlockModal" class="modal-overlay">
-                <div class="modal-box">
-                    <div class="mb-4">
-                        <h3 class="modal-title">Request Permission to Edit</h3>
-                        <p class="text-gray-500 text-sm">You need approval to modify defaults for <span id="modalTypeName"
-                                class="font-bold text-gray-800"></span>.</p>
-                    </div>
-
-                    <form action="{{ route('hr-staff.manage-credits.unlock-request', $user->id) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="leave_type_id" id="modalTypeId">
-
-                        <div class="mb-6">
-                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide">Reason for
-                                Change</label>
-                            <textarea name="reason" rows="3" class="modal-textarea"
-                                placeholder="e.g. Correction of typo, policy adjustment, reinstatement..." required></textarea>
-                        </div>
-
-                        <div class="flex justify-end gap-3">
-                            <button type="button" onclick="closeModal()" class="btn-secondary">Cancel</button>
-                            <button type="submit" class="btn-primary" style="padding: 10px 20px; font-size: 0.95rem;">Send
-                                Request</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <script>
-                function requestUnlock(id, name) {
-                    document.getElementById('modalTypeId').value = id;
-                    document.getElementById('modalTypeName').innerText = name;
-                    document.getElementById('unlockModal').classList.add('open');
-                }
-                function closeModal() {
-                    document.getElementById('unlockModal').classList.remove('open');
-                }
-
-                function toggleCocContent() {
-                    const content = document.getElementById('cocContent');
-                    const chevron = document.getElementById('cocChevron');
-                    const header = document.querySelector('.coc-header');
-
-                    content.classList.toggle('active');
-                    chevron.classList.toggle('rotate');
-                    header.classList.toggle('active-header');
-                }
-            </script>
+            <button type="submit" form="manageCreditsForm"
+                class="btn-primary px-12 py-4 text-lg font-black rounded-2xl shadow-2xl shadow-indigo-100 hover:shadow-indigo-200 transform hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3">
+                <i class="fas fa-save text-2xl"></i> Save All User Credits
+            </button>
         </div>
+        <script>
+            function toggleCocContent() {
+                const content = document.getElementById('cocContent');
+                const chevron = document.getElementById('cocChevron');
+                const header = document.querySelector('.coc-header');
+
+                content.classList.toggle('active');
+                chevron.classList.toggle('rotate');
+                header.classList.toggle('active-header');
+            }
+        </script>
+    </div>
 @endsection

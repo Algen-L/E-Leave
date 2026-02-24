@@ -116,7 +116,6 @@ Route::prefix('head-hr')->name('head-hr.')->middleware(['auth', 'role:head_hr,su
     Route::post('/leave-types', [App\Http\Controllers\HeadHRController::class, 'storeLeaveType'])->name('leave-types.store');
     Route::delete('/leave-types/{id}', [App\Http\Controllers\HeadHRController::class, 'destroyLeaveType'])->name('leave-types.destroy');
     Route::get('/audit-logs', [App\Http\Controllers\HeadHRController::class, 'auditLogs'])->name('audit-logs');
-    Route::post('/requests/{id}', [App\Http\Controllers\HeadHRController::class, 'handleRequest'])->name('requests.handle');
 });
 
 /*
@@ -130,7 +129,6 @@ Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_
     Route::get('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'editCredits'])->name('manage-credits.edit');
     Route::post('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'updateCredits'])->name('manage-credits.update');
     Route::post('/manage-credits/{user}/add-cto', [App\Http\Controllers\HRController::class, 'addCtoCredit'])->name('manage-credits.add-cto');
-    Route::post('/unlock-credits/{user}', [App\Http\Controllers\HRController::class, 'requestUnlock'])->name('manage-credits.unlock-request');
 });
 
 /*
@@ -138,8 +136,11 @@ Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_
 | HR Routes (Profile)
 |--------------------------------------------------------------------------
 */
-Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr'])->group(function () {
+Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,head_hr,super_admin'])->group(function () {
     Route::get('/dashboard', [HRController::class, 'dashboard'])->name('dashboard');
+});
+
+Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr'])->group(function () {
     Route::get('/profile', [HRController::class, 'profile'])->name('profile');
     Route::put('/profile', [HRController::class, 'updateProfile'])->name('profile.update');
 });

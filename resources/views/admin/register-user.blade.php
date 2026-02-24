@@ -69,11 +69,8 @@
                             <label class="form-label">Role <span class="required">*</span></label>
                             <select class="form-select @error('role') error @enderror" name="role" required>
                                 <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
-                                <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                                <option value="hr" {{ old('role') === 'hr' ? 'selected' : '' }}>HR</option>
-                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>Head HR</option>
-                                <option value="immediate_head" {{ old('role') === 'immediate_head' ? 'selected' : '' }}>
-                                    Immediate Head</option>
+                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL
+                                </option>
                                 @if(auth()->user()->role === 'super_admin')
                                     <optgroup label="High Level Roles">
                                         <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASDS</option>

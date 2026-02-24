@@ -326,7 +326,7 @@
                                     <select class="form-select @error('role') is-invalid @enderror" name="role" required>
                                         <option value="user" {{ old('role', $editUser->role) === 'user' ? 'selected' : '' }}>
                                             USER</option>
-                                        <option value="head_hr" {{ old('role', $editUser->role) === 'head_hr' ? 'selected' : '' }}>HUMAN RESOURCE PERSONNEL</option>
+                                        <option value="head_hr" {{ old('role', $editUser->role) === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL</option>
                                         @if(auth()->user()->role === 'super_admin')
                                             <optgroup label="High Level Roles">
                                                 <option value="asds" {{ old('role', $editUser->role) === 'asds' ? 'selected' : '' }}>ASST. SCHOOLS DIVISION SUPERINTENDENT</option>

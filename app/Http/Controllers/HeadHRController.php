@@ -6,9 +6,18 @@ use App\Models\LeaveCreditPolicy;
 use App\Models\LeaveType;
 use App\Models\LeaveCreditAuditLog;
 use Illuminate\Http\Request;
+use App\Services\CreditService;
+use App\Http\Requests\Leave\UpdatePolicyRequest;
 
 class HeadHRController extends Controller
 {
+    protected $creditService;
+
+    public function __construct(CreditService $creditService)
+    {
+        $this->creditService = $creditService;
+    }
+
     /**
      * Dashboard for Head HR.
      */
@@ -55,7 +64,6 @@ class HeadHRController extends Controller
 
         $leaveType = LeaveType::findOrFail($id);
 
-        // Define system leaves that shouldn't be deleted
         $systemLeaves = [
             'Vacation Leave',
             'Sick Leave',
@@ -76,14 +84,12 @@ class HeadHRController extends Controller
             'Wellness Leave'
         ];
 
-        // Use Str::contains to catch variations or check exact match
         $isSystem = in_array($leaveType->type_name, $systemLeaves) || \Illuminate\Support\Str::contains($leaveType->type_name, ['Mandatory', 'Forced', 'Sick Leave', 'Vacation Leave']);
 
         if ($isSystem) {
             return back()->with('error', 'Cannot delete system default leave types.');
         }
 
-        // Delete associated policies and then the leave type itself
         LeaveCreditPolicy::where('leave_type_id', $id)->delete();
         $leaveType->delete();
 
@@ -104,75 +110,68 @@ class HeadHRController extends Controller
     /**
      * Update a leave credit policy.
      */
-    public function updatePolicy(Request $request)
+    public function updatePolicy(UpdatePolicyRequest $request)
     {
-        $request->validate([
-            'leave_type_id' => 'required|exists:leave_types,id',
-            'accrual_rate' => 'required|numeric|min:0',
-            'accrual_period' => 'required|in:Monthly,Yearly,None',
-            'expiration_rule' => 'required|in:None,Yearly,Monthly,SpecificDate',
-            'expiration_date' => 'nullable|required_if:expiration_rule,SpecificDate|date',
-            'max_credits' => 'nullable|numeric|min:0',
-        ]);
-
-        LeaveCreditPolicy::updateOrCreate(
-            ['leave_type_id' => $request->leave_type_id],
-            [
-                'accrual_rate' => $request->accrual_rate,
-                'accrual_period' => $request->accrual_period,
-                'expiration_rule' => $request->expiration_rule,
-                'expiration_date' => $request->expiration_date,
-                'max_credits' => $request->max_credits,
-            ]
-        );
-
-        return back()->with('success', 'Policy updated successfully.');
-    }
-
-    /**
-     * View audit logs of HR staff actions.
-     */
-    public function auditLogs()
-    {
-        $logs = LeaveCreditAuditLog::with(['actor', 'targetUser'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
-        // Also fetch pending requests
-        $requests = \App\Models\LeaveUpdateRequest::with(['requester', 'user']) // Changed targetUser to user
-            ->where('status', 'Pending')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        return view('head_hr.audit_logs', compact('logs', 'requests'));
-    }
-
-    /**
-     * Approve or reject a request
-     */
-    public function handleRequest(Request $request, $id)
-    {
-        $status = $request->input('status'); // approved or rejected
-        $updRequest = \App\Models\LeaveUpdateRequest::findOrFail($id);
-
-        if ($status === 'approved') {
-            $updRequest->status = 'Approved';
-            $updRequest->approver_id = \Illuminate\Support\Facades\Auth::id();
-            $updRequest->save();
-
-            // Unlock the credit record
-            \App\Models\LeaveCredit::where('user_id', $updRequest->target_user_id)
-                ->where('leave_type_id', $updRequest->leave_type_id)
-                ->update(['is_locked' => false]);
-
-            return back()->with('success', 'Request approved. Credit record unlocked.');
-        } else {
-            $updRequest->status = 'Rejected';
-            $updRequest->approver_id = \Illuminate\Support\Facades\Auth::id();
-            $updRequest->save();
-
-            return back()->with('success', 'Request rejected.');
+        try {
+            $this->creditService->updatePolicy($request->validated());
+            return back()->with('success', 'Policy updated successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error updating policy: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Show audit logs
+     */
+    public function auditLogs(Request $request)
+    {
+        $filters = [
+            'search' => $request->get('search', ''),
+            'action' => $request->get('action', ''),
+            'date_range' => $request->get('date_range', ''),
+        ];
+
+        $query = LeaveCreditAuditLog::with(['actor', 'targetUser']);
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('actor', function ($q2) use ($search) {
+                    $q2->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })
+                    ->orWhereHas('targetUser', function ($q2) use ($search) {
+                        $q2->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('leave_type_name', 'like', "%{$search}%")
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhere('reason', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['action'])) {
+            $query->where('action', $filters['action']);
+        }
+
+        if (!empty($filters['date_range'])) {
+            $now = now();
+            switch ($filters['date_range']) {
+                case 'today':
+                    $query->whereDate('created_at', $now->toDateString());
+                    break;
+                case '7days':
+                    $query->where('created_at', '>=', $now->copy()->subDays(7));
+                    break;
+                case '30days':
+                    $query->where('created_at', '>=', $now->copy()->subDays(30));
+                    break;
+            }
+        }
+
+        $logs = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+
+        return view('head_hr.audit_logs', compact('logs', 'filters'));
     }
 }
 

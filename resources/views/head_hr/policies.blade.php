@@ -26,11 +26,11 @@
         /* Policy Card Styling */
         .policy-card {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             border: 1px solid #eef2f6;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.04);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -40,7 +40,7 @@
         }
 
         .policy-header {
-            padding: 20px 28px;
+            padding: 12px 20px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -269,6 +269,33 @@
             transform: scale(1);
             opacity: 1;
         }
+
+        /* Scrollable Container for Policies */
+        .policies-scroll-container {
+            max-height: 480px; /* Approximately fits 4 compact cards */
+            overflow-y: auto;
+            padding-right: 8px;
+            margin-top: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .policies-scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .policies-scroll-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .policies-scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .policies-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 @endpush
 
@@ -320,285 +347,287 @@
             </div>
         </div>
 
-        @foreach($types as $type)
-            @php 
-                        $policy = $policies->get($type->id);
-                $accrualRate = $policy->accrual_rate ?? 0;
-                $accrualPeriod = $policy->accrual_period ?? 'Monthly';
-                $expirationRule = $policy->expiration_rule ?? 'None';
-                $maxCredits = $policy->max_credits ?? '';
-                $isConfigured = $policy ? true : false;
+        <div class="policies-scroll-container">
+            @foreach($types as $type)
+                @php 
+                            $policy = $policies->get($type->id);
+                    $accrualRate = $policy->accrual_rate ?? 0;
+                    $accrualPeriod = $policy->accrual_period ?? 'Monthly';
+                    $expirationRule = $policy->expiration_rule ?? 'None';
+                    $maxCredits = $policy->max_credits ?? '';
+                    $isConfigured = $policy ? true : false;
 
-                $isMandatory = Str::contains($type->type_name, ['Mandatory', 'Forced']);
+                    $isMandatory = Str::contains($type->type_name, ['Mandatory', 'Forced']);
 
-                // Define special leave types with no configuration needed
-                $specialLeaves = [
-                    'Maternity Leave' => [
-                        'details' => '105 days per pregnancy',
-                        'reason' => 'This is a statutory benefit granted per pregnancy. It has a fixed duration and does not accrue or expire like regular leave credits.'
-                    ],
-                    'Paternity Leave' => [
-                        'details' => '7 days per childbirth',
-                        'reason' => 'This is a statutory benefit granted per childbirth of the spouse. It has a fixed limit per instance and does not require monthly accumulation rules.'
-                    ],
-                    'VAWC Leave' => [
-                        'details' => '10 days per valid case',
-                        'reason' => 'Granted to victims of violence against women and children. It is provided per instance based on legal/medical requirements rather than as an accruable pool.'
-                    ],
-                    'Rehabilitation Leave' => [
-                        'details' => 'Up to 6 months',
-                        'reason' => 'Granted based on job-related injuries or illnesses. The duration is determined by medical recommendation and approved case-by-case.'
-                    ],
-                    'Special Leave Benefits for Women' => [
-                        'details' => 'Up to 2 months',
-                        'reason' => 'Granted for gynecological surgeries. It is a one-time benefit per surgery instance and does not follow annual accrual or carry-over patterns.'
-                    ],
-                    'Terminal Leave' => [
-                        'details' => 'Based on total unused leave credits',
-                        'reason' => 'This is the monetization of all accumulated leave credits upon separation from service. Its value is derived from other credits and cannot be configured independently.'
-                    ],
-                    'Adoption Leave' => [
-                        'details' => 'Used per approved adoption',
-                        'reason' => 'A statutory benefit for adoptive parents. It is granted per adoption event and is not part of a regularly accruing credit system.'
-                    ],
-                    'Solo Parent Leave' => [
-                        'details' => '7 days per year',
-                        'reason' => 'Granted to solo parents under RA 8972. It is a fixed annual entitlement that does not accrue monthly and expires if not used within the year.'
-                    ],
-                    'Special Privilege Leave' => [
-                        'details' => '3 days per year',
-                        'reason' => 'A fixed annual entitlement for personal milestones/obligations. It does not accrue monthly and is typically non-cumulative.'
-                    ],
-                    'Calamity Leave' => [
-                        'details' => 'Up to 5 days per year',
-                        'reason' => 'Granted during declared state of calamity. It is a fixed annual entitlement tied to Specific events and does not require accrual configuration.'
-                    ],
-                    'Monetization of Leave Credits' => [
-                        'details' => 'Based on request and availability',
-                        'reason' => 'This is a financial conversion of existing credits rather than a separate leave pool.'
-                    ],
-                    'Wellness Leave' => [
-                        'details' => 'Fixed per year',
-                        'reason' => 'A fixed annual wellness benefit that doesn\'t accrue monthly.'
-                    ]
-                ];
+                    // Define special leave types with no configuration needed
+                    $specialLeaves = [
+                        'Maternity Leave' => [
+                            'details' => '105 days per pregnancy',
+                            'reason' => 'This is a statutory benefit granted per pregnancy. It has a fixed duration and does not accrue or expire like regular leave credits.'
+                        ],
+                        'Paternity Leave' => [
+                            'details' => '7 days per childbirth',
+                            'reason' => 'This is a statutory benefit granted per childbirth of the spouse. It has a fixed limit per instance and does not require monthly accumulation rules.'
+                        ],
+                        'VAWC Leave' => [
+                            'details' => '10 days per valid case',
+                            'reason' => 'Granted to victims of violence against women and children. It is provided per instance based on legal/medical requirements rather than as an accruable pool.'
+                        ],
+                        'Rehabilitation Leave' => [
+                            'details' => 'Up to 6 months',
+                            'reason' => 'Granted based on job-related injuries or illnesses. The duration is determined by medical recommendation and approved case-by-case.'
+                        ],
+                        'Special Leave Benefits for Women' => [
+                            'details' => 'Up to 2 months',
+                            'reason' => 'Granted for gynecological surgeries. It is a one-time benefit per surgery instance and does not follow annual accrual or carry-over patterns.'
+                        ],
+                        'Terminal Leave' => [
+                            'details' => 'Based on total unused leave credits',
+                            'reason' => 'This is the monetization of all accumulated leave credits upon separation from service. Its value is derived from other credits and cannot be configured independently.'
+                        ],
+                        'Adoption Leave' => [
+                            'details' => 'Used per approved adoption',
+                            'reason' => 'A statutory benefit for adoptive parents. It is granted per adoption event and is not part of a regularly accruing credit system.'
+                        ],
+                        'Solo Parent Leave' => [
+                            'details' => '7 days per year',
+                            'reason' => 'Granted to solo parents under RA 8972. It is a fixed annual entitlement that does not accrue monthly and expires if not used within the year.'
+                        ],
+                        'Special Privilege Leave' => [
+                            'details' => '3 days per year',
+                            'reason' => 'A fixed annual entitlement for personal milestones/obligations. It does not accrue monthly and is typically non-cumulative.'
+                        ],
+                        'Calamity Leave' => [
+                            'details' => 'Up to 5 days per year',
+                            'reason' => 'Granted during declared state of calamity. It is a fixed annual entitlement tied to Specific events and does not require accrual configuration.'
+                        ],
+                        'Monetization of Leave Credits' => [
+                            'details' => 'Based on request and availability',
+                            'reason' => 'This is a financial conversion of existing credits rather than a separate leave pool.'
+                        ],
+                        'Wellness Leave' => [
+                            'details' => 'Fixed per year',
+                            'reason' => 'A fixed annual wellness benefit that doesn\'t accrue monthly.'
+                        ]
+                    ];
 
-                $specialType = $specialLeaves[$type->type_name] ?? null;
-            @endphp
+                    $specialType = $specialLeaves[$type->type_name] ?? null;
+                @endphp
 
-            <div class="policy-card">
-                <div class="policy-header" onclick="togglePolicy('{{ $type->id }}')" id="header-{{ $type->id }}">
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm">
-                            <i class="fas fa-file-contract text-lg"></i>
+                <div class="policy-card">
+                    <div class="policy-header" onclick="togglePolicy('{{ $type->id }}')" id="header-{{ $type->id }}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm">
+                                <i class="fas fa-file-contract text-sm"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-base font-bold text-slate-800 tracking-tight">{{ $type->type_name }}</h3>
+                                    @if($specialType)
+                                        <span class="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-wider border border-indigo-100">
+                                            Special
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="mt-1 flex items-center gap-2">
+                                    @if($isMandatory)
+                                        <div class="status-badge badge-system py-0.5" style="font-size: 0.65rem;">
+                                            <i class="fas fa-shield-alt text-[9px]"></i> System Managed
+                                        </div>
+                                    @elseif($isConfigured)
+                                        <div class="status-badge badge-configured py-0.5" style="font-size: 0.65rem;">
+                                            <i class="fas fa-check-circle text-[9px]"></i> Configured
+                                        </div>
+                                    @else
+                                        <div class="status-badge badge-none py-0.5" style="font-size: 0.65rem;">
+                                            <i class="fas fa-circle-notch text-[9px]"></i> Not Configured
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="flex items-center gap-3">
-                                 <h3 class="text-lg font-black text-slate-800 tracking-tight">{{ $type->type_name }}</h3>
-                                 @if($specialType)
-                                    <span class="bg-indigo-50 text-indigo-600 text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-wider border border-indigo-100">
-                                        Special
-                                    </span>
-                                 @endif
-                            </div>
-                            <div class="mt-1.5 flex items-center gap-2">
-                                @if($isMandatory)
-                                    <div class="status-badge badge-system">
-                                        <i class="fas fa-shield-alt text-[10px]"></i> System Managed
-                                    </div>
-                                @elseif($isConfigured)
-                                    <div class="status-badge badge-configured">
-                                        <i class="fas fa-check-circle text-[10px]"></i> Configured
-                                    </div>
-                                @else
-                                    <div class="status-badge badge-none">
-                                        <i class="fas fa-circle-notch text-[10px]"></i> Not Configured
-                                    </div>
-                                @endif
-                            </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Click to manage</span>
+                            <i class="fas fa-chevron-down chevron text-sm" id="chevron-{{ $type->id }}"></i>
                         </div>
                     </div>
-                    <div class="flex items-center gap-6">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Click to manage</span>
-                        <i class="fas fa-chevron-down chevron text-lg" id="chevron-{{ $type->id }}"></i>
-                    </div>
-                </div>
 
-                <div class="policy-body" id="body-{{ $type->id }}">
-                    @if($isMandatory)
-                        <div class="bg-blue-50 border border-blue-100 rounded-md p-6">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-info-circle text-blue-500 mt-1"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-bold text-blue-800">System Managed Policy</h3>
-                                    <div class="mt-2 text-sm text-blue-700 space-y-2">
-                                        <p>This leave type is automatically managed by the system according to CSC rules.</p>
-                                        <ul class="list-disc pl-5 mt-3 space-y-1">
-                                            <li>Employees are required to take <strong>5 days</strong> of this leave annually.</li>
-                                            <li>These days are deducted from the employee's <strong>Vacation Leave (VL)</strong> credits.</li>
-                                            <li>If the employee does not use the full 5 days by the end of the year, the remaining days will be automatically deducted from their VL credits.</li>
-                                        </ul>
-                                        <div class="mt-4 p-3 bg-white bg-opacity-60 rounded border border-blue-100">
-                                            <p class="font-medium text-blue-900"><i class="fas fa-check-circle mr-1"></i> No manual configuration required</p>
-                                            <p class="text-xs text-blue-600 mt-1">The system handles validation and year-end processing automatically.</p>
-                                        </div>
+                    <div class="policy-body" id="body-{{ $type->id }}">
+                        @if($isMandatory)
+                            <div class="bg-blue-50 border border-blue-100 rounded-md p-6">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif($type->type_name === 'COC Compensatory Overtime Credit')
-                        <div class="bg-indigo-50 border border-indigo-100 rounded-md p-6">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas fa-clock text-indigo-500 mt-1"></i>
-                                </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-bold text-indigo-800">Manually Managed Credits</h3>
-                                    <div class="mt-2 text-sm text-indigo-700 space-y-2">
-                                        <p>This leave type is manually managed by HR. Credits are added in batches with specific expiration dates.</p>
-                                        <ul class="list-disc pl-5 mt-3 space-y-1">
-                                            <li>Credits are added manually via "Manage Credits" for each employee.</li>
-                                            <li>Each added batch has its own <strong>expiration date</strong>.</li>
-                                            <li>Maximum total credits allowed per employee is <strong>15</strong>.</li>
-                                            <li>Credits are consumed based on earliest expiration (FIFO).</li>
-                                        </ul>
-                                        <div class="mt-4 p-3 bg-white bg-opacity-60 rounded border border-indigo-100">
-                                            <p class="font-medium text-indigo-900"><i class="fas fa-check-circle mr-1"></i> Manual Input Only</p>
-                                            <p class="text-xs text-indigo-600 mt-1">No automatic accrual. Credits must be explicitly granted.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif($specialType)
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-8">
-                            <div class="flex items-start gap-6">
-                                <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 text-xl">
-                                    <i class="fas fa-info-circle"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-xl font-bold text-slate-800 mb-2">Special Leave Policy</h3>
-                                    <p class="text-slate-600 leading-relaxed mb-4">
-                                        {{ $specialType['reason'] }}
-                                    </p>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Standard Allocation</div>
-                                            <div class="text-slate-800 font-semibold">{{ $specialType['details'] }}</div>
-                                        </div>
-                                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Configuration Status</div>
-                                            <div class="text-indigo-600 font-bold flex items-center gap-2">
-                                                <i class="fas fa-check-circle"></i>
-                                                System Default (Fixed)
+                                    <div class="ml-4">
+                                        <h3 class="text-lg font-bold text-blue-800">System Managed Policy</h3>
+                                        <div class="mt-2 text-sm text-blue-700 space-y-2">
+                                            <p>This leave type is automatically managed by the system according to CSC rules.</p>
+                                            <ul class="list-disc pl-5 mt-3 space-y-1">
+                                                <li>Employees are required to take <strong>5 days</strong> of this leave annually.</li>
+                                                <li>These days are deducted from the employee's <strong>Vacation Leave (VL)</strong> credits.</li>
+                                                <li>If the employee does not use the full 5 days by the end of the year, the remaining days will be automatically deducted from their VL credits.</li>
+                                            </ul>
+                                            <div class="mt-4 p-3 bg-white bg-opacity-60 rounded border border-blue-100">
+                                                <p class="font-medium text-blue-900"><i class="fas fa-check-circle mr-1"></i> No manual configuration required</p>
+                                                <p class="text-xs text-blue-600 mt-1">The system handles validation and year-end processing automatically.</p>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div class="mt-8 pt-6 border-t border-slate-200">
-                                        <p class="text-sm text-slate-500 italic">
-                                            <i class="fas fa-shield-alt mr-1"></i> 
-                                            This leave type follows statutory requirements and does not require periodic accumulation or expiration rules.
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @else
-                        <form action="{{ route('head-hr.leave-policies.update') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="leave_type_id" value="{{ $type->id }}">
-
-                            <!-- Main Grid -->
-                            <div class="settings-grid">
-                                <!-- Left: Accrual -->
-                                <div class="setting-card">
-                                    <div class="setting-title"><i class="fas fa-chart-line text-blue-500 mr-2"></i> Accrual Settings</div>
-
-                                    <div class="input-group">
-                                        <label class="lbl">Credits to Add</label>
-                                        <div class="flex items-center gap-3">
-                                            <input type="number" step="0.01" name="accrual_rate" value="{{ $accrualRate }}" class="input-std w-short" required>
-                                            <span class="text-sm text-gray-400">credits</span>
+                        @elseif($type->type_name === 'COC Compensatory Overtime Credit')
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-md p-6">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-clock text-indigo-500 mt-1"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h3 class="text-lg font-bold text-indigo-800">Manually Managed Credits</h3>
+                                        <div class="mt-2 text-sm text-indigo-700 space-y-2">
+                                            <p>This leave type is manually managed by HR. Credits are added in batches with specific expiration dates.</p>
+                                            <ul class="list-disc pl-5 mt-3 space-y-1">
+                                                <li>Credits are added manually via "Manage Credits" for each employee.</li>
+                                                <li>Each added batch has its own <strong>expiration date</strong>.</li>
+                                                <li>Maximum total credits allowed per employee is <strong>15</strong>.</li>
+                                                <li>Credits are consumed based on earliest expiration (FIFO).</li>
+                                            </ul>
+                                            <div class="mt-4 p-3 bg-white bg-opacity-60 rounded border border-indigo-100">
+                                                <p class="font-medium text-indigo-900"><i class="fas fa-check-circle mr-1"></i> Manual Input Only</p>
+                                                <p class="text-xs text-indigo-600 mt-1">No automatic accrual. Credits must be explicitly granted.</p>
+                                            </div>
                                         </div>
-                                        <div class="help-text">Amount added per cycle.</div>
-                                    </div>
-
-                                    <div class="input-group">
-                                        <label class="lbl">Frequency</label>
-                                        <select name="accrual_period" class="input-std w-medium">
-                                            <option value="None" {{ $accrualPeriod == 'None' ? 'selected' : '' }}>None (Manual Only)</option>
-                                            <option value="Monthly" {{ $accrualPeriod == 'Monthly' ? 'selected' : '' }}>Monthly (Every 24th)</option>
-                                            <option value="Yearly" {{ $accrualPeriod == 'Yearly' ? 'selected' : '' }}>Yearly</option>
-                                        </select>
-                                        <div class="help-text">How often credits are automatically added.</div>
-                                    </div>
-                                </div>
-
-                                <!-- Right: Expiration -->
-                                <div class="setting-card">
-                                    <div class="setting-title"><i class="fas fa-hourglass-end text-orange-500 mr-2"></i> Expiration Rules</div>
-
-                                    <div class="input-group">
-                                        <label class="lbl">Expiry Type</label>
-                                        <select name="expiration_rule" class="input-std w-full" onchange="toggleDate(this, '{{ $type->id }}')">
-                                            <option value="None" {{ $expirationRule == 'None' ? 'selected' : '' }}>No Expiry</option>
-                                            <option value="Yearly" {{ $expirationRule == 'Yearly' ? 'selected' : '' }}>Yearly (Reset Jan 1)</option>
-                                            <option value="Monthly" {{ $expirationRule == 'Monthly' ? 'selected' : '' }}>End of Month</option>
-                                            <option value="SpecificDate" {{ $expirationRule == 'SpecificDate' ? 'selected' : '' }}>Specific Date</option>
-                                        </select>
-                                        <div class="help-text">When unused credits should be forfeited.</div>
-                                    </div>
-
-                                    <div id="date_wrapper_{{ $type->id }}" class="input-group {{ $expirationRule !== 'SpecificDate' ? 'hidden' : '' }}">
-                                        <label class="lbl">Expiration Date</label>
-                                        <input type="date" name="expiration_date" value="{{ $policy->expiration_date ?? '' }}" class="input-std w-medium">
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Bottom: Limits -->
-                            <div class="limit-card">
-                                <label class="lbl text-base mb-3">Maximum Accumulation Limit</label>
-                                <div class="flex flex-col items-center">
-                                    <div class="relative w-short">
-                                        <input type="number" step="0.01" name="max_credits" value="{{ $maxCredits }}" 
-                                               placeholder="∞" class="input-std text-center font-bold text-lg">
+                        @elseif($specialType)
+                            <div class="bg-slate-50 border border-slate-200 rounded-lg p-8">
+                                <div class="flex items-start gap-6">
+                                    <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0 text-xl">
+                                        <i class="fas fa-info-circle"></i>
                                     </div>
-                                    <div class="help-text mt-3 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg border border-blue-100 italic">
-                                        <i class="fas fa-info-circle mr-1"></i> Leave empty for unlimited accumulation (∞).
+                                    <div>
+                                        <h3 class="text-xl font-bold text-slate-800 mb-2">Special Leave Policy</h3>
+                                        <p class="text-slate-600 leading-relaxed mb-4">
+                                            {{ $specialType['reason'] }}
+                                        </p>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Standard Allocation</div>
+                                                <div class="text-slate-800 font-semibold">{{ $specialType['details'] }}</div>
+                                            </div>
+                                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Configuration Status</div>
+                                                <div class="text-indigo-600 font-bold flex items-center gap-2">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    System Default (Fixed)
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-8 pt-6 border-t border-slate-200">
+                                            <p class="text-sm text-slate-500 italic">
+                                                <i class="fas fa-shield-alt mr-1"></i> 
+                                                This leave type follows statutory requirements and does not require periodic accumulation or expiration rules.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Footer -->
-                            <div class="flex justify-between items-center pt-6 border-t border-slate-100 mt-6">
-                                @if(auth()->check() && auth()->user()->isSuperAdmin())
-                                    <button type="button" onclick="confirmDelete('{{ $type->id }}', '{{ addslashes($type->type_name) }}')" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-bold flex items-center gap-2 border border-red-200">
-                                        <i class="fas fa-trash-alt"></i> Delete Leave Type
-                                    </button>
-                                @else
-                                    <div></div>
-                                @endif
-                                <button type="submit" class="btn-premium">
-                                    <i class="fas fa-save"></i> Save Configuration
-                                </button>
-                            </div>
-                        </form>
-                        
-                        @if(auth()->check() && auth()->user()->isSuperAdmin())
-                            <form id="delete-form-{{ $type->id }}" action="{{ route('head-hr.leave-types.destroy', $type->id) }}" method="POST" style="display: none;">
+                        @else
+                            <form action="{{ route('head-hr.leave-policies.update') }}" method="POST">
                                 @csrf
-                                @method('DELETE')
+                                <input type="hidden" name="leave_type_id" value="{{ $type->id }}">
+
+                                <!-- Main Grid -->
+                                <div class="settings-grid">
+                                    <!-- Left: Accrual -->
+                                    <div class="setting-card">
+                                        <div class="setting-title"><i class="fas fa-chart-line text-blue-500 mr-2"></i> Accrual Settings</div>
+
+                                        <div class="input-group">
+                                            <label class="lbl">Credits to Add</label>
+                                            <div class="flex items-center gap-3">
+                                                <input type="number" step="0.01" name="accrual_rate" value="{{ $accrualRate }}" class="input-std w-short" required>
+                                                <span class="text-sm text-gray-400">credits</span>
+                                            </div>
+                                            <div class="help-text">Amount added per cycle.</div>
+                                        </div>
+
+                                        <div class="input-group">
+                                            <label class="lbl">Frequency</label>
+                                            <select name="accrual_period" class="input-std w-medium">
+                                                <option value="None" {{ $accrualPeriod == 'None' ? 'selected' : '' }}>None (Manual Only)</option>
+                                                <option value="Monthly" {{ $accrualPeriod == 'Monthly' ? 'selected' : '' }}>Monthly (Every 24th)</option>
+                                                <option value="Yearly" {{ $accrualPeriod == 'Yearly' ? 'selected' : '' }}>Yearly</option>
+                                            </select>
+                                            <div class="help-text">How often credits are automatically added.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right: Expiration -->
+                                    <div class="setting-card">
+                                        <div class="setting-title"><i class="fas fa-hourglass-end text-orange-500 mr-2"></i> Expiration Rules</div>
+
+                                        <div class="input-group">
+                                            <label class="lbl">Expiry Type</label>
+                                            <select name="expiration_rule" class="input-std w-full" onchange="toggleDate(this, '{{ $type->id }}')">
+                                                <option value="None" {{ $expirationRule == 'None' ? 'selected' : '' }}>No Expiry</option>
+                                                <option value="Yearly" {{ $expirationRule == 'Yearly' ? 'selected' : '' }}>Yearly (Reset Jan 1)</option>
+                                                <option value="Monthly" {{ $expirationRule == 'Monthly' ? 'selected' : '' }}>End of Month</option>
+                                                <option value="SpecificDate" {{ $expirationRule == 'SpecificDate' ? 'selected' : '' }}>Specific Date</option>
+                                            </select>
+                                            <div class="help-text">When unused credits should be forfeited.</div>
+                                        </div>
+
+                                        <div id="date_wrapper_{{ $type->id }}" class="input-group {{ $expirationRule !== 'SpecificDate' ? 'hidden' : '' }}">
+                                            <label class="lbl">Expiration Date</label>
+                                            <input type="date" name="expiration_date" value="{{ $policy->expiration_date ?? '' }}" class="input-std w-medium">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom: Limits -->
+                                <div class="limit-card">
+                                    <label class="lbl text-base mb-3">Maximum Accumulation Limit</label>
+                                    <div class="flex flex-col items-center">
+                                        <div class="relative w-short">
+                                            <input type="number" step="0.01" name="max_credits" value="{{ $maxCredits }}" 
+                                                placeholder="∞" class="input-std text-center font-bold text-lg">
+                                        </div>
+                                        <div class="help-text mt-3 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg border border-blue-100 italic">
+                                            <i class="fas fa-info-circle mr-1"></i> Leave empty for unlimited accumulation (∞).
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="flex justify-between items-center pt-6 border-t border-slate-100 mt-6">
+                                    @if(auth()->check() && auth()->user()->isSuperAdmin())
+                                        <button type="button" onclick="confirmDelete('{{ $type->id }}', '{{ addslashes($type->type_name) }}')" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-bold flex items-center gap-2 border border-red-200">
+                                            <i class="fas fa-trash-alt"></i> Delete Leave Type
+                                        </button>
+                                    @else
+                                        <div></div>
+                                    @endif
+                                    <button type="submit" class="btn-premium">
+                                        <i class="fas fa-save"></i> Save Configuration
+                                    </button>
+                                </div>
                             </form>
+                            
+                            @if(auth()->check() && auth()->user()->isSuperAdmin())
+                                <form id="delete-form-{{ $type->id }}" action="{{ route('head-hr.leave-types.destroy', $type->id) }}" method="POST" style="display: none;">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            @endif
                         @endif
-                    @endif
+                    </div>
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     </div>
 
     <script>
