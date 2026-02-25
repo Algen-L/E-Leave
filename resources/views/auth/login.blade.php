@@ -7,9 +7,9 @@
         .login-card {
             background: #1e293b;
             border-radius: 16px;
-            padding: 40px;
+            padding: 30px;
             width: 100%;
-            max-width: 420px;
+            max-width: 380px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
             z-index: 10;
@@ -17,23 +17,23 @@
 
         .login-logo {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .login-logo img {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
         }
 
         .login-title {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .login-title h1 {
             color: #f8fafc;
-            font-size: 1.75rem;
+            font-size: 1.4rem;
             font-weight: 700;
             font-style: italic;
             margin: 0;
@@ -42,8 +42,8 @@
         .login-subtitle {
             text-align: center;
             color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 32px;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
         }
 
         .form-label-custom {
@@ -53,7 +53,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .form-input-custom {
@@ -61,11 +61,12 @@
             background: #334155;
             border: none;
             border-radius: 8px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             color: #f8fafc;
-            font-size: 0.95rem;
-            margin-bottom: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
             transition: all 0.2s;
+            box-sizing: border-box;
         }
 
         .form-input-custom::placeholder {
@@ -83,9 +84,9 @@
             background: linear-gradient(135deg, #0f4c5c 0%, #0d9488 100%);
             border: none;
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
@@ -101,9 +102,9 @@
             display: block;
             text-align: right;
             color: #0d9488;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-decoration: none;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .forgot-link:hover {
@@ -114,7 +115,8 @@
         .register-text {
             text-align: center;
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            margin-bottom: 0px;
         }
 
         .register-text a {
@@ -128,10 +130,10 @@
         }
 
         .alert-box {
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
         }
 
         .alert-box.success {

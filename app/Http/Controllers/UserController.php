@@ -143,6 +143,9 @@ class UserController extends Controller
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $user->profile_picture));
+            }
             $file = $request->file('profile_picture');
             $fileName = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('profile_pics', $fileName, 'public');
@@ -160,6 +163,10 @@ class UserController extends Controller
                 $data = substr($base64Image, strpos($base64Image, ',') + 1);
                 $data = base64_decode($data);
 
+                if ($user->esignature) {
+                    Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+                }
+
                 $fileName = 'sign_' . $user->id . '_' . time() . '.png';
                 Storage::disk('public')->put('esignatures/' . $fileName, $data);
                 $updateData['esignature'] = 'storage/esignatures/' . $fileName;
@@ -169,6 +176,9 @@ class UserController extends Controller
 
             // Basic validation for PNG
             if (strtolower($file->getClientOriginalExtension()) === 'png') {
+                if ($user->esignature) {
+                    Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+                }
                 $fileName = 'sign_' . $user->id . '_' . time() . '.png';
                 $path = $file->storeAs('esignatures', $fileName, 'public');
                 $updateData['esignature'] = 'storage/' . $path;

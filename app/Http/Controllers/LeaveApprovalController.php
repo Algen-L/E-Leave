@@ -274,6 +274,28 @@ class LeaveApprovalController extends Controller
                 }
             }
 
+            // --- SYNC TO TODTR TABLE ---
+            // If the application has specific dates array (like a comma-separated string or json), we use that.
+            // Otherwise we use start_date to end_date.
+            $startDateStr = $application->start_date instanceof \Carbon\Carbon ? $application->start_date->format('Y-m-d') : $application->start_date;
+            $endDateStr = $application->end_date instanceof \Carbon\Carbon ? $application->end_date->format('Y-m-d') : $application->end_date;
+
+            $datesOfLeave = '';
+            if (!empty($application->dates)) {
+                $datesOfLeave = is_array($application->dates) ? implode(', ', $application->dates) : $application->dates;
+            } else {
+                $datesOfLeave = ($startDateStr == $endDateStr)
+                    ? $startDateStr
+                    : $startDateStr . ' to ' . $endDateStr;
+            }
+
+            DB::table('todtr')->insert([
+                'Name' => $user->name ?? $user->full_name,
+                'Employee_number' => $user->employee_number ?? '',
+                'DateOfLeave' => $datesOfLeave,
+                'TypeOfLeave' => $leaveType->type_name ?? 'Unknown',
+            ]);
+
             DB::commit();
             return redirect()->route('user.leave.approvals')->with('success', 'Application successfully APPROVED and credits updated.');
 

@@ -18,6 +18,7 @@ use App\Models\ActivityLog;
 use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class HRController extends Controller
 {
@@ -208,6 +209,9 @@ class HRController extends Controller
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $user->profile_picture));
+            }
             $file = $request->file('profile_picture');
             $fileName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9\._-]/', '', $file->getClientOriginalName());
             $path = $file->storeAs('profile_pics', $fileName, 'public');

@@ -10,6 +10,7 @@ body.auth-page {
     align-items: center;
     margin: 0;
     padding: 20px;
+    box-sizing: border-box;
     position: relative;
     overflow-x: hidden;
 }
@@ -99,7 +100,7 @@ body.auth-page {
     margin-bottom: 16px;
 }
 
-.form-floating > .form-control {
+.form-floating>.form-control {
     height: 56px;
     padding: 1rem 0.75rem;
     background-color: var(--input-bg-dark);
@@ -110,13 +111,13 @@ body.auth-page {
     transition: all 0.2s;
 }
 
-.form-floating > .form-control:focus {
+.form-floating>.form-control:focus {
     outline: none;
     border-color: var(--primary-blue);
     box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
 }
 
-.form-floating > label {
+.form-floating>label {
     position: absolute;
     top: 0;
     left: 0;
@@ -129,20 +130,20 @@ body.auth-page {
     color: var(--text-muted);
 }
 
-.form-floating > .form-control:focus ~ label,
-.form-floating > .form-control:not(:placeholder-shown) ~ label {
+.form-floating>.form-control:focus~label,
+.form-floating>.form-control:not(:placeholder-shown)~label {
     opacity: .65;
     transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
     background-color: var(--input-bg-dark);
     padding: 0 4px;
 }
 
-.form-floating > select.form-control {
+.form-floating>select.form-control {
     padding-top: 1.625rem;
     padding-bottom: 0.625rem;
 }
 
-.form-floating > select.form-control ~ label {
+.form-floating>select.form-control~label {
     opacity: .65;
     transform: scale(.85) translateY(-0.5rem) translateX(0.15rem);
 }
@@ -554,6 +555,7 @@ body.auth-page {
         opacity: 0;
         transform: translateX(50px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);

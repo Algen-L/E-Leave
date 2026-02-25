@@ -8,9 +8,9 @@
         .register-card {
             background: #1e293b;
             border-radius: 16px;
-            padding: 40px;
+            padding: 30px;
             width: 100%;
-            max-width: 520px;
+            max-width: 480px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             position: relative;
             z-index: 10;
@@ -18,23 +18,23 @@
 
         .register-logo {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .register-logo img {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
         }
 
         .register-title {
             text-align: center;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .register-title h1 {
             color: #0d9488;
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             font-style: italic;
             margin: 0;
@@ -43,8 +43,8 @@
         .register-subtitle {
             text-align: center;
             color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 28px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
         }
 
         .form-label-custom {
@@ -54,7 +54,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .form-input-custom {
@@ -62,11 +62,12 @@
             background: #334155;
             border: none;
             border-radius: 8px;
-            padding: 14px 16px;
+            padding: 10px 14px;
             color: #f8fafc;
-            font-size: 0.95rem;
-            margin-bottom: 16px;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
             transition: all 0.2s;
+            box-sizing: border-box;
         }
 
         .form-input-custom::placeholder {
@@ -81,7 +82,7 @@
 
         .form-row {
             display: flex;
-            gap: 16px;
+            gap: 12px;
         }
 
         .form-col {
@@ -93,13 +94,14 @@
             background: linear-gradient(135deg, #0f4c5c 0%, #0d9488 100%);
             border: none;
             border-radius: 8px;
-            padding: 14px;
+            padding: 12px;
             color: white;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            margin-top: 4px;
         }
 
         .btn-register:hover {
@@ -116,7 +118,8 @@
         .login-text {
             text-align: center;
             color: #94a3b8;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            margin-bottom: 0px;
         }
 
         .login-text a {

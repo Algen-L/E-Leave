@@ -322,12 +322,18 @@ class AdminController extends Controller
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
+            if ($user->profile_picture) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $user->profile_picture));
+            }
             $path = $request->file('profile_picture')->store('profile_pics', 'public');
             $updateData['profile_picture'] = 'storage/' . $path;
         }
 
         // Handle e-signature upload
         if ($request->hasFile('esignature')) {
+            if ($user->esignature) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+            }
             $path = $request->file('esignature')->store('esignatures', 'public');
             $updateData['esignature'] = 'storage/' . $path;
         } elseif ($request->filled('esignature_data')) {
@@ -345,6 +351,9 @@ class AdminController extends Controller
                     if ($data === false) {
                         // Base64 decode failed
                     } else {
+                        if ($user->esignature) {
+                            Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+                        }
                         $filename = 'esignature_' . time() . '.' . $type;
                         $path = 'esignatures/' . $filename;
 
