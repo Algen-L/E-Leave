@@ -73,10 +73,25 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
+        // Monthly Engagement (Active users in last 30 days / Total Users)
+        $activeLast30Days = ActivityLog::where('created_at', '>=', now()->subDays(30))
+            ->distinct('user_id')
+            ->count('user_id');
+        
+        $monthlyEngagement = $totalUsers > 0 ? round(($activeLast30Days / $totalUsers) * 100, 1) : 0;
+
+        // New registrations last month (for trend)
+        $lastMonthRegistrations = User::whereYear('created_at', now()->subMonth()->year)
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->count();
+        $registrationTrendUp = $newRegistrations >= $lastMonthRegistrations;
+
         $data = [
             'totalUsers' => $totalUsers,
             'activeToday' => $activeToday,
             'newRegistrations' => $newRegistrations,
+            'registrationTrendUp' => $registrationTrendUp,
+            'monthlyEngagement' => $monthlyEngagement,
             'auditTrail' => $auditTrail,
             'user' => $user,
             'unreadCount' => Notification::getUnreadCount($user->id),
@@ -102,11 +117,21 @@ class AdminController extends Controller
                 ->get();
 
             // 3. User Growth (Last 6 Months)
-            $data['userGrowth'] = User::selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, count(*) as count")
-                ->where('created_at', '>=', now()->subMonths(6))
-                ->groupBy('month')
-                ->orderBy('created_at', 'asc')
-                ->get();
+            $userGrowth = collect();
+            for ($i = 5; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $monthLabel = $month->format('M Y');
+                
+                $count = User::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count();
+                    
+                $userGrowth->push([
+                    'month' => $monthLabel,
+                    'count' => $count
+                ]);
+            }
+            $data['userGrowth'] = $userGrowth;
 
             // 4. Security Stats
             $data['securityStats'] = [
@@ -153,8 +178,9 @@ class AdminController extends Controller
             $query->where('office_station', $filters['office']);
         }
 
-        // Exclude current super admin from the list
-        $query->where('id', '!=', Auth::id());
+        // Exclude current user and all super admins from the list
+        $query->where('id', '!=', Auth::id())
+              ->where('role', '!=', 'super_admin');
 
         // View-based filter
         if ($view === 'active') {
@@ -176,6 +202,21 @@ class AdminController extends Controller
 
         $offices = Office::all();
 
+        $roles = [
+            'user',
+            'admin',
+            'hr',
+            'head_hr',
+            'hr_review_officer',
+            'immediate_head',
+            'asds',
+            'sds',
+            'sgod_chief',
+            'cid_chief',
+            'ao',
+            'record_personnel',
+        ];
+
         return view('admin.manage-users', [
             'view' => $view,
             'users' => $users,
@@ -183,6 +224,7 @@ class AdminController extends Controller
             'filters' => $filters,
             'user' => Auth::user(),
             'offices' => $offices,
+            'roles' => $roles,
             'unreadCount' => Notification::getUnreadCount(Auth::id()),
         ]);
     }
@@ -193,13 +235,12 @@ class AdminController extends Controller
     public function updateUser(Request $request, User $user)
     {
         $request->validate([
-            'username' => 'required|string|max:50|unique:users,username,' . $user->id,
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
             'gmail' => 'required|email|unique:users,gmail,' . $user->id,
             'position' => 'nullable|string|max:100',
-            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head,asds,sds,sgod_chief,cid_chief,ao',
+            'role' => 'required|string|in:user,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
             'office_station' => 'nullable|string|max:100',
             'is_active' => 'required|boolean',
             'password' => 'nullable|string|min:6|confirmed',
@@ -212,8 +253,12 @@ class AdminController extends Controller
             return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign this role.');
         }
 
+        // HR Review Officer Restriction: Only HR or Super Admin
+        if ($request->role === 'hr_review_officer' && !in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
+            return redirect()->back()->withInput()->with('error', 'Only HR Personnel or Super Admin can assign the HR Review Officer role.');
+        }
+
         $updateData = [
-            'username' => $request->username,
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
@@ -294,6 +339,7 @@ class AdminController extends Controller
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'password' => 'nullable|string|min:6|confirmed',
+            'current_password' => 'required_with:password',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'esignature' => 'nullable|image|mimes:png|max:1024',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
@@ -317,7 +363,21 @@ class AdminController extends Controller
         }
 
         if (!empty($request->password)) {
-            $updateData['password'] = $request->password;
+            if (!Hash::check($request->current_password, $user->password)) {
+                return redirect()->back()->with('error', 'Current password does not match.');
+            }
+            $updateData['password'] = Hash::make($request->password);
+
+            // Notify HR and Super Admins
+            $hrAndAdmins = User::whereIn('role', ['hr', 'head_hr', 'hr_review_officer', 'super_admin'])
+                ->where('is_active', true)
+                ->get();
+                
+            foreach ($hrAndAdmins as $admin) {
+                if ($admin->id !== $user->id) {
+                    Notification::send($user->id, $admin->id, "Admin {$user->full_name} has updated their account password.");
+                }
+            }
         }
 
         // Handle profile picture upload
@@ -432,16 +492,15 @@ class AdminController extends Controller
 
         // Filter by date range
         if (!empty($filters['date_range'])) {
-            $now = now();
             switch ($filters['date_range']) {
                 case 'today':
-                    $query->whereDate('created_at', $now->toDateString());
+                    $query->whereDate('created_at', Carbon::now(config('app.timezone'))->toDateString());
                     break;
                 case '7days':
-                    $query->where('created_at', '>=', $now->subDays(7));
+                    $query->where('created_at', '>=', Carbon::now(config('app.timezone'))->subDays(6)->startOfDay());
                     break;
                 case '30days':
-                    $query->where('created_at', '>=', $now->subDays(30));
+                    $query->where('created_at', '>=', Carbon::now(config('app.timezone'))->subDays(29)->startOfDay());
                     break;
             }
         }
@@ -476,8 +535,7 @@ class AdminController extends Controller
     public function storeUser(Request $request)
     {
         $request->validate([
-            'username' => 'required|string|max:50|unique:users,username',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:6|confirmed',
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
@@ -485,7 +543,7 @@ class AdminController extends Controller
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'employee_number' => 'required|string|regex:/^[0-9]{7}$/|unique:users,employee_number',
-            'role' => 'required|string|in:user,admin,hr,head_hr,immediate_head,asds,sds,sgod_chief,cid_chief,ao',
+            'role' => 'required|string|in:user,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
         ]);
 
         // Authorization check for restricted roles
@@ -494,8 +552,15 @@ class AdminController extends Controller
             return redirect()->back()->withInput()->with('error', 'Only Super Admin can create accounts with this role.');
         }
 
+        // HR Review Officer Restriction: Only HR or Super Admin
+        if ($request->role === 'hr_review_officer' && !in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
+            return redirect()->back()->withInput()->with('error', 'Only HR Personnel or Super Admin can assign the HR Review Officer role.');
+        }
+
+        $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->first_name)) . mt_rand(1000, 9999);
+
         $user = User::create([
-            'username' => $request->username,
+            'username' => $username,
             'password' => $request->password,
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -510,6 +575,15 @@ class AdminController extends Controller
         ]);
 
         ActivityLog::logAction(Auth::id(), 'Created User', "User ID: {$user->id} - {$user->full_name}");
+
+        // Notify HR Personnel if created by an HR Review Officer
+        if (Auth::user()->role === 'hr_review_officer') {
+            $hrStaff = User::whereIn('role', ['hr', 'head_hr'])->where('is_active', true)->get();
+            foreach ($hrStaff as $hr) {
+                Notification::send(Auth::id(), $hr->id, "HR Review Officer " . Auth::user()->full_name . " has registered a new user: " . $user->full_name);
+            }
+        }
+
 
         return redirect()->route('admin.manage-users')->with('success', 'User created successfully!');
     }

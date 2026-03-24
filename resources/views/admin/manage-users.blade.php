@@ -4,12 +4,71 @@
 @section('page-title', 'Manage Users')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/manage-users.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/manage-users.css') }}?v={{ time() }}">
+    <style>
+        .manage-users-premium {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* Sequential Entrance for Top Elements */
+        .management-tabs, .filter-bar-card, .table-header {
+            opacity: 0;
+            animation: fadeInDown 0.6s ease-out forwards;
+        }
+
+        .management-tabs { animation-delay: 0.1s; }
+        .filter-bar-card { animation-delay: 0.2s; }
+        .table-header { animation-delay: 0.3s; }
+
+        /* Sequential card animation */
+        .user-list .user-card {
+            opacity: 0;
+            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @foreach(range(1, 25) as $i)
+            .user-list .user-card:nth-child({{ $i }}) {
+                animation-delay: {{ 0.35 + ($i * 0.05) }}s;
+            }
+        @endforeach
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes backInDown {
+            0% {
+                transform: translateY(-100px) scale(0.7);
+                opacity: 0;
+            }
+            80% {
+                transform: translateY(0px) scale(0.7);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 @endpush
 
 @section('content')
-    <!-- Tabs -->
-    <div class="management-tabs">
+    <div class="manage-users-premium">
+        <!-- Tabs -->
+        <div class="management-tabs">
         <a href="{{ route('admin.manage-users', ['view' => 'active']) }}"
             class="tab-item {{ $view === 'active' ? 'active' : '' }}">
             <i class="fas fa-user-check"></i>
@@ -35,14 +94,21 @@
 
             <div class="search-wrapper">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" name="search" placeholder="Search by name, username, email..."
+                <input type="text" class="search-input" name="search" placeholder="Search by name, email, employee id..."
                     value="{{ $filters['search'] }}">
             </div>
 
             <select class="filter-select" name="filter_role">
                 <option value="">All Roles</option>
-                <option value="user" {{ $filters['role'] === 'user' ? 'selected' : '' }}>User</option>
-                <option value="head_hr" {{ $filters['role'] === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role }}" {{ $filters['role'] === $role ? 'selected' : '' }}>
+                        @if($role === 'head_hr')
+                            HR PERSONNEL
+                        @else
+                            {{ ucfirst(str_replace('_', ' ', $role)) }}
+                        @endif
+                    </option>
+                @endforeach
             </select>
 
             <select class="filter-select" name="filter_office">
@@ -63,7 +129,6 @@
     <!-- Table Header -->
     <div class="table-header">
         <span>User</span>
-        <span>Username</span>
         <span>Role</span>
         <span>Office</span>
         <span>Status</span>
@@ -88,10 +153,7 @@
                     </div>
                 </div>
 
-                <div>
-                    <span class="user-meta-label">Username</span>
-                    <span class="user-meta-value">{{ $u->username }}</span>
-                </div>
+
 
                 <div>
                     <span class="user-meta-label">Role</span>
@@ -102,7 +164,9 @@
 
                 <div>
                     <span class="user-meta-label">Office</span>
-                    <span class="user-meta-value">{{ $u->office_station ?: '-' }}</span>
+                    <span class="user-meta-value office-{{ str($u->office_station)->slug() }}">
+                        {{ $u->office_station ?: '-' }}
+                    </span>
                 </div>
 
                 <div>
@@ -147,4 +211,5 @@
             </div>
         @endforelse
     </div>
+</div>
 @endsection

@@ -97,7 +97,7 @@ class HRController extends Controller
                     ->orWhere('employee_number', 'like', "%{$search}%");
             });
         })
-            ->where('role', 'user')
+            ->whereIn('role', ['user', 'immediate_head', 'asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'])
             ->orderBy('last_name')
             ->paginate(15);
 
@@ -110,18 +110,18 @@ class HRController extends Controller
     public function editCredits(User $user)
     {
         $leaveTypes = LeaveType::where('is_active', true)->get();
-        $userCredits = LeaveCredit::where('user_id', $user->id)->get()->keyBy('leave_type_id');
+        $existingCredits = LeaveCredit::where('user_id', $user->id)->get()->keyBy('leave_type_id');
 
         $ctoType = LeaveType::where('type_name', 'COC Compensatory Overtime Credit')->first();
-        $ctoBatches = [];
+        $ctoCredits = collect();
         if ($ctoType) {
-            $ctoBatches = CompensatoryLeaveCredit::where('user_id', $user->id)
+            $ctoCredits = CompensatoryLeaveCredit::where('user_id', $user->id)
                 ->where('status', 'Active')
                 ->orderBy('expiration_date', 'asc')
                 ->get();
         }
 
-        return view('hr.manage_credits.edit', compact('user', 'leaveTypes', 'userCredits', 'ctoBatches', 'ctoType'));
+        return view('hr.manage_credits.edit', compact('user', 'leaveTypes', 'existingCredits', 'ctoCredits', 'ctoType'));
     }
 
     /**
@@ -175,10 +175,9 @@ class HRController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,gmail,' . Auth::id(),
-            'password' => 'nullable|string|min:8|confirmed',
+            'full_name' => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:6|confirmed',
+            'current_password' => 'required_with:password',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -204,7 +203,21 @@ class HRController extends Controller
 
         // Handle password change
         if (!empty($request->password)) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return redirect()->back()->with('error', 'Current password does not match.');
+            }
             $updateData['password'] = Hash::make($request->password);
+            
+            // Notify Super Admin and other HR
+            $hrAndAdmins = User::whereIn('role', ['hr', 'head_hr', 'hr_review_officer', 'super_admin'])
+                ->where('is_active', true)
+                ->get();
+                
+            foreach ($hrAndAdmins as $admin) {
+                if ($admin->id !== $user->id) {
+                    Notification::send($user->id, $admin->id, "HR Personnel {$user->full_name} has updated their account password.");
+                }
+            }
         }
 
         // Handle profile picture upload

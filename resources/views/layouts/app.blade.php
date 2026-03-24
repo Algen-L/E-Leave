@@ -50,11 +50,14 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t mt-auto">
-        <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-500 text-sm">
-                &copy; {{ date('Y') }} Inventory System. All rights reserved.
-            </p>
+    <footer class="bg-white border-t mt-auto py-4 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col justify-center items-center gap-1 text-gray-500 text-sm">
+            <div class="flex items-center gap-2">
+                <span>&copy; {{ date('Y') }} SDO System. All rights reserved.</span>
+            </div>
+            <div class="text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                Developed by: Algen D. Loveres & Cedrick V. Bacaresas
+            </div>
         </div>
     </footer>
 </body>

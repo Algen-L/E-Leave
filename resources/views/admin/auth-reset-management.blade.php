@@ -4,7 +4,70 @@
 @section('page-title', 'Authentication Reset Management')
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('css/auth-reset-management.css') }}">
+<link rel="stylesheet" href="{{ asset('css/auth-reset-management.css') }}?v={{ time() }}">
+<style>
+    .stats-row .stat-card {
+        opacity: 0;
+        animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .stats-row .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stats-row .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stats-row .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stats-row .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .filter-bar-card {
+        opacity: 0;
+        animation: fadeInDown 0.6s ease-out 0.5s forwards;
+    }
+
+    .dashboard-card {
+        opacity: 0;
+        animation: fadeIn 0.8s ease-out 0.6s forwards;
+    }
+
+    .rate-limits-table tbody tr {
+        opacity: 0;
+        animation: backInDown 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @foreach(range(1, 20) as $i)
+        .rate-limits-table tbody tr:nth-child({{ $i }}) {
+            animation-delay: {{ 0.7 + ($i * 0.05) }}s;
+        }
+    @endforeach
+
+    @keyframes backInDown {
+        0% {
+            transform: translateY(-100px) scale(0.7);
+            opacity: 0;
+        }
+        80% {
+            transform: translateY(0px) scale(0.7);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 @endpush
 
 @section('content')

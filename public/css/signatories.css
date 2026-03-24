@@ -1,0 +1,308 @@
+/* Signatories Management Styles */
+:root {
+    --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.08);
+    --soft-blue: #0f4c75;
+    --soft-blue-bg: #e0f2fe;
+}
+
+.signatories-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding-bottom: 20px;
+}
+
+/* Page Intro */
+.page-intro {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--card-shadow);
+}
+
+.page-intro p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Grid Layout */
+.signatories-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* Signatory Card */
+.sig-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.sig-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: #cbd5e1;
+}
+
+.sig-card-header {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Header Background Color Variations */
+.sig-card-header.header-cid {
+    background: #0284c7; /* Vibrant Light Blue */
+    border-bottom-color: #0369a1;
+}
+.sig-card-header.header-cid .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-cid .sig-active-status { color: #e0f2fe; }
+.sig-card-header.header-cid .sig-role-icon { color: #0284c7; background: #ffffff; }
+
+.sig-card-header.header-sgod {
+    background: #10b981; /* Vibrant Mint Green */
+    border-bottom-color: #059669;
+}
+.sig-card-header.header-sgod .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-sgod .sig-active-status { color: #d1fae5; }
+.sig-card-header.header-sgod .sig-role-icon { color: #10b981; background: #ffffff; }
+
+.sig-card-header.header-ao {
+    background: #f59e0b; /* Vibrant Amber */
+    border-bottom-color: #d97706;
+}
+.sig-card-header.header-ao .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-ao .sig-active-status { color: #fef3c7; }
+.sig-card-header.header-ao .sig-role-icon { color: #f59e0b; background: #ffffff; }
+
+.sig-card-header.header-asds {
+    background: #8b5cf6; /* Vibrant Purple */
+    border-bottom-color: #7c3aed;
+}
+.sig-card-header.header-asds .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-asds .sig-active-status { color: #ede9fe; }
+.sig-card-header.header-asds .sig-role-icon { color: #8b5cf6; background: #ffffff; }
+
+.sig-card-header.header-sds {
+    background: #ef4444; /* Vibrant Red */
+    border-bottom-color: #dc2626;
+}
+.sig-card-header.header-sds .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-sds .sig-active-status { color: #fee2e2; }
+.sig-card-header.header-sds .sig-role-icon { color: #ef4444; background: #ffffff; }
+
+.sig-card-header.header-verifier {
+    background: #6366f1; /* Vibrant Indigo */
+    border-bottom-color: #4f46e5;
+}
+.sig-card-header.header-verifier .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-verifier .sig-active-status { color: #e0e7ff; }
+.sig-card-header.header-verifier .sig-role-icon { color: #6366f1; background: #ffffff; }
+
+/* Default / General Role Header */
+.sig-card-header.header-default {
+    background: #64748b; /* Vibrant Slate */
+    border-bottom-color: #475569;
+}
+.sig-card-header.header-default .sig-role-badge { background: transparent; color: #ffffff; }
+.sig-card-header.header-default .sig-active-status { color: #f1f5f9; }
+.sig-card-header.header-default .sig-role-icon { color: #64748b; background: #ffffff; }
+
+.sig-role-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sig-role-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--soft-blue);
+    font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sig-active-status {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #059669;
+    /* Darker emerald for better readability */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sig-card-body {
+    padding: 10px 16px;
+}
+
+/* Form Controls */
+.sig-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sig-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.field-input {
+    height: 40px;
+    padding: 0 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #334155;
+    background: white;
+    transition: all 0.2s;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--soft-blue);
+    box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
+}
+
+/* Action Bar */
+.action-bar {
+    margin-top: 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--card-shadow);
+}
+
+.action-bar-content {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.btn-save-fixed {
+    height: 44px;
+    padding: 0 30px;
+    background: var(--soft-blue);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(15, 76, 117, 0.2);
+}
+
+.btn-save-fixed:hover {
+    background: #1b6ca8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(15, 76, 117, 0.3);
+}
+
+/* Role Specific Colors */
+.role-badge-cid {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.role-badge-sgod {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.role-badge-ao {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.role-badge-asds {
+    background: #ede9fe;
+    color: #6d28d9;
+}
+
+.role-badge-sds {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* Default / General Badge */
+.role-badge-default {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.role-badge-verifier {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+/* Responsive */
+/* Responsive Design for 3x2 Grid Downscaling */
+@media (max-width: 1024px) {
+    .signatories-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .signatories-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .action-bar {
+        padding: 12px 20px;
+    }
+
+    .status-indicator span {
+        display: none;
+    }
+}

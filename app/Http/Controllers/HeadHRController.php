@@ -169,9 +169,16 @@ class HeadHRController extends Controller
             }
         }
 
+        $stats = [
+            'total' => LeaveCreditAuditLog::count(),
+            'allocate' => LeaveCreditAuditLog::where('action', 'allocate')->count(),
+            'deduct' => LeaveCreditAuditLog::where('action', 'deduct')->count(),
+            'update' => LeaveCreditAuditLog::where('action', 'update')->count(),
+        ];
+
         $logs = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
-        return view('head_hr.audit_logs', compact('logs', 'filters'));
+        return view('head_hr.audit_logs', compact('logs', 'filters', 'stats'));
     }
 }
 

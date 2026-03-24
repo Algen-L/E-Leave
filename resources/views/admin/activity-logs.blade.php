@@ -4,7 +4,49 @@
 @section('page-title', 'Activity Logs')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/activity-logs.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/activity-logs.css') }}?v={{ time() }}">
+    <style>
+        .premium-filter-container {
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .activity-feed .activity-item {
+            opacity: 0;
+            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @foreach(range(1, 20) as $i)
+            .activity-feed .activity-item:nth-child({{ $i }}) {
+                animation-delay: {{ $i * 0.05 }}s;
+            }
+        @endforeach
+
+        @keyframes backInDown {
+            0% {
+                transform: translateY(-100px) scale(0.7);
+                opacity: 0;
+            }
+            80% {
+                transform: translateY(0px) scale(0.7);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 @endpush
 
 @section('content')

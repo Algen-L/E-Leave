@@ -16,6 +16,7 @@ class ResetPasswordRequest extends FormRequest
         $rules = [
             'email' => 'required|email',
             'token' => 'required|string|size:6',
+            'verify_only' => 'sometimes|boolean',
         ];
 
         if (!$this->boolean('verify_only', false)) {

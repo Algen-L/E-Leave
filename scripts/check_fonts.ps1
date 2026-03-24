@@ -1,1 +1,0 @@
-Get-ChildItem -Path "C:\Windows\Fonts" | Select-Object Name

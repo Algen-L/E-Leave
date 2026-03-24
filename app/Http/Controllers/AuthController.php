@@ -182,6 +182,8 @@ class AuthController extends Controller
             case 'head_hr':
             case 'hr':
                 return redirect()->route('hr.dashboard');
+            case 'record_personnel':
+                return redirect()->route('records.dashboard');
             default:
                 return redirect()->route('user.home');
         }

@@ -4,748 +4,546 @@
 @section('page-title', 'Review Application')
 
 @push('styles')
-    <style>
-        /* Ensure modal shows as overlay */
-        #rejectModal {
-            display: none;
-            /* Default hidden */
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background-color: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        /* When active (not hidden) */
-        #rejectModal:not(.hidden) {
-            display: flex !important;
-        }
-
-        /* Modal Content */
-        #rejectModal>div {
-            background: white;
-            width: 100%;
-            max-width: 500px;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            position: relative;
-            z-index: 10000;
-            animation: modal-enter 0.2s ease-out;
-        }
-
-        @keyframes modal-enter {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* PAGE LAYOUT GRID */
-        .page-layout {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 24px;
-            align-items: start;
-            margin-top: 20px;
-        }
-
-        @media(max-width: 1024px) {
-            .page-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* DOCUMENT CARD (LEFT) */
-        .document-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            min-height: auto;
-            padding: 24px;
-            position: relative;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-        }
-
-        /* Paper effect */
-        .paper-view {
-            max-width: 100%;
-            margin: 0 auto;
-            background: #fff;
-        }
-
-        /* SIDEBAR CARDS (RIGHT) */
-        .sidebar-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 24px;
-            margin-bottom: 24px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .sidebar-header {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #1e293b;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        /* STEPPER (VERTICAL) */
-        .v-stepper {
-            position: relative;
-            border-left: 2px solid #e2e8f0;
-            margin-left: 10px;
-            padding-left: 20px;
-            padding-bottom: 10px;
-        }
-
-        .v-step {
-            position: relative;
-            margin-bottom: 24px;
-        }
-
-        .v-step:last-child {
-            margin-bottom: 0;
-        }
-
-        .v-step-marker {
-            position: absolute;
-            left: -27px;
-            /* Adjust based on border/padding */
-            top: 0;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: #cbd5e1;
-            border: 2px solid #fff;
-            box-shadow: 0 0 0 1px #cbd5e1;
-        }
-
-        .v-step.active .v-step-marker {
-            background: #3b82f6;
-            box-shadow: 0 0 0 1px #3b82f6;
-        }
-
-        .v-step.completed .v-step-marker {
-            background: #22c55e;
-            box-shadow: 0 0 0 1px #22c55e;
-        }
-
-        .v-step.rejected .v-step-marker {
-            background: #ef4444;
-            box-shadow: 0 0 0 1px #ef4444;
-        }
-
-        .v-step-content {}
-
-        .v-step-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #334155;
-        }
-
-        .v-step-desc {
-            font-size: 0.8rem;
-            color: #64748b;
-            margin-top: 2px;
-        }
-
-        /* STATUS BADGE */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 16px;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
-        .status-pending {
-            background: #fff7ed;
-            color: #c2410c;
-        }
-
-        .status-approved {
-            background: #f0fdf4;
-            color: #15803d;
-        }
-
-        .status-rejected {
-            background: #fef2f2;
-            color: #b91c1c;
-        }
-
-        /* DOCUMENT STYLING */
-        .doc-header {
-            text-align: center;
-            border-bottom: 2px solid #1e293b;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-
-        .doc-title {
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 1.25rem;
-            color: #0f172a;
-        }
-
-        .doc-subtitle {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-top: 4px;
-        }
-
-        .doc-section {
-            margin-bottom: 30px;
-        }
-
-        .doc-section-title {
-            background: #f1f5f9;
-            padding: 8px 12px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            color: #475569;
-            margin-bottom: 12px;
-            border-left: 4px solid #3b82f6;
-        }
-
-        .doc-row {
-            display: flex;
-            margin-bottom: 12px;
-            border-bottom: 1px dotted #e2e8f0;
-            padding-bottom: 4px;
-        }
-
-        .doc-label {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #64748b;
-            width: 180px;
-            flex-shrink: 0;
-        }
-
-        .doc-label-short {
-            width: 100px;
-        }
-
-        .doc-value {
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: #1e293b;
-            flex-grow: 1;
-        }
-
-        /* CREDIT ANALYSIS STYLES */
-        .credit-summary-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            padding: 4px 0;
-            border-bottom: 1px dashed #e2e8f0;
-        }
-
-        .credit-summary-row:last-child {
-            border-bottom: none;
-        }
-
-        .credit-val {
-            font-family: monospace;
-            font-weight: 600;
-        }
-
-        .text-negative {
-            color: #dc2626;
-        }
-
-        .bg-warning-light {
-            background-color: #fff1f2;
-            border: 1px solid #fecaca;
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/review-leave.css') }}?v={{ time() }}">
 @endpush
 
 @section('content')
+    @php
+        $startDate = \Carbon\Carbon::parse($application->start_date);
+        $endDate = \Carbon\Carbon::parse($application->end_date);
+        $applicationDates = [];
+        if (!empty($application->dates)) {
+            $applicationDates = is_array($application->dates) ? $application->dates : explode(',', $application->dates);
+        } else {
+            $current = $startDate->copy();
+            while ($current <= $endDate) {
+                $applicationDates[] = $current->format('Y-m-d');
+                $current->addDay();
+            }
+        }
+    @endphp
 
-    <!-- --- HEADER --- -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('user.leave.approvals') }}" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <h1 class="text-2xl font-bold text-gray-900">Review Application</h1>
+    <div class="page-header-modular animate__animated animate__fadeInDown">
+        <div class="header-centered-content">
+            <a href="{{ route('user.leave.approvals') }}" class="back-btn-premium-abs">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+
+            <div class="header-identity text-center">
+                <span class="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-slate-400 mb-1 block">CS Form No. 6 (Revised 2020)</span>
+                <h1 class="page-title-premium-centered">Application for Leave</h1>
+                <p class="text-[0.65rem] font-bold text-slate-500 tracking-tight">Department of Education - Schools Division Office</p>
             </div>
-            <p class="text-sm text-gray-500 ml-7">Applicant: <span
-                    class="font-semibold">{{ $application->user->full_name }}</span></p>
-        </div>
 
-        <div class="flex items-center gap-3">
-            @php
-                $badgeClass = 'status-pending';
-                if (stripos($application->status, 'approve') !== false && stripos($application->status, 'pending') === false)
-                    $badgeClass = 'status-approved';
-                if (stripos($application->status, 'reject') !== false || stripos($application->status, 'disapprove') !== false)
-                    $badgeClass = 'status-rejected';
-            @endphp
-            <span class="status-badge {{ $badgeClass }}">
-                <i class="fas fa-circle text-[0.6rem] mr-2"></i> {{ $application->status }}
-            </span>
+            <div class="header-bottom-row mt-6">
+                <div class="header-metadata-compact">
+                    <div class="meta-capsule-compact">
+                        <i class="fas fa-fingerprint text-blue-500"></i>
+                        <span>#{{ str_pad($application->id, 5, '0', STR_PAD_LEFT) }}</span>
+                    </div>
+                    <div class="meta-capsule-compact">
+                        <i class="far fa-calendar-check text-slate-400"></i>
+                        <span>{{ $application->created_at->format('M d, Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="header-actions-compact">
+                    <a href="{{ route('user.leave.form6', ['id' => $application->id, 'format' => 'pdf']) }}" target="_blank" class="btn-action-mini">
+                        <i class="fas fa-file-pdf text-red-500"></i>
+                        <span>PREVIEW FORM 6</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="page-layout">
 
-        <!-- --- LEFT: DOCUMENT VIEW --- -->
-        <div class="document-card">
-            <div class="paper-view">
-                <!-- Header -->
-                <div class="doc-header">
-                    <div class="flex justify-between items-start mb-4">
-                        <img src="{{ asset('assets/images/deped_logo.png') }}" class="h-16 w-auto" alt="Logo"
-                            onerror="this.style.display='none'">
-                        <div class="text-right text-xs text-gray-500">
-                            <div class="font-bold">CS Form No. 6</div>
-                            <div>Revised 2020</div>
+        <!-- --- LEFT: DOCUMENT VIEW (MODULAR) --- -->
+        <div class="flex flex-col gap-6">
+            
+            <!-- CS Form Header Info (Standalone Card) -->
+            <div class="review-section animate__animated animate__backInUp" style="animation-delay: 0.1s;">
+                <div class="review-card-body">
+                    <div class="doc-header-box">
+                        <div class="flex justify-center items-center mb-0">
+                            <img src="{{ asset('assets/images/deped_logo.png') }}" class="h-14 w-auto grayscale opacity-40 hover:opacity-100 transition-all duration-500" alt="Logo" onerror="this.style.display='none'">
                         </div>
-                    </div>
-                    <div class="doc-title">Application for Leave</div>
-                    <div class="doc-subtitle">Department of Education - Schools Division Office</div>
-                </div>
 
-                <!-- 1. Office/Agency -->
-                <div class="doc-section">
-                    <div class="doc-row">
-                        <span class="doc-label">Office/Department:</span>
-                        <span class="doc-value">DepEd SDO - {{ $application->user->office->name ?? 'N/A' }}</span>
-                    </div>
-                    <div class="doc-row">
-                        <span class="doc-label">Name:</span>
-                        <span class="doc-value uppercase">{{ $application->user->last_name }},
-                            {{ $application->user->first_name }}
-                            {{ substr($application->user->middle_name ?? '', 0, 1) }}.</span>
-                    </div>
-                    <div class="doc-row">
-                        <span class="doc-label">Date of Filing:</span>
-                        <span class="doc-value">{{ $application->date_filing->format('F d, Y') }}</span>
-                    </div>
-                    <div class="doc-row">
-                        <span class="doc-label">Position:</span>
-                        <span class="doc-value">{{ $application->user->position }}</span>
-                    </div>
-                </div>
+                        @php
+                            $currentStatus = strtolower($application->status);
+                            $isRejected = str_contains($currentStatus, 'reject') || str_contains($currentStatus, 'disapprove');
+                            $s1 = $application->hr_verified_at ? 'completed' : 'active';
+                            $recoComplete = $application->recommended_at;
+                            $s2 = $recoComplete ? 'completed' : ($application->hr_verified_at ? 'active' : '');
+                            $s3 = $application->approved_at ? 'completed' : ($recoComplete ? 'active' : '');
+                            if ($isRejected) {
+                                if (!$application->hr_verified_at) $s1 = 'rejected';
+                                else if (!$recoComplete) $s2 = 'rejected';
+                                else $s3 = 'rejected';
+                            }
+                        @endphp
 
-                <!-- 2. Details of Application -->
-                <div class="doc-section">
-                    <div class="doc-section-title">6.A Type of Leave to be Availed Of</div>
-                    <div class="pl-4">
-                        <div class="text-lg font-bold text-gray-800 mb-2">
-                            <i class="fas fa-check-square mr-2 text-blue-600"></i> {{ $application->leaveType->type_name }}
-                        </div>
-                        @if($application->details && $application->details->other_purpose)
-                            <div class="text-sm text-gray-600 italic pl-6">
-                                Specify: {{ $application->details->other_purpose }}
+                        <div class="header-workflow-belt mt-12 mb-4 animate__animated animate__fadeInUp">
+                            <div class="h-connector"></div>
+                            <div class="h-step completed">
+                                <div class="h-marker"><i class="fas fa-check"></i></div>
+                                <div class="h-step-label">Application Filed</div>
+                                <div class="h-step-sub">{{ $application->created_at->format('M d, Y') }}</div>
                             </div>
-                        @endif
+                            <div class="h-step {{ $s1 }}">
+                                <div class="h-marker"><i class="fas fa-check"></i></div>
+                                <div class="h-step-label">HR Verification</div>
+                                <div class="h-step-sub">
+                                    {{ $application->hr_verified_at ? $application->hr_verified_at->format('M d, Y') : ($s1 == 'active' ? 'Under Review' : 'Upcoming') }}
+                                </div>
+                            </div>
+                            <div class="h-step {{ $s2 }}">
+                                <div class="h-marker"><i class="fas fa-check"></i></div>
+                                <div class="h-step-label">Recommendation</div>
+                                <div class="h-step-sub">
+                                    {{ $application->recommended_at ? $application->recommended_at->format('M d, Y') : ($s2 == 'active' ? 'Under Review' : 'Upcoming') }}
+                                </div>
+                            </div>
+                            <div class="h-step {{ $s3 }}">
+                                <div class="h-marker"><i class="fas fa-check"></i></div>
+                                <div class="h-step-label">Final Approval</div>
+                                <div class="h-step-sub">
+                                    {{ $application->approved_at ? $application->approved_at->format('M d, Y') : ($s3 == 'active' ? 'Under Review' : 'Upcoming') }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Group: Applicant Info & Leave Type (Side by Side) -->
+            <div class="review-grid-two-col">
+                <!-- 1. Office & Personal Details -->
+                <div class="review-section animate__animated animate__backInUp" style="animation-delay: 0.2s; margin-bottom: 0;">
+                    <div class="review-card-header">
+                        <div class="review-card-icon"><i class="fas fa-user-tie"></i></div>
+                        <h3>Applicant Information</h3>
+                    </div>
+                    <div class="review-card-body">
+                        <div class="doc-info-row">
+                            <span class="doc-info-label">Office:</span>
+                            <span class="doc-info-value">DepEd SDO - {{ $application->user->office->name ?? 'N/A' }}</span>
+                        </div>
+                        <div class="doc-info-row">
+                            <span class="doc-info-label">Filing:</span>
+                            <span class="doc-info-value">{{ $application->date_filing->format('M d, Y') }}</span>
+                        </div>
+                        <div class="doc-info-row">
+                            <span class="doc-info-label">Name:</span>
+                            <span class="doc-info-value uppercase">{{ $application->user->last_name }}, {{ $application->user->first_name }}</span>
+                        </div>
+                        <div class="doc-info-row border-none">
+                            <span class="doc-info-label">Position:</span>
+                            <span class="doc-info-value">{{ $application->user->position }}</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="doc-section">
-                    <div class="doc-section-title">6.B Details of Leave</div>
-                    <div class="pl-4 text-sm">
+                <!-- 2. Type & Details of Leave -->
+                <div class="review-section animate__animated animate__backInUp" style="animation-delay: 0.3s; margin-bottom: 0;">
+                    <div class="review-card-header">
+                        <div class="review-card-icon"><i class="fas fa-file-signature"></i></div>
+                        <h3>Leave Type & Details</h3>
+                    </div>
+                    <div class="review-card-body">
+                        <div class="sub-section-label-premium">6.A Type of Leave to be Availed Of</div>
+                        <div class="leave-type-display-premium" style="margin-bottom: 0;">
+                             @php
+                                $typeIcon = 'fa-file-alt';
+                                $tn = $application->leaveType->type_name;
+                                if (str_contains($tn, 'Vacation')) $typeIcon = 'fa-plane';
+                                elseif (str_contains($tn, 'Sick')) $typeIcon = 'fa-notes-medical';
+                                elseif (str_contains($tn, 'Maternity') || str_contains($tn, 'Paternity')) $typeIcon = 'fa-baby';
+                                elseif (str_contains($tn, 'Wellness')) $typeIcon = 'fa-spa';
+                             @endphp
+                             <div class="leave-type-icon-box">
+                                <i class="fas {{ $typeIcon }}"></i>
+                             </div>
+                             <div class="flex flex-col">
+                                 <span class="leave-type-name-premium text-slate-800">{{ $tn }}</span>
+                                 @if($application->details && $application->details->other_purpose)
+                                    <div class="mt-1 text-slate-500 font-medium text-xs">
+                                        <span class="text-slate-400 mr-1 uppercase text-[0.6rem] font-black">Purpose:</span>
+                                        {{ $application->details->other_purpose }}
+                                    </div>
+                                @endif
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Duration & Commutation -->
+            <div class="review-section animate__animated animate__backInUp" style="animation-delay: 0.4s;">
+                <div class="review-card-header">
+                    <div class="review-card-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Duration & Commutation</h3>
+                </div>
+                <div class="review-card-body">
+                    <div class="sub-section-label-premium">6.B Details of Leave</div>
+                    <div class="leave-details-grid mb-8">
                         @if($application->details)
                             @if($application->details->vacation_loc_type)
-                                <div class="mb-2"><strong>Vacation Location:</strong> {{ $application->details->vacation_loc_type }}
-                                    - {{ $application->details->vacation_loc_details }}</div>
+                                <div class="detail-item-box-premium vacation">
+                                    <span class="detail-item-label-premium text-blue-400">Vacation Location</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->vacation_loc_type }}</div>
+                                    <div class="text-[0.75rem] text-slate-500 font-medium mt-1">{{ $application->details->vacation_loc_details }}</div>
+                                </div>
                             @endif
                             @if($application->details->sick_loc_type)
-                                <div class="mb-2"><strong>Sick Leave:</strong> {{ $application->details->sick_loc_type }} -
-                                    {{ $application->details->sick_illness }}</div>
+                                <div class="detail-item-box-premium sick">
+                                    <span class="detail-item-label-premium text-red-400">Sick Leave Details</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->sick_loc_type }}</div>
+                                    <div class="text-[0.75rem] text-slate-500 font-medium mt-1">{{ $application->details->sick_illness }}</div>
+                                </div>
                             @endif
                             @if($application->details->women_illness)
-                                <div class="mb-2"><strong>Special Leave Benefit:</strong> {{ $application->details->women_illness }}
+                                <div class="detail-item-box-premium special">
+                                    <span class="detail-item-label-premium text-pink-400">Special Leave (Women)</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->women_illness }}</div>
                                 </div>
                             @endif
                             @if($application->details->study_type)
-                                <div class="mb-2"><strong>Study Leave:</strong> {{ $application->details->study_type }} -
-                                    {{ $application->details->study_details }}</div>
+                                <div class="detail-item-box-premium other">
+                                    <span class="detail-item-label-premium">Study Details</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->study_type }} {{ $application->details->study_details }}</div>
+                                </div>
+                            @endif
+                            @if($application->details->other_type)
+                                <div class="detail-item-box-premium other">
+                                    <span class="detail-item-label-premium">Other Details</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->other_type }} {{ $application->details->other_details }}</div>
+                                </div>
+                            @endif
+                            @if($application->details->commutation)
+                                <div class="detail-item-box-premium other">
+                                    <span class="detail-item-label-premium">Commutation</span>
+                                    <div class="detail-item-value-premium">{{ $application->details->commutation }}</div>
+                                </div>
                             @endif
                         @else
-                            <span class="text-gray-400">No specific details provided.</span>
+                            <div class="text-slate-400 italic text-sm py-4">No specific details provided.</div>
                         @endif
                     </div>
-                </div>
-
-                <div class="doc-section">
-                    <div class="doc-section-title">6.C Number of Working Days Applied For</div>
-                    <div class="pl-4">
-                        <div class="doc-row">
-                            <span class="doc-label">Days:</span>
-                            <span class="doc-value">{{ $application->days_applied }} Day(s)</span>
-                        </div>
-                        <div class="doc-row">
-                            <span class="doc-label">Inclusive Dates:</span>
-                            <span class="doc-value">
-                                {{ $application->start_date->format('M d, Y') }} -
-                                {{ $application->end_date->format('M d, Y') }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="doc-section">
-                    <div class="doc-section-title">6.D Commutation</div>
-                    <div class="pl-4">
-                        <span
-                            class="font-medium  {{ $application->commutation == 'Requested' ? 'text-blue-700' : 'text-gray-600' }}">
-                            <i
-                                class="fas {{ $application->commutation == 'Requested' ? 'fa-check-circle' : 'fa-circle' }} mr-2"></i>
-                            Requested
-                        </span>
-                        <span
-                            class="font-medium ml-6 {{ $application->commutation == 'Not Requested' ? 'text-blue-700' : 'text-gray-600' }}">
-                            <i
-                                class="fas {{ $application->commutation == 'Not Requested' ? 'fa-check-circle' : 'fa-circle' }} mr-2"></i>
-                            Not Requested
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Signatory Section (7.A, 7.B, 7.C) -->
-                <div class="mt-12 space-y-8">
-                    <!-- Row: HR & Recommendation -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- 7.A HR Certification -->
-                        <div class="border border-gray-100 p-4 rounded-lg bg-gray-50/30">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-6 border-b border-gray-100 pb-1">7.A Certification of Leave Credits</div>
-                            
-                            <div class="text-center">
-                                @if($application->hr_verified_at)
-                                    <div class="text-[0.7rem] text-blue-600 font-bold mb-1 italic">
-                                        Digitally Certified on {{ $application->hr_verified_at->format('F d, Y') }}
+                        <div>
+                            <div class="doc-section-divider">6.C Typical Date(s)</div>
+                            <div class="date-grid-fancy mt-4">
+                                @foreach($applicationDates as $dStr)
+                                    @php $d = \Carbon\Carbon::parse($dStr); @endphp
+                                    <div class="date-card-fancy">
+                                        <span class="df-month">{{ $d->format('M') }}</span>
+                                        <span class="df-day">{{ $d->format('d') }}</span>
+                                        <span class="df-year">{{ $d->format('Y') }}</span>
                                     </div>
-                                    @if($application->hrVerifier && $application->hrVerifier->esignature)
-                                        <div class="relative h-12 flex items-center justify-center">
-                                            <img src="{{ storage_url($application->hrVerifier->esignature) }}" alt="HR Sig" class="h-full object-contain scale-125">
+                                @endforeach
+                            </div>
+                        </div>
+                        <div>
+                            <div class="doc-section-divider">6.D Commutation</div>
+                            <div class="flex flex-col gap-3 mt-4">
+                                <div class="flex items-center gap-3 p-3 rounded-xl border {{ $application->commutation == 'Requested' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-slate-50 border-slate-100 text-slate-400' }}">
+                                    <i class="fas {{ $application->commutation == 'Requested' ? 'fa-check-circle' : 'fa-circle opacity-20' }} text-lg"></i>
+                                    <span class="font-bold uppercase text-xs">Requested</span>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 rounded-xl border {{ $application->commutation == 'Not Requested' ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-slate-50 border-slate-100 text-slate-400' }}">
+                                    <i class="fas {{ $application->commutation == 'Not Requested' ? 'fa-check-circle' : 'fa-circle opacity-20' }} text-lg"></i>
+                                    <span class="font-bold uppercase text-xs">Not Requested</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Verification & Approvals -->
+            <div class="review-section animate__animated animate__backInUp" style="animation-delay: 0.5s;">
+                <div class="review-card-header">
+                    <div class="review-card-icon"><i class="fas fa-stamp"></i></div>
+                    <h3>Certification & Approvals</h3>
+                </div>
+                <div class="review-card-body">
+                    <div class="review-grid-three-col">
+                        <!-- 7.A HR Certification -->
+                        <div class="sig-box">
+                            <div class="sig-label-top">7.A Cert. of Leave Credits</div>
+                            <div class="signature-area-premium">
+                                @if($application->hr_verified_at)
+                                    <div class="mb-2 text-center">
+                                        <div class="status-badge-premium certified mb-4">
+                                            <i class="fas fa-check-circle"></i> Certified {{ $application->hr_verified_at->format('M d, Y') }}
                                         </div>
-                                    @endif
-                                    <div class="font-bold underline uppercase text-xs mt-1">{{ $application->hrVerifier->full_name ?? 'Verifying Officer' }}</div>
-                                    <div class="text-[0.65rem] text-gray-500 uppercase">{{ $application->hrVerifier->position ?? 'Administrative Officer' }}</div>
+                                        @if($application->hrVerifier && $application->hrVerifier->esignature)
+                                            <div class="mb-2">
+                                                <img src="{{ storage_url($application->hrVerifier->esignature) }}" class="esign-premium" alt="Signature">
+                                            </div>
+                                        @endif
+                                    </div>
                                 @else
-                                    <div class="h-20 flex items-center justify-center text-gray-300 text-[0.65rem] italic">
-                                        (Pending HR Verification)
+                                    <div class="signature-placeholder-premium">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Awaiting HR Certification</span>
                                     </div>
                                 @endif
                             </div>
+                            @if($application->hr_verified_at)
+                                <div class="text-center">
+                                    <div class="font-bold uppercase text-xs text-slate-800 tracking-tight">{{ $application->hrVerifier->full_name ?? 'Verifying Officer' }}</div>
+                                    <div class="text-[0.55rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $application->hrVerifier->position ?? 'Administrative Officer' }}</div>
+                                </div>
+                            @endif
                         </div>
 
                         <!-- 7.B Recommendation -->
-                        <div class="border border-gray-100 p-4 rounded-lg bg-gray-50/30">
-                            <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-6 border-b border-gray-100 pb-1">7.B Recommendation</div>
-                            
-                            <div class="text-center">
+                        <div class="sig-box">
+                            <div class="sig-label-top">7.B Recommendation</div>
+                            <div class="signature-area-premium">
                                 @if($application->recommended_at)
-                                    <div class="text-[0.7rem] text-blue-600 font-bold mb-1 italic">
-                                        Digitally Recommended on {{ $application->recommended_at->format('F d, Y') }}
-                                    </div>
-                                    @if($application->recommendingOfficer && $application->recommendingOfficer->esignature)
-                                        <div class="relative h-12 flex items-center justify-center">
-                                            <img src="{{ storage_url($application->recommendingOfficer->esignature) }}" alt="Reco Sig" class="h-full object-contain scale-125">
+                                    <div class="mb-2 text-center">
+                                        <div class="status-badge-premium recommended mb-4">
+                                            <i class="fas fa-thumbs-up"></i> Recommended {{ $application->recommended_at->format('M d, Y') }}
                                         </div>
-                                    @endif
-                                    <div class="font-bold underline uppercase text-xs mt-1">{{ $application->recommendingOfficer->full_name }}</div>
-                                    <div class="text-[0.65rem] text-gray-500 uppercase">{{ $application->recommendingOfficer->position }}</div>
+                                        @if($application->recommendingOfficer && $application->recommendingOfficer->esignature)
+                                            <div class="mb-2">
+                                                <img src="{{ storage_url($application->recommendingOfficer->esignature) }}" class="esign-premium" alt="Signature">
+                                            </div>
+                                        @endif
+                                    </div>
                                 @else
-                                    <div class="h-20 flex items-center justify-center text-gray-300 text-[0.65rem] italic">
-                                        (Pending Recommendation)
+                                    <div class="signature-placeholder-premium">
+                                        <i class="fas fa-user-clock"></i>
+                                        <span>Awaiting Recommendation</span>
                                     </div>
                                 @endif
                             </div>
+                            @if($application->recommended_at)
+                                <div class="text-center">
+                                    <div class="font-bold uppercase text-xs text-slate-800 tracking-tight">{{ $application->recommendingOfficer->full_name }}</div>
+                                    <div class="text-[0.55rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $application->recommendingOfficer->position }}</div>
+                                </div>
+                            @endif
                         </div>
-                    </div>
 
-                    <!-- 7.C/D Final Approval -->
-                    <div class="border border-gray-100 p-4 rounded-lg bg-gray-50/30">
-                        <div class="text-[0.65rem] font-bold uppercase text-gray-400 mb-6 border-b border-gray-100 pb-1">7.C / 7.D Final Approval</div>
-                        <div class="flex flex-col md:flex-row justify-between items-center gap-8">
-                            <div class="flex-1 w-full text-center md:text-left">
+                        <!-- 7.C/D Final Approval -->
+                        <div class="sig-box bg-slate-50/30 border-slate-200" style="grid-column: span 1;">
+                            <div class="sig-label-top">7.C / 7.D Final Executive Approval</div>
+                            <div class="signature-area-premium">
                                 @if($application->approved_at)
-                                    <div class="inline-block p-3 border-2 border-green-200 bg-green-50 rounded-lg">
-                                        <div class="text-green-800 font-bold text-sm mb-1 uppercase">Approved For:</div>
-                                        <div class="text-xs text-green-700 space-y-1">
-                                            <div><i class="fas fa-check-circle mr-1"></i> {{ $application->days_with_pay ?? 0 }} Day(s) with pay</div>
-                                            <div><i class="fas fa-check-circle mr-1"></i> {{ $application->days_without_pay ?? 0 }} Day(s) without pay</div>
-                                            @if($application->others_remarks)
-                                                <div class="mt-1 font-medium italic border-t border-green-100 pt-1">Others: {{ $application->others_remarks }}</div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @else
-                                     <div class="text-gray-400 text-xs italic">Awaiting final approval details...</div>
-                                @endif
-                            </div>
-
-                            <div class="flex-1 w-full text-center">
-                                @if($application->approved_at)
-                                    <div class="text-[0.7rem] text-blue-600 font-bold mb-1 italic">
-                                        Digitally Approved on {{ $application->approved_at->format('F d, Y') }}
+                                    <div class="status-badge-premium approved mb-6">
+                                        <i class="fas fa-shield-check"></i> Exec Signed {{ $application->approved_at->format('M d, Y') }}
                                     </div>
                                     @if($application->approvingOfficer && $application->approvingOfficer->esignature)
-                                        <div class="relative h-12 flex items-center justify-center">
-                                            <img src="{{ storage_url($application->approvingOfficer->esignature) }}" alt="App Sig" class="h-full object-contain scale-125">
+                                        <div class="mb-4">
+                                            <img src="{{ storage_url($application->approvingOfficer->esignature) }}" class="esign-premium" alt="Signature">
                                         </div>
                                     @endif
-                                    <div class="font-bold underline uppercase text-xs mt-1">{{ $application->approvingOfficer->full_name }}</div>
-                                    <div class="text-[0.65rem] text-gray-500 uppercase">{{ $application->approvingOfficer->position }}</div>
+                                    <div class="text-center">
+                                        <div class="font-black uppercase text-sm text-blue-950 tracking-tight leading-none mb-1">{{ $application->approvingOfficer->full_name }}</div>
+                                        <div class="text-[0.55rem] text-blue-400 font-black uppercase tracking-[0.1em]">{{ $application->approvingOfficer->position }}</div>
+                                    </div>
                                 @else
-                                    <div class="h-20 flex items-center justify-center text-gray-300 text-[0.65rem] italic">
-                                        (Pending Final Approval)
+                                    @if($application->hr_verified_at)
+                                        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm mb-4">
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                    <span class="text-[0.6rem] font-black text-slate-400 uppercase">With Pay</span>
+                                                    <span class="font-black text-blue-600">{{ $application->days_with_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
+                                                </div>
+                                                <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                    <span class="text-[0.6rem] font-black text-slate-400 uppercase">W/O Pay</span>
+                                                    <span class="font-black text-slate-700">{{ $application->days_without_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    <div class="signature-placeholder-premium border-slate-200 bg-slate-50/50">
+                                        <i class="fas fa-pen-nib"></i>
+                                        <span>Pending Signature</span>
                                     </div>
                                 @endif
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
         <!-- --- RIGHT: SIDEBAR --- -->
-        <div class="flex flex-col">
+        <div class="flex flex-col gap-6">
 
-            <!-- Credit Analysis Card (Important for Approvers) -->
-            <div class="sidebar-card">
-                <div class="sidebar-header"><i class="fas fa-calculator"></i> Credit Analysis</div>
-
-                @php
-                    $vl = $credits['vl'];
-                    $sl = $credits['sl'];
-                    $insufficient = ($vl['balance'] < 0 || $sl['balance'] < 0);
-                @endphp
-
-                @if($insufficient)
-                    <div class="bg-warning-light text-xs text-red-800">
-                        <i class="fas fa-exclamation-triangle mr-1"></i> <strong>Deficit Warning:</strong> This application will
-                        result in negative leave credits.
-                    </div>
-                @endif
-
-                <div class="mb-4">
-                    <div class="text-xs font-bold text-gray-500 uppercase mb-2">Vacation Leave</div>
-                    <div class="credit-summary-row">
-                        <span>Current:</span> <span class="credit-val">{{ (float) $vl['current'] }}</span>
-                    </div>
-                    <div class="credit-summary-row">
-                        <span>Less This App:</span> <span class="credit-val text-blue-600">{{ (float) $vl['less'] }}</span>
-                    </div>
-                    <div class="credit-summary-row border-t border-gray-300 pt-1 mt-1">
-                        <span class="font-bold">Balance:</span>
-                        <span
-                            class="credit-val {{ $vl['balance'] < 0 ? 'text-negative' : 'text-green-600' }}">{{ (float) $vl['balance'] }}</span>
-                    </div>
+            <!-- Credit Analysis Card -->
+            <div class="sidebar-modular-card animate__animated animate__fadeInRight" style="animation-delay: 0.6s;">
+                <div class="sidebar-modular-header text-blue-900">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><i class="fas fa-calculator"></i></div>
+                    <span>Credit Analysis</span>
                 </div>
 
-                <div>
-                    <div class="text-xs font-bold text-gray-500 uppercase mb-2">Sick Leave</div>
-                    <div class="credit-summary-row">
-                        <span>Current:</span> <span class="credit-val">{{ (float) $sl['current'] }}</span>
-                    </div>
-                    <div class="credit-summary-row">
-                        <span>Less This App:</span> <span class="credit-val text-blue-600">{{ (float) $sl['less'] }}</span>
-                    </div>
-                    <div class="credit-summary-row border-t border-gray-300 pt-1 mt-1">
-                        <span class="font-bold">Balance:</span>
-                        <span
-                            class="credit-val {{ $sl['balance'] < 0 ? 'text-negative' : 'text-green-600' }}">{{ (float) $sl['balance'] }}</span>
+                <div class="sidebar-content-modular">
+                    @php
+                        $vl = $credits['vl'];
+                        $sl = $credits['sl'];
+                        $insufficient = ($vl['balance'] < 0 || $sl['balance'] < 0);
+                    @endphp
+
+                    @if($insufficient)
+                        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-6 animate__animated animate__pulse animate__infinite">
+                            <div class="flex gap-3">
+                                <i class="fas fa-exclamation-triangle text-amber-500 mt-1"></i>
+                                <div>
+                                    <span class="text-[0.65rem] font-black text-amber-600 uppercase tracking-widest block mb-1">Deficit Warning</span>
+                                    <p class="text-[0.75rem] text-amber-700 font-bold leading-tight">This application will result in negative leave credits.</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="space-y-8">
+                        <!-- VL Pool -->
+                        <div class="credit-pool-card-premium">
+                            <div class="credit-pool-label">
+                                <i class="fas fa-sun text-orange-400"></i> Vacation Leave Pool
+                            </div>
+                            <div class="space-y-1">
+                                <div class="credit-row-premium">
+                                    <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
+                                    <span class="credit-val-dim">{{ (float) $vl['current'] }}</span>
+                                </div>
+                                <div class="credit-row-premium">
+                                    <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
+                                    <span class="credit-val-impact">-{{ (float) $vl['less'] }}</span>
+                                </div>
+                                <div class="credit-balance-box">
+                                    <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
+                                    <span class="text-xl font-black {{ $vl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $vl['balance'] }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SL Pool -->
+                        <div class="credit-pool-card-premium">
+                            <div class="credit-pool-label">
+                                <i class="fas fa-briefcase-medical text-red-400"></i> Sick Leave Pool
+                            </div>
+                            <div class="space-y-1">
+                                <div class="credit-row-premium">
+                                    <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
+                                    <span class="credit-val-dim">{{ (float) $sl['current'] }}</span>
+                                </div>
+                                <div class="credit-row-premium">
+                                    <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
+                                    <span class="credit-val-impact">-{{ (float) $sl['less'] }}</span>
+                                </div>
+                                <div class="credit-balance-box">
+                                    <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
+                                    <span class="text-xl font-black {{ $sl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $sl['balance'] }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Actions Card -->
-            <div class="sidebar-card">
-                <div class="sidebar-header"><i class="fas fa-bolt"></i> Actions</div>
+            <div class="sidebar-modular-card animate__animated animate__fadeInRight" style="animation-delay: 0.7s;">
+                <div class="sidebar-modular-header">
+                    <i class="fas fa-bolt"></i>
+                    <span>Authority Actions</span>
+                </div>
 
-                @php
-                    $user = Auth::user();
-                    $role = $user->role;
-                    $status = $application->status;
-                    $canAct = false;
-
-                    // Determine Action Type
-                    $actionType = '';
-                    if (in_array($role, ['hr', 'head_hr', 'super_admin']) && $status === 'Pending HR')
-                        $actionType = 'verify';
-                    elseif ($application->recommending_officer_id == $user->id && $status === 'Pending Recommending')
-                        $actionType = 'recommend';
-                    elseif ($application->approving_officer_id == $user->id && $status === 'Pending Approval')
-                        $actionType = 'approve';
-
-                    if ($actionType)
-                        $canAct = true;
-                @endphp
-
-                <div class="flex flex-col gap-3">
+                <div class="sidebar-content-modular flex flex-col gap-4">
+                    @php
+                        $user = Auth::user();
+                        $role = $user->role;
+                        $status = $application->status;
+                        $canAct = false;
+                        $actionType = '';
+                        if (in_array($role, ['hr', 'head_hr', 'super_admin']) && $status === 'Pending HR') $actionType = 'verify';
+                        elseif ($application->recommending_officer_id == $user->id && $status === 'Pending Recommending') $actionType = 'recommend';
+                        elseif ($application->approving_officer_id == $user->id && $status === 'Pending Approval') $actionType = 'approve';
+                        if ($actionType) $canAct = true;
+                    @endphp
                     @if($canAct)
                         @if($actionType === 'verify')
-                            <form action="{{ route('user.leave.verify', $application->id) }}" method="POST" class="w-full">
+                            <form action="{{ route('user.leave.verify', $application->id) }}" method="POST" class="w-full space-y-4">
                                 @csrf
-                                
-                                <div class="mb-4 bg-gray-50 p-3 rounded border border-gray-200 text-sm">
-                                    <div class="font-bold text-gray-700 mb-2 text-xs uppercase">7. C Recommendations</div>
+                                <div class="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-5">
+                                    <div class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2"><i class="fas fa-file-signature text-blue-400"></i> Verification Form</div>
+                                    
+                                    <div class="verification-date-board-premium">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-wider">Date Breakdown Selection</span>
+                                            <div class="flex gap-2">
+                                                <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full" id="paid-total-pill">0.0 Paid</div>
+                                                <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full" id="unpaid-total-pill">0.0 Unpaid</div>
+                                            </div>
+                                        </div>
 
-                                    <div class="mb-2">
-                                        <label class="block text-gray-600 text-xs mb-1">For approval without pay (Days)</label>
-                                        <input type="number" name="days_without_pay" step="0.5" min="0" value="{{ $application->days_without_pay }}"
-                                            class="w-full border border-gray-300 rounded text-sm p-1.5 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Number of days">
+                                        <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar-premium">
+                                            @foreach($applicationDates as $index => $date)
+                                                @php $d = \Carbon\Carbon::parse($date); @endphp
+                                                <div class="date-selector-row-premium">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-[0.7rem] font-bold text-slate-700 leading-none">{{ $d->format('D, M d') }}</span>
+                                                        <span class="text-[0.55rem] text-slate-400 font-bold uppercase mt-0.5">{{ $d->format('Y') }}</span>
+                                                    </div>
+                                                    <div class="pay-toggle-group-premium">
+                                                        <input type="radio" id="p_{{ $index }}" name="date_pay_{{ $index }}" value="1" class="pay-radio-hidden" checked onchange="calculateVerificationTotals()">
+                                                        <label for="p_{{ $index }}" class="pay-toggle-btn-premium paid">Paid</label>
+                                                        
+                                                        <input type="radio" id="u_{{ $index }}" name="date_pay_{{ $index }}" value="0" class="pay-radio-hidden" onchange="calculateVerificationTotals()">
+                                                        <label for="u_{{ $index }}" class="pay-toggle-btn-premium unpaid">Unpaid</label>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     </div>
-                                    <div class="mb-2">
-                                        <label class="block text-gray-600 text-xs mb-1">For approval with pay (Days)</label>
-                                        <input type="number" name="days_with_pay" step="0.5" min="0" value="{{ $application->days_with_pay }}"
-                                            class="w-full border border-gray-300 rounded text-sm p-1.5 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Number of days">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="block text-gray-600 text-xs mb-1">Others (Specify)</label>
+
+                                    <input type="hidden" name="days_with_pay" id="days_with_pay_hidden" value="{{ $application->days_with_pay }}">
+                                    <input type="hidden" name="days_without_pay" id="days_without_pay_hidden" value="{{ $application->days_without_pay }}">
+
+                                    <div>
+                                        <label class="action-label-premium">Remarks / Internal Notes</label>
                                         <input type="text" name="others_remarks" value="{{ $application->others_remarks }}"
-                                            class="w-full border border-gray-300 rounded text-sm p-1.5 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Specify details">
+                                            class="action-input-premium shadow-sm" placeholder="Add remarks here...">
                                     </div>
                                 </div>
-
-                                <button type="submit"
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
-                                    <i class="fas fa-check-circle mr-2"></i> Verify Application
+                                <button type="submit" class="btn-review-primary shadow-xl shadow-blue-500/10 py-4">
+                                    <i class="fas fa-check-double scale-125"></i> <span class="tracking-tight">Verify Application</span>
                                 </button>
                             </form>
                         @elseif($actionType === 'recommend')
-                            <form action="{{ route('user.leave.recommend', $application->id) }}" method="POST" class="w-full">
+                             <form action="{{ route('user.leave.recommend', $application->id) }}" method="POST" class="w-full">
                                 @csrf
-                                <button type="submit"
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition">
-                                    <i class="fas fa-thumbs-up mr-2"></i> Recommend
+                                <button type="submit" class="btn-review-primary shadow-xl shadow-blue-500/10">
+                                    <i class="fas fa-award scale-125"></i> <span class="tracking-tight">Submit Recommendation</span>
                                 </button>
                             </form>
                         @elseif($actionType === 'approve')
-                            <form action="{{ route('user.leave.approve', $application->id) }}" method="POST" class="w-full">
+                             <form action="{{ route('user.leave.approve', $application->id) }}" method="POST" class="w-full">
                                 @csrf
-
-                                <button type="submit"
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition">
-                                    <i class="fas fa-signature mr-2"></i> Final Approve
+                                <button type="submit" class="btn-review-primary shadow-xl shadow-green-500/10 !bg-green-600">
+                                    <i class="fas fa-signature scale-125"></i> <span class="tracking-tight">Grant Final Approval</span>
                                 </button>
                             </form>
                         @endif
 
-                        <button id="openRejectModalBtn" type="button"
-                            class="w-full bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold py-2 px-4 rounded transition">
-                            <i class="fas fa-times-circle mr-2"></i> Reject / Return
+                        <button id="openRejectModalBtn" type="button" class="btn-review-reject">
+                            <i class="fas fa-undo mr-2"></i> Reject & Return
                         </button>
-                    @elseif(in_array($role, ['hr', 'head_hr', 'super_admin']) || $application->recommending_officer_id == $user->id || $application->approving_officer_id == $user->id)
-                        <div class="text-sm text-gray-500 text-center italic mb-2">
-                            Status: {{ $status }}
-                        </div>
                     @else
-                        <div class="text-sm text-gray-500 text-center italic">
-                            No pending actions for you.
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center">
+                            <i class="fas fa-info-circle text-slate-300 text-2xl mb-2"></i>
+                            <div class="text-slate-400 text-[0.7rem] font-bold uppercase tracking-widest leading-relaxed"> No pending actions <br> for your profile </div>
                         </div>
                     @endif
 
-                    <hr class="my-2 border-gray-100">
 
-                    <a href="{{ route('user.leave.form6', ['id' => $application->id, 'format' => 'pdf']) }}" target="_blank"
-                        class="text-center text-sm text-blue-600 hover:text-blue-800 font-medium">
-                        <i class="fas fa-file-pdf mr-1"></i> Preview PDF
-                    </a>
-                </div>
-            </div>
-
-            <!-- Progress Tracker -->
-            <div class="sidebar-card">
-                <div class="sidebar-header"><i class="fas fa-tasks"></i> Progress Tracker</div>
-
-                @php
-                    // Logic Reuse
-                    $currentStatus = strtolower($application->status);
-                    $isRejected = str_contains($currentStatus, 'reject') || str_contains($currentStatus, 'disapprove');
-
-                    $s1 = $application->hr_verified_at ? 'completed' : 'active';
-                    $recoComplete = $application->recommended_at;
-
-                    $s2 = $recoComplete ? 'completed' : ($application->hr_verified_at ? 'active' : '');
-                    $s3 = $application->approved_at ? 'completed' : ($recoComplete ? 'active' : '');
-
-                    if ($isRejected) {
-                        if (!$application->hr_verified_at)
-                            $s1 = 'rejected';
-                        else if (!$recoComplete)
-                            $s2 = 'rejected';
-                        else
-                            $s3 = 'rejected';
-                    }
-                @endphp
-
-                <div class="v-stepper">
-                    <!-- Step 1: Pending (Filed) -->
-                    <div class="v-step completed">
-                        <div class="v-step-marker"></div>
-                        <div class="v-step-content">
-                            <div class="v-step-title">Application Filed</div>
-                            <div class="v-step-desc">
-                                {{ $application->created_at->format('M d, Y') }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: HR Verify -->
-                    <div class="v-step {{ $s1 }}">
-                        <div class="v-step-marker"></div>
-                        <div class="v-step-content">
-                            <div class="v-step-title">HR Verification</div>
-                            <div class="v-step-desc">
-                                {{ $application->hr_verified_at ? $application->hr_verified_at->format('M d, Y') : ($s1 == 'active' ? 'Pending Action...' : 'Waiting') }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 3: Recommendation -->
-                    <div class="v-step {{ $s2 }}">
-                        <div class="v-step-marker"></div>
-                        <div class="v-step-content">
-                            <div class="v-step-title">Recommendation</div>
-                            <div class="v-step-desc">
-                                {{ $application->recommended_at ? $application->recommended_at->format('M d, Y') : ($s2 == 'active' ? 'Pending Action...' : 'Waiting') }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 4: Approval -->
-                    <div class="v-step {{ $s3 }}">
-                        <div class="v-step-marker"></div>
-                        <div class="v-step-content">
-                            <div class="v-step-title">Final Approval</div>
-                            <div class="v-step-desc">
-                                {{ $application->approved_at ? $application->approved_at->format('M d, Y') : ($s3 == 'active' ? 'Pending Action...' : 'Waiting') }}
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -753,34 +551,24 @@
     </div>
 
     <!-- Reject Modal -->
-    <div id="rejectModal" class="hidden"
-        style="background-color: rgba(0,0,0,0.5); position: fixed; inset: 0; z-index: 9999;">
-        <!-- Modal Content -->
-        <div
-            style="background-color: white; width: 100%; max-width: 500px; margin: auto; padding: 20px; border-radius: 12px; position: relative; top: 50%; transform: translateY(-50%); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-            <div class="mt-2 text-center sm:text-left">
-                <h3 class="text-xl leading-6 font-bold text-gray-900 mb-2"
-                    style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; display: block;">Confirm Rejection
-                </h3>
-                <p class="text-sm text-gray-500 mb-4" style="color: #6b7280; margin-bottom: 1rem; display: block;">
-                    Please provide a reason for rejecting or returning this application. This will be visible to the
-                    applicant.
+    <div id="rejectModal" class="modal-backdrop">
+        <div class="modal-content-modular">
+            <div class="text-left">
+                <h3 class="modal-title-modular">Confirm Rejection</h3>
+                <p class="modal-desc-modular">
+                    Please provide a clear reason for rejecting or returning this application. This helps the applicant understand what needs correction.
                 </p>
 
                 <form action="{{ route('user.leave.reject', $application->id) }}" method="POST" id="rejectForm">
                     @csrf
-                    <textarea name="remarks" required
-                        style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; min-height: 100px; display: block;"
-                        placeholder="Enter rejection reason here..."></textarea>
+                    <textarea name="remarks" required class="modal-textarea-modular"
+                        placeholder="e.g., Please attach the required medical certificate for sick leave..."></textarea>
 
-                    <div class="flex gap-3 mt-5 justify-end"
-                        style="display: flex; gap: 12px; margin-top: 20px; justify-content: flex-end;">
-                        <button type="button" id="cancelRejectModalBtn"
-                            style="padding: 8px 16px; background-color: #f3f4f6; color: #374151; font-weight: 600; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer;">
+                    <div class="modal-footer-modular">
+                        <button type="button" id="cancelRejectModalBtn" class="btn-modal-cancel">
                             Cancel
                         </button>
-                        <button type="submit"
-                            style="padding: 8px 16px; background-color: #dc2626; color: white; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);">
+                        <button type="submit" class="btn-modal-confirm">
                             Confirm Rejection
                         </button>
                     </div>
@@ -790,7 +578,6 @@
     </div>
 
 
-    <!-- Loading overlay script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const rejectModal = document.getElementById('rejectModal');
@@ -800,15 +587,39 @@
             if (rejectBtn) {
                 rejectBtn.addEventListener('click', function (e) {
                     e.preventDefault();
-                    rejectModal.classList.remove('hidden');
+                    rejectModal.classList.add('active');
                 });
             }
 
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', function () {
-                    rejectModal.classList.add('hidden');
+                    rejectModal.classList.remove('active');
                 });
             }
+
+            // Close modal when clicking outside
+            rejectModal.addEventListener('click', function (e) {
+                if (e.target === rejectModal) {
+                    rejectModal.classList.remove('active');
+                }
+            });
         });
+
+        function calculateVerificationTotals() {
+            const paidRadios = document.querySelectorAll('.pay-radio-hidden[value="1"]:checked');
+            const unpaidRadios = document.querySelectorAll('.pay-radio-hidden[value="0"]:checked');
+            
+            const totalPaid = paidRadios.length;
+            const totalUnpaid = unpaidRadios.length;
+            
+            document.getElementById('days_with_pay_hidden').value = totalPaid;
+            document.getElementById('days_without_pay_hidden').value = totalUnpaid;
+            
+            document.getElementById('paid-total-pill').innerText = totalPaid.toFixed(1) + ' Paid';
+            document.getElementById('unpaid-total-pill').innerText = totalUnpaid.toFixed(1) + ' Unpaid';
+        }
+
+        // Initialize on load
+        window.addEventListener('load', calculateVerificationTotals);
     </script>
 @endsection

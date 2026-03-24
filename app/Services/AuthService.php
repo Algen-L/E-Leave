@@ -50,6 +50,9 @@ class AuthService
         $code = sprintf("%06d", mt_rand(100000, 999999));
         $fullName = trim($data['first_name'] . ' ' . ($data['middle_name'] ? $data['middle_name'] . ' ' : '') . $data['last_name']);
 
+        $data['username'] = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $data['first_name'])) . mt_rand(1000, 9999);
+        $data['area_of_specialization'] = null;
+
         Session::put('reg_data', array_merge($data, [
             'code' => $code,
             'attempts' => 0,
@@ -97,6 +100,9 @@ class AuthService
             'last_name' => $regData['last_name'],
             'office_station' => $regData['office_station'],
             'position' => $regData['position'],
+            'area_of_specialization' => $regData['area_of_specialization'] ?? null,
+            'age' => $regData['age'] ?? null,
+            'sex' => $regData['sex'] ?? null,
             'employee_number' => $regData['employee_number'],
             'gmail' => $regData['gmail'],
             'is_active' => true,

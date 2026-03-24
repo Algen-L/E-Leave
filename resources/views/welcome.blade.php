@@ -9,6 +9,8 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <!-- Animate.css -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 
         <!-- Styles / Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -20,6 +22,7 @@
         @endif
     </head>
     <body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
+        <div id="main-wrapper" class="w-full flex flex-col items-center animate__animated animate__zoomIn">
         <header class="w-full lg:max-w-4xl max-w-[335px] text-sm mb-6 not-has-[nav]:hidden">
             @if (Route::has('login'))
                 <nav class="flex items-center justify-end gap-4">
@@ -273,5 +276,27 @@
         @if (Route::has('login'))
             <div class="h-14.5 hidden lg:block"></div>
         @endif
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const wrapper = document.getElementById('main-wrapper');
+                
+                // Zoom-out on navigation to Auth
+                document.querySelectorAll('nav a').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        const href = this.getAttribute('href');
+                        if (!href || href.startsWith('#')) return;
+
+                        e.preventDefault();
+                        wrapper.classList.remove('animate__zoomIn');
+                        wrapper.classList.add('animate__zoomOut');
+                        
+                        setTimeout(() => {
+                            window.location.href = href;
+                        }, 400);
+                    });
+                });
+            });
+        </script>
     </body>
 </html>

@@ -1,0 +1,189 @@
+/* Modern Activity Log Card - Linear/Notion Aesthetic */
+
+.activity-log-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.activity-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.activity-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activity-header h2 i {
+    color: #6366f1;
+}
+
+.activity-body {
+    max-height: 380px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.activity-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.activity-body::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+.activity-body::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-item-card {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.activity-item-card:last-child {
+    border-bottom: none;
+}
+
+.activity-item-card:hover {
+    background: #fbfcfe;
+}
+
+/* Left Side: Subject & Type */
+.activity-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.activity-subject {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #0f172a;
+    font-family: 'Inter', sans-serif;
+}
+
+.activity-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.leave-tag {
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Right Side: Action & Value Change */
+.activity-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+/* Action Badges */
+.action-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.action-deduction {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid rgba(220, 38, 38, 0.1);
+}
+
+.action-addition {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid rgba(22, 163, 74, 0.1);
+}
+
+/* Balance Pill */
+.balance-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 3px 10px;
+    border-radius: 30px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.val-old {
+    color: #94a3b8;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+.val-arrow {
+    color: #cbd5e1;
+    font-size: 0.7rem;
+}
+
+.val-new {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.val-diff {
+    font-weight: 800;
+    margin-left: 4px;
+}
+
+.diff-negative { color: #dc2626; }
+.diff-positive { color: #16a34a; }
+
+.activity-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.activity-empty i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.3;
+}

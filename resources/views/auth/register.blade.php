@@ -2,467 +2,269 @@
 
 @section('title', 'Register')
 
-@push('styles')
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-    <style>
-        .register-card {
-            background: #1e293b;
-            border-radius: 16px;
-            padding: 30px;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 10;
-        }
-
-        .register-logo {
-            text-align: center;
-            margin-bottom: 12px;
-        }
-
-        .register-logo img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-        }
-
-        .register-title {
-            text-align: center;
-            margin-bottom: 2px;
-        }
-
-        .register-title h1 {
-            color: #0d9488;
-            font-size: 1.25rem;
-            font-weight: 700;
-            font-style: italic;
-            margin: 0;
-        }
-
-        .register-subtitle {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
-        }
-
-        .form-label-custom {
-            display: block;
-            color: #94a3b8;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 6px;
-        }
-
-        .form-input-custom {
-            width: 100%;
-            background: #334155;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 14px;
-            color: #f8fafc;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-            box-sizing: border-box;
-        }
-
-        .form-input-custom::placeholder {
-            color: #64748b;
-        }
-
-        .form-input-custom:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px #0d9488;
-            background: #3d4f66;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .form-col {
-            flex: 1;
-        }
-
-        .btn-register {
-            width: 100%;
-            background: linear-gradient(135deg, #0f4c5c 0%, #0d9488 100%);
-            border: none;
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 16px;
-            margin-top: 4px;
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
-        }
-
-        .btn-register:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .login-text {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 0px;
-        }
-
-        .login-text a {
-            color: #f8fafc;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .login-text a:hover {
-            text-decoration: underline;
-        }
-
-        /* Tom Select styles */
-        .ts-wrapper.form-select-custom .ts-control {
-            background: #334155;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            color: #f8fafc;
-            font-size: 0.95rem;
-            min-height: 48px;
-        }
-
-        .ts-wrapper.form-select-custom .ts-control input {
-            color: #f8fafc;
-        }
-
-        .ts-wrapper.form-select-custom .ts-control::placeholder {
-            color: #64748b;
-        }
-
-        .ts-wrapper.form-select-custom.focus .ts-control {
-            box-shadow: 0 0 0 2px #0d9488;
-            background: #3d4f66;
-        }
-
-        .ts-wrapper.form-select-custom .ts-dropdown {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-        }
-
-        .ts-wrapper.form-select-custom .ts-dropdown .option {
-            color: #f8fafc;
-            padding: 10px 16px;
-        }
-
-        .ts-wrapper.form-select-custom .ts-dropdown .option:hover,
-        .ts-wrapper.form-select-custom .ts-dropdown .option.active {
-            background: #334155;
-            color: #0d9488;
-        }
-
-        .ts-wrapper.form-select-custom .ts-dropdown .optgroup-header {
-            color: #0d9488;
-            font-weight: 600;
-            padding: 10px 16px 5px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        /* Verification step styles */
-        .code-container {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 24px;
-        }
-
-        .code-digit {
-            width: 48px;
-            height: 56px;
-            background: #334155;
-            border: none;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #f8fafc;
-            transition: all 0.2s;
-        }
-
-        .code-digit:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px #0d9488;
-            background: #3d4f66;
-        }
-
-        .step-description {
-            color: #f8fafc;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 0.95rem;
-        }
-
-        .btn-back {
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .btn-back:hover {
-            color: #0d9488;
-        }
-    </style>
-@endpush
-
 @section('content')
-    <div class="register-card">
-        <div class="register-logo">
-            <img src="{{ asset('images/logo.png') }}" alt="Logo" onerror="this.src='https://via.placeholder.com/80'">
+<div class="login-container register-mode" id="authContainer">
+    <div class="header">
+        <div class="logo-container">
+            <img src="{{ asset('images/logo.png') }}" alt="SDO Logo">
         </div>
+        <h1 id="authTitle">Create Account</h1>
+        <p id="authSubtitle">Fill in your details to get started</p>
+    </div>
 
-        <div class="register-title">
-            <h1>Create Account</h1>
-        </div>
-        <p class="register-subtitle">Fill in your details</p>
-
-        <!-- Step 1: Registration Form -->
-        <div id="registrationStep">
-            <form id="registerForm">
-                @csrf
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label-custom">First Name</label>
-                        <input type="text" class="form-input-custom" id="first_name" name="first_name" placeholder="John"
-                            required>
+    <!-- STEP 1: Personal Details -->
+    <div id="regSection" class="form-section active">
+        <form id="registerForm" class="ajax-auth-form">
+            @csrf
+            <div id="regStep1">
+                <div class="form-grid grid-3">
+                    <div class="form-group">
+                        <label>First Name <span class="required-asterisk">*</span></label>
+                        <input type="text" name="first_name" id="reg_first_name" class="form-control" placeholder="First Name" required>
                     </div>
-                    <div class="form-col">
-                        <label class="form-label-custom">Middle Name</label>
-                        <input type="text" class="form-input-custom" id="middle_name" name="middle_name"
-                            placeholder="Optional">
+                    <div class="form-group">
+                        <label>Middle Name</label>
+                        <input type="text" name="middle_name" id="reg_middle_name" class="form-control" placeholder="Middle Name">
                     </div>
-                </div>
-
-                <label class="form-label-custom">Last Name</label>
-                <input type="text" class="form-input-custom" id="last_name" name="last_name" placeholder="Doe" required>
-
-                <div class="form-row">
-                    <div class="form-col">
-                        <label class="form-label-custom">Username</label>
-                        <input type="text" class="form-input-custom" id="username" name="username" placeholder="admin"
-                            required>
-                    </div>
-                    <div class="form-col">
-                        <label class="form-label-custom">Password</label>
-                        <input type="password" class="form-input-custom" id="password" name="password"
-                            placeholder="••••••••" minlength="6" required>
+                    <div class="form-group">
+                        <label>Last Name <span class="required-asterisk">*</span></label>
+                        <input type="text" name="last_name" id="reg_last_name" class="form-control" placeholder="Last Name" required>
                     </div>
                 </div>
 
-                <label class="form-label-custom">Office / Station</label>
-                <select class="form-select-custom" id="office_station" name="office_station">
-                    <option value="">Select your office...</option>
-                    @foreach($offices as $category => $officeList)
-                        <optgroup label="{{ $category }}">
-                            @foreach($officeList as $office)
-                                <option value="{{ $office->name }}">{{ $office->name }}</option>
-                            @endforeach
-                        </optgroup>
-                    @endforeach
-                </select>
+                <div class="form-group">
+                    <label>Employee Number <span class="required-asterisk">*</span></label>
+                    <input type="text" name="employee_number" id="employee_number" class="form-control" placeholder="Employee Number" maxlength="7" inputmode="numeric" required>
+                </div>
 
-                <div class="form-row" style="margin-top: 16px;">
-                    <div class="form-col">
-                        <label class="form-label-custom">Employee No.</label>
-                        <input type="text" class="form-input-custom" id="employee_number" name="employee_number"
-                            placeholder="1234567" pattern="\d{7}" maxlength="7" title="Must be exactly 7 digits" required>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Password <span class="required-asterisk">*</span></label>
+                        <input type="password" name="password" id="reg_password" class="form-control" placeholder="Password" required minlength="6">
                     </div>
-                    <div class="form-col">
-                        <label class="form-label-custom">Gmail Address</label>
-                        <input type="email" class="form-input-custom" id="gmail" name="gmail"
-                            placeholder="example@gmail.com" required>
+                    <div class="form-group">
+                        <label>Confirm Password <span class="required-asterisk">*</span></label>
+                        <input type="password" name="password_confirmation" id="reg_password_confirmation" class="form-control" placeholder="Confirm Password" required minlength="6">
                     </div>
                 </div>
 
-                <button type="submit" class="btn-register" id="requestCodeBtn">Next: Verify Email</button>
-            </form>
-
-            <p class="login-text">
-                Already have an account? <a href="{{ route('login') }}">Back to Login</a>
-            </p>
-        </div>
-
-        <!-- Step 2: Verification -->
-        <div id="verificationStep" style="display: none;">
-            <p class="step-description">Enter the 6-digit code sent to your email</p>
-
-            <form id="verifyForm">
-                @csrf
-                <div class="code-container">
-                    <input type="text" class="code-digit" maxlength="1" data-index="0">
-                    <input type="text" class="code-digit" maxlength="1" data-index="1">
-                    <input type="text" class="code-digit" maxlength="1" data-index="2">
-                    <input type="text" class="code-digit" maxlength="1" data-index="3">
-                    <input type="text" class="code-digit" maxlength="1" data-index="4">
-                    <input type="text" class="code-digit" maxlength="1" data-index="5">
+                <div class="form-group">
+                    <label>Office / Station <span class="required-asterisk">*</span></label>
+                    <select name="office_station" id="office_select" class="form-control" required>
+                        <option value="">Select your office...</option>
+                        @foreach($offices as $category => $items)
+                            <optgroup label="{{ $category }}">
+                                @foreach($items as $office)
+                                    <option value="{{ $office->name }}">{{ $office->name }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
+                    </select>
                 </div>
-                <input type="hidden" id="codeInput" name="code">
 
-                <button type="submit" class="btn-register" id="verifyBtn">Verify & Register</button>
-            </form>
+                <div class="form-grid grid-3">
+                    <div class="form-group">
+                        <label>Position <span class="required-asterisk">*</span></label>
+                        <input type="text" name="position" id="position" class="form-control" placeholder="Position" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Age <span class="required-asterisk">*</span></label>
+                        <input type="number" name="age" id="reg_age" class="form-control" placeholder="Age" min="18" max="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Sex <span class="required-asterisk">*</span></label>
+                        <select name="sex" id="reg_sex" class="form-control" required>
+                            <option value="">Select...</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                </div>
 
-            <div class="text-center">
-                <button type="button" class="btn-back" id="backBtn">
-                    <i class="fas fa-arrow-left me-1"></i> Go Back
-                </button>
+
+
+                <div class="form-group">
+                    <label>Gmail Address <span class="required-asterisk">*</span></label>
+                    <input type="email" name="gmail" id="reg_email" class="form-control" placeholder="example@gmail.com" required>
+                    <div style="margin-top: 8px; color: var(--text-muted); font-size: 0.7rem; font-style: italic;">
+                        *A valid Gmail address is required for account notifications.
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="registerBtn">Next: Verify Identity</button>
             </div>
+
+            <!-- STEP 2: Email Verification -->
+            <div id="regStep2" style="display: none;">
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center;">
+                    We've sent a 6-digit verification code to <strong id="display_reg_email" style="color: var(--primary-blue);"></strong>. Please enter it below to complete your registration.
+                </p>
+                <div class="form-group">
+                    <label>Verification Code <span class="required-asterisk">*</span></label>
+                    <div class="token-boxes">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                        <input type="text" class="token-box reg-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
+                    </div>
+                    <input type="hidden" id="reg_verification_code">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted);" onclick="backToStep1()">Back</button>
+                    <button type="button" class="btn" id="verifyRegBtn" onclick="verifyRegistrationCode()" style="flex: 2;">Verify & Register</button>
+                </div>
+            </div>
+        </form>
+        <div class="footer-text">
+            Already have an account? <a href="{{ route('login') }}" class="toggle-link">Back to Login</a>
+        </div>
+
+        <div class="auth-footer">
+            <div class="dev-info">Department of Education - Schools Division Office of San Pedro City</div>
+            <div class="dev-info">Developed by Algen Loveres & Cedrick Bacaresas</div>
         </div>
     </div>
+</div>
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const registerForm = document.getElementById('registerForm');
-            const verifyForm = document.getElementById('verifyForm');
-            const registrationStep = document.getElementById('registrationStep');
-            const verificationStep = document.getElementById('verificationStep');
-            const codeDigits = document.querySelectorAll('.code-digit');
-            const codeInput = document.getElementById('codeInput');
-            const backBtn = document.getElementById('backBtn');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize TomSelect for office dropdown
+        const officeSelect = new TomSelect('#office_select', {
+            create: false,
+            placeholder: "Type to search office...",
+            maxOptions: 50
+        });
 
-            // Initialize Tom Select for office dropdown
-            if (document.getElementById('office_station')) {
-                new TomSelect('#office_station', {
-                    allowEmptyOption: true,
-                    placeholder: 'Select your office...'
-                });
-            }
+        // Handle Registration Form Submission (Step 1)
+        const registerForm = document.getElementById('registerForm');
+        registerForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('registerBtn');
+            const originalText = btn.innerHTML;
+            const email = document.getElementById('reg_email').value.trim();
 
-            // Handle code digit inputs
-            codeDigits.forEach((digit, index) => {
-                digit.addEventListener('input', function () {
-                    if (this.value.length === 1 && index < codeDigits.length - 1) {
-                        codeDigits[index + 1].focus();
-                    }
-                    updateCodeInput();
-                });
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending code...';
 
-                digit.addEventListener('keydown', function (e) {
-                    if (e.key === 'Backspace' && !this.value && index > 0) {
-                        codeDigits[index - 1].focus();
-                    }
-                });
-            });
+            const formData = new FormData(registerForm);
 
-            function updateCodeInput() {
-                let code = '';
-                codeDigits.forEach(digit => code += digit.value);
-                codeInput.value = code;
-            }
-
-            // Request registration code
-            registerForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                const btn = document.getElementById('requestCodeBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
-
-                try {
-                    const formData = new FormData(registerForm);
-                    const response = await fetch('{{ route("register.request-code") }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json'
-                        },
-                        body: formData
-                    });
-
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        showToast(data.message, 'success');
-                        registrationStep.style.display = 'none';
-                        verificationStep.style.display = 'block';
-                        codeDigits[0].focus();
-                    } else {
-                        showToast(data.message, 'error');
-                    }
-                } catch (error) {
-                    showToast('An error occurred. Please try again.', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = 'Next: Verify Email';
+            fetch('{{ route("register.request-code") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast(data.message, 'success');
+                    document.getElementById('display_reg_email').innerText = email;
+                    document.getElementById('regStep1').style.display = 'none';
+                    document.getElementById('regStep2').style.display = 'block';
+                    document.getElementById('regStep2').classList.add('animate__animated', 'animate__fadeIn');
+                } else {
+                    showToast(data.message || "Request failed.", 'error');
                 }
-            });
-
-            // Verify code
-            verifyForm.addEventListener('submit', async function (e) {
-                e.preventDefault();
-
-                const btn = document.getElementById('verifyBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying...';
-
-                try {
-                    const response = await fetch('{{ route("register.verify-code") }}', {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ code: codeInput.value })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.status === 'success') {
-                        showToast(data.message, 'success');
-                        setTimeout(() => {
-                            window.location.href = '{{ route("login") }}';
-                        }, 2000);
-                    } else {
-                        showToast(data.message, 'error');
-                        if (data.status === 'attempts_exceeded') {
-                            registrationStep.style.display = 'block';
-                            verificationStep.style.display = 'none';
-                            registerForm.reset();
-                        }
-                    }
-                } catch (error) {
-                    showToast('An error occurred. Please try again.', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = 'Verify & Register';
-                }
-            });
-
-            // Back button
-            backBtn.addEventListener('click', function () {
-                registrationStep.style.display = 'block';
-                verificationStep.style.display = 'none';
-                codeDigits.forEach(digit => digit.value = '');
+            })
+            .catch(error => showToast("An error occurred. Please try again.", 'error'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             });
         });
-    </script>
+
+        // Handle Token Box Inputs
+        const digits = document.querySelectorAll('.reg-digit');
+        digits.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                input.value = input.value.replace(/[^0-9]/g, '');
+                if (input.value.length === 1 && index < digits.length - 1) {
+                    digits[index + 1].focus();
+                }
+                updateHiddenCode();
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !input.value && index > 0) {
+                    digits[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+                pasteData.split('').forEach((char, i) => {
+                    if (digits[i]) digits[i].value = char;
+                });
+                if (pasteData.length > 0) digits[Math.min(pasteData.length, 5)].focus();
+                updateHiddenCode();
+            });
+        });
+
+        function updateHiddenCode() {
+            let code = '';
+            digits.forEach(d => code += d.value);
+            document.getElementById('reg_verification_code').value = code;
+        }
+    });
+
+    function backToStep1() {
+        document.getElementById('regStep1').style.display = 'block';
+        document.getElementById('regStep2').style.display = 'none';
+        document.getElementById('regStep1').classList.add('animate__animated', 'animate__fadeIn');
+    }
+
+    function verifyRegistrationCode() {
+        const code = document.getElementById('reg_verification_code').value;
+        const btn = document.getElementById('verifyRegBtn');
+        const originalText = btn.innerHTML;
+
+        if (code.length !== 6) {
+            showToast("Please enter the 6-digit verification code.", 'error');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+
+        fetch('{{ route("register.verify-code") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ code: code })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                setTimeout(() => {
+                    if (window.triggerExitMorph) window.triggerExitMorph('{{ route("login") }}');
+                    else window.location.href = '{{ route("login") }}';
+                }, 2000);
+            } else {
+                showToast(data.message || "Verification failed.", 'error');
+                if (data.status === 'attempts_exceeded') {
+                    backToStep1();
+                    document.querySelectorAll('.reg-digit').forEach(d => d.value = '');
+                    document.getElementById('reg_verification_code').value = '';
+                }
+            }
+        })
+        .catch(error => showToast("An error occurred. Please try again.", 'error'))
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+</script>
 @endpush

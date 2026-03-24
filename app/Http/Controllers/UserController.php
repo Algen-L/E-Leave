@@ -55,7 +55,15 @@ class UserController extends Controller
         $profileIncomplete = empty($user->position) ||
             empty($user->salary) ||
             empty($user->recommending_officer_id) ||
-            empty($user->approving_officer_id);
+            empty($user->approving_officer_id) ||
+            empty($user->esignature);
+
+        // --- FETCH ACTIVITY LOGS (Leave Credit Changes) ---
+        $activityLogs = \App\Models\LeaveCreditAuditLog::with('actor')
+            ->where('target_user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
         return view('user.home', [
             'user' => $user,
@@ -64,6 +72,7 @@ class UserController extends Controller
             'credits' => $credits,
             'leaveSummary' => $leaveSummary,
             'profileIncomplete' => $profileIncomplete,
+            'activityLogs' => $activityLogs,
         ]);
     }
 
@@ -108,7 +117,6 @@ class UserController extends Controller
             'salary' => 'nullable|string|max:50',
             'recommending_officer_id' => 'nullable|exists:users,id',
             'approving_officer_id' => 'nullable|exists:users,id',
-            'password' => 'nullable|string|min:6|confirmed',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
@@ -201,70 +209,36 @@ class UserController extends Controller
     public function updatePassword(Request $request)
     {
         $request->validate([
+            'current_password' => 'required',
             'password' => 'required|string|min:6|confirmed',
-            'token' => 'required|string',
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Verify token
-        $passwordReset = PasswordReset::verifyToken($user->username, $request->token);
-
-        if (!$passwordReset) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid or expired verification token.'
-            ]);
+        // Verify current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return redirect()->back()->with('error', 'Current password does not match.');
         }
 
         // Update password
-        $user->update(['password' => $request->password]);
+        $user->update(['password' => Hash::make($request->password)]);
 
-        // Delete token
-        PasswordReset::deleteForUser($user->username);
+        // Log action
+        ActivityLog::logAction($user->id, 'Password Changed', 'User changed password securely via profile');
 
-        ActivityLog::logAction($user->id, 'Password Changed', 'User changed password via profile');
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Password updated successfully!'
-        ]);
-    }
-
-    /**
-     * Request password change token
-     */
-    public function requestPasswordToken()
-    {
-        $user = Auth::user();
-
-        // Check for active token
-        $activeToken = PasswordReset::getActiveToken($user->username);
-
-        if ($activeToken) {
-            $token = $activeToken->token;
-            $message = 'Your active verification token has been re-sent to your Gmail. It will expire in 5 minutes.';
-        } else {
-            // Generate new token
-            $passwordReset = PasswordReset::generateToken($user->username);
-            $token = $passwordReset->token;
-            $message = 'Verification token sent to your Gmail. Note: The token expires in 5 minutes.';
+        // Notify Admins and HR
+        $hrAndAdmins = User::whereIn('role', ['hr', 'head_hr', 'super_admin'])
+            ->where('is_active', true)
+            ->get();
+            
+        foreach ($hrAndAdmins as $admin) {
+            if ($admin->id !== $user->id) {
+                Notification::send($user->id, $admin->id, "User {$user->full_name} has updated their account password.");
+            }
         }
 
-        try {
-            $this->sendVerificationEmail($user->gmail, $user->full_name, $token);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => $message,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to send verification email.',
-            ]);
-        }
+        return redirect()->back()->with('success', 'Password updated successfully!');
     }
 
     /**

@@ -4,18 +4,22 @@
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 32px;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    align-items: start;
 }
 
 /* Avatar Side Panel */
 .avatar-panel {
-    position: sticky;
-    top: 24px;
-    height: fit-content;
+    flex: 0 0 320px;
+    /* No sticky here, we'll stick the internal card */
 }
 
 .avatar-card {
+    position: sticky !important;
+    top: calc(56px + 20px) !important;
+    /* Header height + 20px padding */
+    z-index: 100;
+    transition: all 0.3s ease;
     background: white;
     border-radius: 20px;
     padding: 32px 24px;
@@ -50,24 +54,32 @@
 
 .avatar-upload-btn {
     position: absolute;
-    bottom: 4px;
-    right: 4px;
+    bottom: 5px;
+    right: 5px;
     width: 44px;
     height: 44px;
-    background: var(--accent-gold);
+    background: var(--primary);
     border: 3px solid white;
     border-radius: 50%;
-    color: #1e293b;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-upload-btn i {
+    font-size: 1.1rem;
+    color: white;
 }
 
 .avatar-upload-btn:hover {
-    transform: scale(1.1);
-    background: #e9c16e;
+    transform: scale(1.1) translateY(-2px);
+    background: var(--primary);
+    box-shadow: 0 6px 16px rgba(15, 76, 117, 0.3);
 }
 
 .avatar-card h3 {
@@ -84,6 +96,8 @@
 
 /* Form Panel */
 .form-panel {
+    flex: 1;
+    min-width: 0;
     background: white;
     border-radius: 20px;
     padding: 32px;
@@ -332,26 +346,27 @@
     .register-container {
         grid-template-columns: 1fr;
     }
-    
+
     .avatar-panel {
         position: static;
     }
 }
 
 @media (max-width: 768px) {
+
     .form-grid-2,
     .form-grid-3 {
         grid-template-columns: 1fr;
     }
-    
+
     .form-group.full-width {
         grid-column: span 1;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }
-    
+
     .btn-secondary,
     .btn-primary {
         width: 100%;

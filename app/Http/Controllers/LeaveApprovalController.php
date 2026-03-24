@@ -13,41 +13,72 @@ class LeaveApprovalController extends Controller
     /**
      * Display a listing of applications pending the user's action.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $tab = $request->query('tab', 'pending');
         $applications = collect();
-        $title = 'Pending Approvals';
+        $title = $tab === 'processed' ? 'Processed Approvals' : 'Pending Approvals';
 
-        // 1. HR Review (Pending HR)
-        if (in_array($user->role, ['hr', 'head_hr', 'super_admin'])) {
-            $hrPending = LeaveApplication::with(['user', 'leaveType'])
-                ->where('status', 'Pending HR')
+        if ($tab === 'processed') {
+            // 1. HR Processed (Verified by HR)
+            if (in_array($user->role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin'])) {
+                $hrProcessed = LeaveApplication::with(['user', 'leaveType'])
+                    ->whereNotNull('hr_verified_at')
+                    ->orderBy('hr_verified_at', 'desc')
+                    ->get();
+                $applications = $applications->merge($hrProcessed);
+            }
+
+            // 2. Recommending Officer Processed
+            $recoProcessed = LeaveApplication::with(['user', 'leaveType'])
+                ->where('recommending_officer_id', $user->id)
+                ->whereNotNull('recommended_at')
+                ->orderBy('recommended_at', 'desc')
+                ->get();
+            $applications = $applications->merge($recoProcessed);
+
+            // 3. Approving Officer Processed
+            $appProcessed = LeaveApplication::with(['user', 'leaveType'])
+                ->where('approving_officer_id', $user->id)
+                ->whereNotNull('approved_at')
+                ->orderBy('approved_at', 'desc')
+                ->get();
+            $applications = $applications->merge($appProcessed);
+            
+            // Deduplicate if needed (though unlikely due to role logic)
+            $applications = $applications->unique('id');
+        } else {
+            // 1. HR Review (Pending HR)
+            if (in_array($user->role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin'])) {
+                $hrPending = LeaveApplication::with(['user', 'leaveType'])
+                    ->where('status', 'Pending HR')
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+
+                // Allow HR to see these
+                $applications = $applications->merge($hrPending);
+            }
+
+            // 2. Recommending Officer Review (Pending Recommending)
+            // Check if user is assigned as someone's recommender
+            $recommendingPending = LeaveApplication::with(['user', 'leaveType'])
+                ->where('recommending_officer_id', $user->id)
+                ->where('status', 'Pending Recommending')
                 ->orderBy('created_at', 'asc')
                 ->get();
+            $applications = $applications->merge($recommendingPending);
 
-            // Allow HR to see these
-            $applications = $applications->merge($hrPending);
+            // 3. Final Approver Review (Pending Approval)
+            $approvalPending = LeaveApplication::with(['user', 'leaveType'])
+                ->where('approving_officer_id', $user->id)
+                ->where('status', 'Pending Approval')
+                ->orderBy('created_at', 'asc')
+                ->get();
+            $applications = $applications->merge($approvalPending);
         }
 
-        // 2. Recommending Officer Review (Pending Recommending)
-        // Check if user is assigned as someone's recommender
-        $recommendingPending = LeaveApplication::with(['user', 'leaveType'])
-            ->where('recommending_officer_id', $user->id)
-            ->where('status', 'Pending Recommending')
-            ->orderBy('created_at', 'asc')
-            ->get();
-        $applications = $applications->merge($recommendingPending);
-
-        // 3. Final Approver Review (Pending Approval)
-        $approvalPending = LeaveApplication::with(['user', 'leaveType'])
-            ->where('approving_officer_id', $user->id)
-            ->where('status', 'Pending Approval')
-            ->orderBy('created_at', 'asc')
-            ->get();
-        $applications = $applications->merge($approvalPending);
-
-        return view('leave.approvals.index', compact('applications', 'title'));
+        return view('leave.approvals.index', compact('applications', 'title', 'tab'));
     }
 
     /**
@@ -60,7 +91,7 @@ class LeaveApprovalController extends Controller
         // Authorization check: User must be involved or HR
         $user = Auth::user();
         $canView =
-            in_array($user->role, ['hr', 'head_hr', 'super_admin']) ||
+            in_array($user->role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin']) ||
             $application->recommending_officer_id == $user->id ||
             $application->approving_officer_id == $user->id;
 
@@ -107,10 +138,14 @@ class LeaveApprovalController extends Controller
             }
         }
 
+        // IMPORTANT: For credit calculations, we MUST use 'days_with_pay' if it has been verified by HR.
+        // If it is still NULL (before verification), we fallback to the total 'days_applied'.
+        $calculationDays = (float) ($application->days_with_pay ?? $application->days_applied);
+
         if ($isVlRelated || $isCompensatory) {
-            $lessVl = $daysApplied;
+            $lessVl = $calculationDays;
         } elseif (stripos($appTypeName, 'Sick') !== false) {
-            $lessSl = $daysApplied;
+            $lessSl = $calculationDays;
         }
 
         // 3. Calculate Balances
@@ -141,7 +176,7 @@ class LeaveApprovalController extends Controller
         $application = LeaveApplication::findOrFail($id);
 
         // Ensure user is HR
-        if (!in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
+        if (!in_array(Auth::user()->role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin'])) {
             abort(403);
         }
 
@@ -159,6 +194,14 @@ class LeaveApprovalController extends Controller
             'days_without_pay' => $request->days_without_pay,
             'others_remarks' => $request->others_remarks,
         ]);
+
+        // Notify HR Personnel if verified by an HR Review Officer
+        if (Auth::user()->role === 'hr_review_officer') {
+            $hrStaff = User::whereIn('role', ['hr', 'head_hr'])->where('is_active', true)->get();
+            foreach ($hrStaff as $hr) {
+                Notification::send(Auth::id(), $hr->id, "HR Review Officer " . Auth::user()->full_name . " has verified application #" . $application->id . ". Please double-check.");
+            }
+        }
 
         return redirect()->route('user.leave.approvals')->with('success', 'Application verified. Sent to Recommending Officer.');
     }
@@ -206,7 +249,9 @@ class LeaveApprovalController extends Controller
             // --- LEAVE CREDIT DEDUCTION LOGIC ---
             $user = $application->user;
             $leaveType = $application->leaveType;
-            $daysToDeduct = (float) $application->days_applied;
+            
+            // Deduct ONLY the days verified as 'With Pay' (fallback to total days if not verified yet)
+            $daysToDeduct = (float) ($application->days_with_pay ?? $application->days_applied);
 
             // 1. Determine which credit pool to deduct from
             $isVlRelated = false;
@@ -277,23 +322,22 @@ class LeaveApprovalController extends Controller
             // --- SYNC TO TODTR TABLE ---
             // If the application has specific dates array (like a comma-separated string or json), we use that.
             // Otherwise we use start_date to end_date.
-            $startDateStr = $application->start_date instanceof \Carbon\Carbon ? $application->start_date->format('Y-m-d') : $application->start_date;
-            $endDateStr = $application->end_date instanceof \Carbon\Carbon ? $application->end_date->format('Y-m-d') : $application->end_date;
+            $dateRange = is_array($application->dates) 
+                ? implode(',', $application->dates) 
+                : $application->dates;
 
-            $datesOfLeave = '';
-            if (!empty($application->dates)) {
-                $datesOfLeave = is_array($application->dates) ? implode(', ', $application->dates) : $application->dates;
-            } else {
-                $datesOfLeave = ($startDateStr == $endDateStr)
-                    ? $startDateStr
-                    : $startDateStr . ' to ' . $endDateStr;
+            // Fallback to range if dates is empty
+            if (empty($dateRange)) {
+                $startDateStr = $application->start_date instanceof \Carbon\Carbon ? $application->start_date->format('Y-m-d') : $application->start_date;
+                $endDateStr = $application->end_date instanceof \Carbon\Carbon ? $application->end_date->format('Y-m-d') : $application->end_date;
+                $dateRange = ($startDateStr == $endDateStr) ? $startDateStr : $startDateStr . ' to ' . $endDateStr;
             }
 
             DB::table('todtr')->insert([
                 'Name' => $user->name ?? $user->full_name,
                 'Employee_number' => $user->employee_number ?? '',
-                'DateOfLeave' => $datesOfLeave,
                 'TypeOfLeave' => $leaveType->type_name ?? 'Unknown',
+                'Date' => $dateRange,
             ]);
 
             DB::commit();
@@ -318,7 +362,7 @@ class LeaveApprovalController extends Controller
 
         // Authorization check: User must be involved
         $canReject =
-            in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin']) ||
+            in_array(Auth::user()->role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin']) ||
             $application->recommending_officer_id == Auth::id() ||
             $application->approving_officer_id == Auth::id();
 
@@ -331,6 +375,14 @@ class LeaveApprovalController extends Controller
             'rejected_at' => now(),
             'rejection_remarks' => $request->remarks
         ]);
+
+        // Notify HR Personnel if rejected by an HR Review Officer
+        if (Auth::user()->role === 'hr_review_officer') {
+            $hrStaff = User::whereIn('role', ['hr', 'head_hr'])->where('is_active', true)->get();
+            foreach ($hrStaff as $hr) {
+                Notification::send(Auth::id(), $hr->id, "HR Review Officer " . Auth::user()->full_name . " has rejected application #" . $application->id . ". Please verify this rejection.");
+            }
+        }
 
         return redirect()->route('user.leave.approvals')->with('success', 'Application disapproved.');
     }

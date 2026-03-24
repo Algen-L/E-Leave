@@ -4,604 +4,438 @@
 @section('page-title', 'My Profile')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/user-profile.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/profile.css') }}?v={{ time() }}">
 @endpush
 
 @section('content')
-    <!-- Profile Banner -->
-    <div class="profile-banner">
-        <div class="profile-banner-content">
-            <div class="profile-banner-avatar">
-                @if($user->profile_picture)
-                    <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}">
-                @else
-                    <div class="banner-avatar-placeholder">
-                        {{ strtoupper(substr($user->full_name, 0, 1)) }}
-                    </div>
-                @endif
-            </div>
-            <div class="profile-banner-info">
-                <h1 class="banner-name">{{ $user->full_name }}</h1>
-                <div class="banner-meta">
-                    <span><i class="fas fa-id-badge"></i> {{ ucfirst(str_replace('_', ' ', $user->role)) }}</span>
-                    <span class="banner-divider">&bull;</span>
-                    <span><i class="fas fa-building"></i> {{ $user->office_station ?: 'No office set' }}</span>
+    <div class="profile-container">
+        <!-- 1. Core Identification -->
+        <div class="profile-card animate__animated animate__backInDown animate__fast" style="animation-delay: 0.1s;">
+            <div class="profile-card-header">
+                <div class="profile-section-title">
+                    <i class="fas fa-id-card"></i>
+                    Core Identification
                 </div>
             </div>
-        </div>
-        <div class="profile-banner-actions">
-            <button type="button" class="banner-btn banner-btn-outline" onclick="toggleSection('accountInfoSection')"
-                title="Account Info">
-                <i class="fas fa-user-circle"></i>
-            </button>
-            <button type="button" class="banner-btn banner-btn-white" onclick="toggleSection('editProfileSection')"
-                title="Edit Profile">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button type="button" class="banner-btn banner-btn-outline" onclick="toggleSection('esignatureSection')"
-                title="E-Signature">
-                <i class="fas fa-signature"></i>
-            </button>
-            <button type="button" class="banner-btn banner-btn-outline" onclick="toggleSection('changePasswordSection')"
-                title="Change Password">
-                <i class="fas fa-lock"></i>
-            </button>
-        </div>
-        <div class="profile-banner-decoration"></div>
-    </div>
+            <div class="profile-card-body">
+                <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data" id="profileUpdateForm">
+                    @csrf
+                    @method('PUT')
+                    
+                    <div class="profile-form">
+                        <!-- Profile Picture Upload -->
+                        <div class="form-item-row" style="margin-bottom: 20px; align-items: flex-start;">
+                            <label class="form-item-label">Profile Image</label>
+                            <div style="flex: 1; display: flex; align-items: center; gap: 20px;">
+                                <div class="pic-preview">
+                                    @if($user->profile_picture)
+                                        <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}" style="width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #e2e8f0;">
+                                    @else
+                                        <div class="pic-placeholder" style="width: 80px; height: 80px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; color: #94a3b8; border: 2px dashed #cbd5e1;">
+                                            {{ strtoupper(substr($user->full_name, 0, 1)) }}
+                                        </div>
+                                    @endif
+                                </div>
+                                <div style="flex: 1;">
+                                    <input type="file" name="profile_picture" class="input-premium" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; font-size: 0.8rem;" accept="image/*">
+                                    <small style="display: block; margin-top: 6px; color: #64748b; font-size: 0.72rem;">Upload a professional headshot (JPG, PNG).</small>
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- Account Information (Read-only, hidden by default) -->
-    <div class="profile-section" id="accountInfoSection" style="display: none;">
-        <div class="section-header">
-            <h2><i class="fas fa-user-circle"></i> Account Information</h2>
+                        <div class="form-item-row">
+                            <label class="form-item-label">Full Name</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-user"></i></div>
+                                <input type="text" class="input-premium" name="full_name" value="{{ $user->full_name }}" required>
+                            </div>
+                        </div>
+
+                        <div class="form-item-row">
+                            <label class="form-item-label">Official Position</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-briefcase"></i></div>
+                                <input type="text" class="input-premium" name="position" value="{{ $user->position }}">
+                            </div>
+                        </div>
+
+                        <div class="form-item-row">
+                            <label class="form-item-label">Salary</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-money-bill-wave"></i></div>
+                                <input type="text" class="input-premium" name="salary" value="{{ old('salary', $user->salary) }}" placeholder="Enter salary">
+                            </div>
+                        </div>
+
+                        <div class="form-item-row">
+                            <label class="form-item-label">Employee Number</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-id-badge"></i></div>
+                                <input type="text" class="input-premium" name="employee_number" value="{{ old('employee_number', $user->employee_number) }}" placeholder="7-digit No." pattern="\d{7}" maxlength="7">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="profile-footer">
+                        <a href="{{ route('user.home') }}" class="btn-back animate__animated animate__backInDown animate__fast" style="animation-delay: 0.55s;">
+                            <i class="fas fa-arrow-left"></i>
+                            Return to Dashboard
+                        </a>
+                        <button type="submit" class="btn-sync animate__animated animate__backInDown animate__fast" style="animation-delay: 0.5s;">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="section-body">
-            <div class="info-grid">
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-user"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Full Name</div>
-                        <div class="info-value">{{ $user->full_name }}</div>
-                    </div>
+
+        <!-- 2. Approver Configuration -->
+        <div class="profile-card accent-blue animate__animated animate__backInDown animate__fast" style="animation-delay: 0.2s;">
+            <div class="profile-card-header">
+                <div class="profile-section-title">
+                    <i class="fas fa-users-cog"></i>
+                    Approver Configuration
                 </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-envelope"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Gmail Address</div>
-                        <div class="info-value">{{ $user->gmail ?: 'Not set' }}</div>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-id-card"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Employee No.</div>
-                        <div class="info-value">{{ $user->employee_number ?: 'Not set' }}</div>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-briefcase"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Position</div>
-                        <div class="info-value">{{ $user->position ?: 'Not set' }}</div>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-building"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Office / Station</div>
-                        <div class="info-value">{{ $user->office_station ?: 'Not assigned' }}</div>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Member Since</div>
-                        <div class="info-value">{{ $user->created_at->format('F d, Y') }}</div>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <div class="info-icon"><i class="fas fa-shield-alt"></i></div>
-                    <div class="info-content">
-                        <div class="info-label">Account Status</div>
-                        <div class="info-value"
-                            style="color: <?php echo $user->is_active ? '#22c55e' : '#dc2626'; ?>; font-weight: 700;">
-                            <i class="fas fa-circle"
-                                style="font-size: 0.5rem; vertical-align: middle; margin-right: 4px;"></i>
-                            {{ $user->is_active ? 'Active' : 'Inactive' }}
+            </div>
+            <div class="profile-card-body">
+                <form action="{{ route('user.profile.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="profile-form">
+                        <div class="form-item-row">
+                            <label class="form-item-label">Recommending Approver</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-user-check"></i></div>
+                                <select class="input-premium" name="recommending_officer_id">
+                                    <option value="">Select Recommender</option>
+                                    @foreach($recommendingOfficers as $officer)
+                                        <option value="{{ $officer->id }}" {{ (old('recommending_officer_id', $user->recommending_officer_id) == $officer->id) ? 'selected' : '' }}>
+                                            {{ $officer->full_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-item-row">
+                            <label class="form-item-label">Final Approver</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-signature"></i></div>
+                                <select class="input-premium" name="approving_officer_id">
+                                    <option value="">Select Final Approver</option>
+                                    @foreach($finalApprovers as $officer)
+                                        <option value="{{ $officer->id }}" {{ (old('approving_officer_id', $user->approving_officer_id) == $officer->id) ? 'selected' : '' }}>
+                                            {{ $officer->full_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 10px; padding: 12px; background: #f0f9ff; border-radius: 10px; border: 1px solid #e0f2fe;">
+                            <p style="font-size: 0.75rem; color: #0369a1; line-height: 1.4; margin: 0;">
+                                <i class="fas fa-info-circle"></i> These officers will be automatically assigned to your leave requests for recommendations and final approval.
+                            </p>
                         </div>
                     </div>
-                </div>
+                    
+                    <div class="profile-footer" style="justify-content: flex-end;">
+                        <button type="submit" class="btn-sync">
+                            <i class="fas fa-save"></i>
+                            Save Config
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
 
-    <!-- Edit Profile Section (Hidden by default) -->
-    <div class="profile-section" id="editProfileSection" style="display: none;">
-        <div class="section-header">
-            <h2><i class="fas fa-edit"></i> Edit Profile</h2>
-        </div>
-        <div class="section-body">
-            <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-
-                <div class="form-row-custom">
-                    <div class="form-group-custom">
-                        <label class="field-label">FULL NAME</label>
-                        <input type="text" class="field-input" name="full_name" value="{{ $user->full_name }}" required>
-                    </div>
-                    <div class="form-group-custom">
-                        <label class="field-label">POSITION</label>
-                        <input type="text" class="field-input" name="position" value="{{ $user->position }}">
-                    </div>
-                </div>
-
-                <div class="form-row-custom">
-                    <div class="form-group-custom">
-                        <label class="field-label">OFFICE / STATION</label>
-                        <input type="text" class="field-input field-readonly" value="{{ $user->office_station }}" readonly>
-                    </div>
-                    <div class="form-group-custom">
-                        <label class="field-label">EMPLOYEE NO.</label>
-                        <input type="text" class="field-input" name="employee_number" 
-                               value="{{ old('employee_number', $user->employee_number) }}" 
-                               placeholder="Enter 7-digit Employee No." 
-                               pattern="\d{7}" maxlength="7" title="Must be exactly 7 digits">
-                    </div>
-                </div>
-
-                <div class="form-row-custom">
-                    <div class="form-group-custom">
-                        <label class="field-label">SALARY</label>
-                        <input type="text" class="field-input" name="salary" value="{{ old('salary', $user->salary) }}"
-                            placeholder="Enter monthly salary">
-                    </div>
-                </div>
-
-                <!-- Approver Selection Section -->
-                <div class="mt-4 mb-4 pt-4 border-t border-gray-200">
-                    <h3
-                        class="text-lg font-bold text-gray-700 mb-3 block uppercase text-xs font-bold tracking-wider text-slate-500">
-                        Choose your Recommending and Final Approver</h3>
-                    <div class="form-row-custom">
-                        <div class="form-group-custom">
-                            <label class="field-label">RECOMMENDING APPROVER</label>
-                            <select class="field-input" name="recommending_officer_id">
-                                <option value="">Select Recommender</option>
-                                @foreach($recommendingOfficers as $officer)
-                                    <option value="{{ $officer->id }}" {{ (old('recommending_officer_id', $user->recommending_officer_id) == $officer->id) ? 'selected' : '' }}>
-                                        {{ $officer->full_name }} ({{ strtoupper($officer->role) }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group-custom">
-                            <label class="field-label">FINAL APPROVER</label>
-                            <select class="field-input" name="approving_officer_id">
-                                <option value="">Select Final Approver</option>
-                                @foreach($finalApprovers as $officer)
-                                    <option value="{{ $officer->id }}" {{ (old('approving_officer_id', $user->approving_officer_id) == $officer->id) ? 'selected' : '' }}>
-                                        {{ $officer->full_name }} ({{ strtoupper($officer->role) }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group-custom">
-                    <label class="field-label">PROFILE PICTURE</label>
-                    <input type="file" class="field-input" name="profile_picture" accept="image/*">
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel" onclick="toggleSection('editProfileSection')">Cancel</button>
-                    <button type="submit" class="btn-save">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Change Password Section (Hidden by default) -->
-    <div class="profile-section" id="changePasswordSection" style="display: none;">
-        <div class="section-header">
-            <h2><i class="fas fa-lock"></i> Change Password</h2>
-        </div>
-        <div class="section-body">
-            <form id="passwordForm">
-
-                <div class="form-row-custom">
-                    <div class="form-group-custom">
-                        <label class="field-label">NEW PASSWORD</label>
-                        <input type="password" class="field-input" name="password" id="newPassword"
-                            placeholder="Enter new password" minlength="6" required>
-                        <span class="field-hint">Minimum 6 characters</span>
-                    </div>
-                    <div class="form-group-custom">
-                        <label class="field-label">CONFIRM NEW PASSWORD</label>
-                        <input type="password" class="field-input" name="password_confirmation" id="confirmPassword"
-                            placeholder="Confirm new password" minlength="6" required>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-cancel"
-                        onclick="toggleSection('changePasswordSection')">Cancel</button>
-                    <button type="button" class="btn-save" onclick="initiatePasswordChange()">
-                        <i class="fas fa-save"></i> Update Password
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal for Verification -->
-    <div class="custom-modal-overlay" id="verificationModal">
-        <div class="custom-modal">
-            <div class="custom-modal-header">
-                <h3><i class="fas fa-shield-alt"></i> Security Verification</h3>
-                <button type="button" class="custom-modal-close" onclick="closeModal('verificationModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="custom-modal-body">
-                <p class="modal-info-text">
-                    To secure your account, we've sent a verification code to <strong>{{ $user->gmail }}</strong>.
-                    Please enter it below to confirm your password change.
-                </p>
-                <div class="form-group-custom">
-                    <label class="field-label" style="text-align: center;">VERIFICATION CODE</label>
-                    <div class="verification-input-wrapper">
-                        <input type="text" class="field-input verification-input" id="verificationCode"
-                            placeholder="Enter 6-digit code" maxlength="6">
-                    </div>
+        <!-- 3. Electronic Signature -->
+        <div class="profile-card animate__animated animate__backInDown animate__fast" style="animation-delay: 0.3s;">
+            <div class="profile-card-header">
+                <div class="profile-section-title">
+                    <i class="fas fa-file-signature"></i>
+                    Electronic Signature
                 </div>
             </div>
-            <div class="custom-modal-footer">
-                <button type="button" class="btn-cancel" onclick="closeModal('verificationModal')">Cancel</button>
-                <button type="button" class="btn-save" onclick="submitPasswordChange()">
-                    <i class="fas fa-check-circle"></i> Verify & Update
-                </button>
-            </div>
-        </div>
-    </div>
+            <div class="profile-card-body">
+                <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data" id="signatureForm">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="esignature_mode" id="esignatureMode" value="upload">
+                    <input type="hidden" name="esignature_data" id="esignatureData">
 
-    <!-- E-Signature Section -->
-    <div class="profile-section" id="esignatureSection" style="display: none;">
-        <div class="section-header">
-            <h2><i class="fas fa-signature"></i> Electronic Signature</h2>
-        </div>
-        <div class="section-body">
-            <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data"
-                id="signatureForm">
-                @csrf
-                @method('PUT')
-
-                <input type="hidden" name="esignature_mode" id="esignatureMode" value="upload">
-                <input type="hidden" name="esignature_data" id="esignatureData">
-
-                <div class="form-grid">
-                    <div class="form-group-custom full-width">
-                        <label class="field-label">Current Signature</label>
-                        <div class="signature-preview"
-                            style="border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 20px; background: #f8fafc;">
+                    <div class="form-item-row" style="margin-bottom: 20px;">
+                        <label class="form-item-label">Current Signature</label>
+                        <div class="signature-preview" style="border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; background: #f8fafc; flex: 1;">
                             @if($user->esignature)
-                                <img src="{{ storage_url($user->esignature) }}" alt="E-Signature"
-                                    style="max-height: 100px; max-width: 100%;">
+                                <img src="{{ storage_url($user->esignature) }}" alt="E-Signature" style="max-height: 100px; max-width: 100%;">
                             @else
-                                <p class="text-gray-400">No signature uploaded yet.</p>
+                                <p class="text-muted" style="font-size: 0.85rem;">No signature uploaded yet.</p>
                             @endif
                         </div>
                     </div>
 
-                    <div class="form-group-custom full-width">
-                        <label class="field-label">Update Signature</label>
-
-                        <!-- Tabs -->
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <button type="button" class="btn-tab active" id="tabUpload" onclick="switchSigMode('upload')"
-                                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: #eef2ff; color: #6366f1; cursor: pointer;">
-                                <i class="fas fa-upload"></i> Upload PNG
-                            </button>
-                            <button type="button" class="btn-tab" id="tabDraw" onclick="switchSigMode('draw')"
-                                style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; cursor: pointer;">
-                                <i class="fas fa-pen-nib"></i> Draw Signature
-                            </button>
-                        </div>
-
-                        <!-- Upload Area -->
-                        <div id="uploadArea">
-                            <input type="file" name="esignature" class="field-input" accept="image/png">
-                            <small style="display: block; margin-top: 8px; color: #64748b;">
-                                Please upload a clear image of your signature (<strong>PNG only</strong> with transparent
-                                background recommended).
-                            </small>
-                        </div>
-
-                        <!-- Draw Area -->
-                        <div id="drawArea" style="display: none;">
-                            <div
-                                style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; position: relative; width: 300px; height: 300px; margin: 0 auto;">
-                                <canvas id="sigCanvas" width="300" height="300"
-                                    style="display: block; cursor: crosshair; touch-action: none;"></canvas>
-                            </div>
-                            <div
-                                style="margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 20px;">
-                                <small class="text-gray-500">Sign within the box</small>
-                                <button type="button" onclick="clearSigCanvas()"
-                                    style="color: #dc2626; background: transparent; border: none; cursor: pointer; font-weight: 600;">
-                                    <i class="fas fa-eraser"></i> Clear
+                    <div class="form-item-row">
+                        <label class="form-item-label">Update Signature</label>
+                        <div style="flex: 1;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <button type="button" class="btn-tab active" id="tabUpload" onclick="switchSigMode('upload')" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: #eef2ff; color: #6366f1; cursor: pointer; font-size: 0.8rem; font-weight: 700;">
+                                    <i class="fas fa-upload"></i> UPLOAD PNG
                                 </button>
+                                <button type="button" class="btn-tab" id="tabDraw" onclick="switchSigMode('draw')" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 700;">
+                                    <i class="fas fa-pen-nib"></i> DRAW SIGNATURE
+                                </button>
+                            </div>
+
+                            <div id="uploadArea">
+                                <input type="file" name="esignature" class="input-premium" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;" accept="image/png">
+                                <small style="display: block; margin-top: 8px; color: #64748b; font-size: 0.75rem;">
+                                    Please upload a clear image of your signature (<strong>PNG only</strong>).
+                                </small>
+                            </div>
+
+                            <div id="drawArea" style="display: none;">
+                                <div style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; width: 100%; max-width: 400px; height: 200px;">
+                                    <canvas id="sigCanvas" width="400" height="200" style="display: block; cursor: crosshair; touch-action: none; width: 100%; height: 100%;"></canvas>
+                                </div>
+                                <div style="margin-top: 10px; display: flex; align-items: center; gap: 20px;">
+                                    <small style="color: #64748b; font-size: 0.75rem;">Sign within the box</small>
+                                    <button type="button" onclick="clearSigCanvas()" style="color: #dc2626; background: transparent; border: none; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
+                                        <i class="fas fa-eraser"></i> Clear
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-actions">
-                    <button type="button" onclick="submitSignature()" class="btn-save">
-                        <i class="fas fa-save"></i> Save Signature
-                    </button>
+                    <div class="profile-footer" style="justify-content: flex-end;">
+                        <button type="button" onclick="submitSignature()" class="btn-sync">
+                            <i class="fas fa-save"></i>
+                            Save Signature
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- 4. Security & Authentication -->
+        <div class="profile-card accent-purple animate__animated animate__backInDown animate__fast" style="animation-delay: 0.35s;">
+            <div class="profile-card-header">
+                <div class="profile-section-title">
+                    <i class="fas fa-lock"></i>
+                    Security & Authentication
                 </div>
-            </form>
+            </div>
+            <div class="profile-card-body">
+                <form action="{{ route('user.profile.password.update') }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="profile-form">
+                        <div class="form-item-row">
+                            <label class="form-item-label">Current Password</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-key"></i></div>
+                                <input type="password" class="input-premium" name="current_password" required>
+                            </div>
+                        </div>
+                        <div class="form-item-row">
+                            <label class="form-item-label">New Password</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-lock"></i></div>
+                                <input type="password" class="input-premium" name="password" required minlength="6" placeholder="Minimum 6 characters">
+                            </div>
+                        </div>
+                        <div class="form-item-row">
+                            <label class="form-item-label">Confirm Password</label>
+                            <div class="input-group-premium">
+                                <div class="input-icon"><i class="fas fa-check-circle"></i></div>
+                                <input type="password" class="input-premium" name="password_confirmation" required minlength="6" placeholder="Confirm new password">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-footer" style="justify-content: flex-end;">
+                        <button type="submit" class="btn-sync">
+                            <i class="fas fa-save"></i>
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 5. Account Status & Actions -->
+        <div class="profile-card accent-orange animate__animated animate__backInDown animate__fast" style="animation-delay: 0.4s;">
+            <div class="profile-card-header">
+                <div class="profile-section-title">
+                    <i class="fas fa-user-circle"></i>
+                    Account Status
+                </div>
+            </div>
+            <div class="profile-card-body">
+                <div class="profile-form">
+                    <div class="form-item-row">
+                        <label class="form-item-label">Office / Assignment</label>
+                        <div class="input-group-premium">
+                            <div class="input-icon"><i class="fas fa-building"></i></div>
+                            <input type="text" class="input-premium" value="{{ $user->office_station ?: 'Not set' }}" readonly style="background: #f1f5f9; cursor: not-allowed;">
+                        </div>
+                    </div>
+
+                    <div class="form-item-row">
+                        <label class="form-item-label">Member Since</label>
+                        <div class="input-group-premium">
+                            <div class="input-icon"><i class="fas fa-calendar-alt"></i></div>
+                            <input type="text" class="input-premium" value="{{ $user->created_at->format('F d, Y') }}" readonly style="background: #f1f5f9; cursor: not-allowed;">
+                        </div>
+                    </div>
+
+                    <div class="privilege-box" style="margin-top: 10px;">
+                        <div class="privilege-icon-container" style="background: {{ $user->is_active ? '#ecfdf5' : '#fef2f2' }}; color: {{ $user->is_active ? '#059669' : '#dc2626' }};">
+                            <i class="fas {{ $user->is_active ? 'fa-check-circle' : 'fa-times-circle' }}"></i>
+                        </div>
+                        <div class="privilege-text">
+                            <span class="role-level">Status: {{ $user->is_active ? 'ACTIVE' : 'INACTIVE' }}</span>
+                            <p class="role-desc">Your account is {{ $user->is_active ? 'fully operational' : 'currently suspended' }}. You can file leave requests as long as your status remains active.</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #e2e8f0; display: flex; gap: 12px;">
+                        <a href="{{ route('user.profile.leave-card') }}" class="btn-sync" style="background: #475569; flex: 1; justify-content: center;" target="_blank">
+                            <i class="fas fa-print"></i> Generate Leave Card
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            // ---- Signature Logic ----
+            let canvas, ctx;
+            let isDrawing = false;
+            let hasSignature = false;
+
+            function initCanvas() {
+                canvas = document.getElementById('sigCanvas');
+                if (!canvas) return;
+                if (canvas.getAttribute('data-init') === 'true') return;
+
+                ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const rect = canvas.getBoundingClientRect();
+
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                ctx.scale(dpr, dpr);
+
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000';
+
+                // Desktop events
+                canvas.addEventListener('mousedown', startDraw);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', endDraw);
+                canvas.addEventListener('mouseout', endDraw);
+
+                // Touch events for mobile
+                canvas.addEventListener('touchstart', function(e) {
+                    const touch = e.touches[0];
+                    startDraw({ clientX: touch.clientX, clientY: touch.clientY });
+                }, { passive: false });
+
+                canvas.addEventListener('touchmove', function(e) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    draw({ clientX: touch.clientX, clientY: touch.clientY });
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', endDraw);
+
+                canvas.setAttribute('data-init', 'true');
+            }
+
+            function startDraw(e) {
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                ctx.beginPath();
+                ctx.moveTo((e.clientX - rect.left), (e.clientY - rect.top));
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+                hasSignature = true;
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineTo((e.clientX - rect.left), (e.clientY - rect.top));
+                ctx.stroke();
+            }
+
+            function endDraw() {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+
+            function clearSigCanvas() {
+                if (!ctx || !canvas) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                hasSignature = false;
+            }
+
+            function switchSigMode(mode) {
+                const uploadArea = document.getElementById('uploadArea');
+                const drawArea = document.getElementById('drawArea');
+                const tabUpload = document.getElementById('tabUpload');
+                const tabDraw = document.getElementById('tabDraw');
+                const modeInput = document.getElementById('esignatureMode');
+
+                if (mode === 'upload') {
+                    uploadArea.style.display = 'block';
+                    drawArea.style.display = 'none';
+                    tabUpload.style.background = '#eef2ff';
+                    tabUpload.style.color = '#6366f1';
+                    tabDraw.style.background = 'white';
+                    tabDraw.style.color = '#334155';
+                    modeInput.value = 'upload';
+                } else {
+                    uploadArea.style.display = 'none';
+                    drawArea.style.display = 'block';
+                    tabUpload.style.background = 'white';
+                    tabUpload.style.color = '#334155';
+                    tabDraw.style.background = '#eef2ff';
+                    tabDraw.style.color = '#6366f1';
+                    modeInput.value = 'draw';
+                    initCanvas();
+                }
+            }
+
+            function submitSignature() {
+                const form = document.getElementById('signatureForm');
+                const mode = document.getElementById('esignatureMode').value;
+
+                if (mode === 'draw') {
+                    if (!hasSignature) {
+                        alert('Please draw your signature first.');
+                        return;
+                    }
+                    const dataURL = canvas.toDataURL('image/png');
+                    document.getElementById('esignatureData').value = dataURL;
+                }
+                form.submit();
+            }
+
+            // Init canvas on load if visible
+            window.addEventListener('load', () => {
+                const drawArea = document.getElementById('drawArea');
+                if(drawArea && drawArea.style.display === 'block') {
+                    initCanvas();
+                }
+            });
+        </script>
+    @endpush
 @endsection
-
-@push('scripts')
-    <script>
-
-        // ---- Signature Logic ----
-        let canvas, ctx;
-        let isDrawing = false;
-        let hasSignature = false;
-
-        // Initialize canvas on load or when section opens
-        // We'll init when the section is toggled or lazily
-
-        function initCanvas() {
-            canvas = document.getElementById('sigCanvas');
-            if (!canvas) return;
-
-            ctx = canvas.getContext('2d');
-
-            // Handle resizing for high DPI
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            ctx.lineWidth = 2;
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#000000';
-
-            // Events
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('mouseout', endDraw);
-
-            // Touch events
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            });
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            });
-
-            canvas.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                const mouseEvent = new MouseEvent('mouseup', {});
-                canvas.dispatchEvent(mouseEvent);
-            });
-        }
-
-        function startDraw(e) {
-            isDrawing = true;
-            const rect = canvas.getBoundingClientRect();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            const rect = canvas.getBoundingClientRect();
-            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
-            ctx.stroke();
-            hasSignature = true;
-        }
-
-        function endDraw() {
-            isDrawing = false;
-            ctx.closePath();
-        }
-
-        function clearSigCanvas() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hasSignature = false;
-        }
-
-        function switchSigMode(mode) {
-            document.getElementById('esignatureMode').value = mode;
-
-            const tabUpload = document.getElementById('tabUpload');
-            const tabDraw = document.getElementById('tabDraw');
-            const areaUpload = document.getElementById('uploadArea');
-            const areaDraw = document.getElementById('drawArea');
-
-            if (mode === 'upload') {
-                tabUpload.style.background = '#eef2ff';
-                tabUpload.style.color = '#6366f1';
-
-                tabDraw.style.background = 'white'; // Here
-                tabDraw.style.color = 'black'; // Here
-
-                areaUpload.style.display = 'block';
-                areaDraw.style.display = 'none';
-            } else {
-                tabDraw.style.background = '#eef2ff';
-                tabDraw.style.color = '#6366f1';
-
-                tabUpload.style.background = 'white'; // Here
-                tabUpload.style.color = 'black'; // Here
-
-                areaUpload.style.display = 'none';
-                areaDraw.style.display = 'block';
-
-                // Re-init canvas visibility can mess up dimensions
-                setTimeout(initCanvas, 50);
-            }
-        }
-
-        function submitSignature() {
-            const mode = document.getElementById('esignatureMode').value;
-            if (mode === 'draw') {
-                if (!hasSignature) {
-                    showToast('Please sign on the canvas before saving.', 'warning');
-                    return;
-                }
-                const dataURL = canvas.toDataURL('image/png');
-                document.getElementById('esignatureData').value = dataURL;
-            }
-
-            document.getElementById('signatureForm').submit();
-        }
-
-        function initiatePasswordChange() {
-            const password = document.getElementById('newPassword').value;
-            const confirm = document.getElementById('confirmPassword').value;
-
-            if (!password || !confirm) {
-                showToast('Please fill in both password fields.', 'warning');
-                return;
-            }
-
-            if (password.length < 6) {
-                showToast('Password must be at least 6 characters.', 'warning');
-                return;
-            }
-
-            if (password !== confirm) {
-                showToast('Passwords do not match.', 'error');
-                return;
-            }
-
-            // Request Token
-            const btn = document.querySelector('#passwordForm .btn-save');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Code...';
-            btn.disabled = true;
-
-            fetch('{{ route("user.profile.password.request-token") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-
-                    if (data.status === 'success') {
-                        document.getElementById('verificationModal').style.display = 'flex';
-                        document.getElementById('verificationCode').focus();
-                        showToast(data.message, 'success');
-                    } else {
-                        showToast(data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    console.error('Error:', error);
-                    showToast('An error occurred. Please try again.', 'error');
-                });
-        }
-
-        function submitPasswordChange() {
-            const code = document.getElementById('verificationCode').value;
-            const password = document.getElementById('newPassword').value;
-            const password_confirmation = document.getElementById('confirmPassword').value;
-
-            if (!code) {
-                showToast('Please enter the verification code.', 'warning');
-                return;
-            }
-
-            const btn = document.querySelector('#verificationModal .btn-save');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-            btn.disabled = true;
-
-            fetch('{{ route("user.profile.password.update") }}', {
-                method: 'PUT',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    password: password,
-                    password_confirmation: password_confirmation,
-                    token: code
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-
-                    if (data.status === 'success') {
-                        document.getElementById('verificationModal').style.display = 'none';
-                        showToast(data.message, 'success');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
-                    } else {
-                        showToast(data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    console.error('Error:', error);
-                    showToast('An error occurred. Please try again.', 'error');
-                });
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
-        function toggleSection(id) {
-            const section = document.getElementById(id);
-            if (section.style.display === 'none') {
-                // Hide other sections first
-                document.getElementById('accountInfoSection').style.display = 'none';
-                document.getElementById('editProfileSection').style.display = 'none';
-                document.getElementById('changePasswordSection').style.display = 'none';
-                // Show this one
-                section.style.display = 'block';
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-                section.style.display = 'none';
-            }
-        }
-    </script>
-@endpush

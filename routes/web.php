@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 // Serve storage files (profile pics, e-signatures) via /media/ - avoids conflict with storage directory
 $storageHandler = function (string $path) {
     $path = trim($path, '/');
-    if (!Storage::disk('public')->exists($path)) {
+    if (! Storage::disk('public')->exists($path)) {
         abort(404);
     }
 
@@ -68,7 +68,7 @@ Route::controller(AuthController::class)->group(function () {
 | Admin Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_admin,head_hr,hr'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_admin,head_hr,hr,hr_review_officer'])->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard/api', [AdminController::class, 'dashboardApi'])->name('dashboard.api');
 
@@ -116,6 +116,7 @@ Route::prefix('head-hr')->name('head-hr.')->middleware(['auth', 'role:head_hr,su
     Route::post('/leave-types', [App\Http\Controllers\HeadHRController::class, 'storeLeaveType'])->name('leave-types.store');
     Route::delete('/leave-types/{id}', [App\Http\Controllers\HeadHRController::class, 'destroyLeaveType'])->name('leave-types.destroy');
     Route::get('/audit-logs', [App\Http\Controllers\HeadHRController::class, 'auditLogs'])->name('audit-logs');
+    Route::post('/requests/{id}', [App\Http\Controllers\HeadHRController::class, 'handleRequest'])->name('requests.handle');
 });
 
 /*
@@ -123,12 +124,13 @@ Route::prefix('head-hr')->name('head-hr.')->middleware(['auth', 'role:head_hr,su
 | HR Staff Routes (Leave Credit Input)
 |--------------------------------------------------------------------------
 */
-Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_hr'])->group(function () {
+Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_hr,hr_review_officer'])->group(function () {
     // HR can access this, Head HR too if needed (or just restrict to HR)
     Route::get('/manage-credits', [App\Http\Controllers\HRController::class, 'manageCredits'])->name('manage-credits');
     Route::get('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'editCredits'])->name('manage-credits.edit');
     Route::post('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'updateCredits'])->name('manage-credits.update');
     Route::post('/manage-credits/{user}/add-cto', [App\Http\Controllers\HRController::class, 'addCtoCredit'])->name('manage-credits.add-cto');
+    Route::post('/unlock-credits/{user}', [App\Http\Controllers\HRController::class, 'requestUnlock'])->name('manage-credits.unlock-request');
 });
 
 /*
@@ -136,11 +138,8 @@ Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_
 | HR Routes (Profile)
 |--------------------------------------------------------------------------
 */
-Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,head_hr,super_admin'])->group(function () {
+Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,hr_review_officer'])->group(function () {
     Route::get('/dashboard', [HRController::class, 'dashboard'])->name('dashboard');
-});
-
-Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr'])->group(function () {
     Route::get('/profile', [HRController::class, 'profile'])->name('profile');
     Route::put('/profile', [HRController::class, 'updateProfile'])->name('profile.update');
 });
@@ -154,9 +153,9 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/home', [UserController::class, 'home'])->name('home');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/profile/leave-card', [\App\Http\Controllers\PrintLeaveCardController::class, 'print'])->name('profile.leave-card');
 
-    // Password Update with Verification
-    Route::post('/profile/password/request-token', [UserController::class, 'requestPasswordToken'])->name('profile.password.request-token');
+    // Password Update
     Route::put('/profile/password/update', [UserController::class, 'updatePassword'])->name('profile.password.update');
 
     // E-Leave System
@@ -178,4 +177,15 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::post('/notifications/read', [UserController::class, 'markNotificationRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [UserController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
     Route::get('/notifications', [UserController::class, 'getNotifications'])->name('notifications');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Record Personnel Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('records')->name('records.')->middleware(['auth', 'role:record_personnel,super_admin'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\RecordPersonnelController::class, 'dashboard'])->name('dashboard');
+    Route::get('/applications', [\App\Http\Controllers\RecordPersonnelController::class, 'index'])->name('index');
+    Route::get('/leave/view/{id}', [\App\Http\Controllers\RecordPersonnelController::class, 'showLeave'])->name('leave.show');
 });

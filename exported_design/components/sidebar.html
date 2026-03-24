@@ -1,0 +1,61 @@
+<!-- 
+    Exported Sidebar Component 
+    Includes: Sidebar layout, Navigation Tabs, Toggle animations, and Logout Button
+-->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="mainSidebar">
+    <div class="sidebar-header">
+        <div class="logo">
+            <img src="../../public/assets/LogoLDP.png" alt="Logo" class="logo-img">
+            <div class="logo-text">
+                <span class="logo-title">System Name</span>
+                <span class="logo-subtitle">Subtitle</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="sidebar-nav">
+        <!-- Active Tab Example -->
+        <a href="#" class="nav-item active" data-tooltip="Dashboard">
+            <div class="nav-icon">
+                <i class="bi bi-grid-fill"></i>
+            </div>
+            <span class="nav-text">Dashboard</span>
+        </a>
+
+        <!-- Normal Tab Example -->
+        <a href="#" class="nav-item" data-tooltip="Users">
+            <div class="nav-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <span class="nav-text">Users</span>
+        </a>
+
+        <!-- Normal Tab Example -->
+        <a href="#" class="nav-item" data-tooltip="Settings">
+            <div class="nav-icon">
+                <i class="bi bi-gear-fill"></i>
+            </div>
+            <span class="nav-text">Settings</span>
+        </a>
+    </div>
+
+    <!-- Footer with Logout -> Extracted Design -->
+    <div class="sidebar-footer">
+        <a href="#" class="user-info-link">
+            <div class="user-info">
+                <div class="user-avatar-placeholder" style="width: 36px; height: 36px; border-radius: 50%; background: #0f4c75; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">U</div>
+                <div class="user-details">
+                    <span class="user-name">User Name</span>
+                    <span class="user-role">Role</span>
+                </div>
+            </div>
+        </a>
+        <!-- Destructive Red Logout Button -->
+        <a href="#" class="logout-btn-new" title="Log out">
+            <i class="bi bi-box-arrow-right"></i>
+        </a>
+    </div>
+</div>

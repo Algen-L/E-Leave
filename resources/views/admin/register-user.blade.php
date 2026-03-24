@@ -6,6 +6,41 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/register-user.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <style>
+        .register-container {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .avatar-panel, .form-section {
+            opacity: 0;
+            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .avatar-panel { animation-delay: 0.1s; }
+        .form-section:nth-of-type(1) { animation-delay: 0.2s; }
+        .form-section:nth-of-type(2) { animation-delay: 0.3s; }
+        .form-section:nth-of-type(3) { animation-delay: 0.4s; }
+
+        @keyframes backInDown {
+            0% {
+                transform: translateY(-100px) scale(0.7);
+                opacity: 0;
+            }
+            80% {
+                transform: translateY(0px) scale(0.7);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -43,24 +78,10 @@
 
                     <div class="form-grid-2">
                         <div class="form-group">
-                            <label class="form-label">Username <span class="required">*</span></label>
-                            <input type="text" class="form-control @error('username') error @enderror" name="username"
-                                value="{{ old('username') }}" placeholder="Enter username" required>
-                            @error('username')
-                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Password <span class="required">*</span></label>
-                            <div class="password-wrapper">
-                                <input type="password" class="form-control @error('password') error @enderror"
-                                    name="password" id="password" placeholder="Enter password" minlength="6" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword()">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
-                            </div>
-                            @error('password')
+                            <label class="form-label">Email (DepEd Gmail) <span class="required">*</span></label>
+                            <input type="email" class="form-control @error('gmail') error @enderror" name="gmail"
+                                value="{{ old('gmail') }}" placeholder="username@deped.gov.ph" required>
+                            @error('gmail')
                                 <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                             @enderror
                         </div>
@@ -69,8 +90,11 @@
                             <label class="form-label">Role <span class="required">*</span></label>
                             <select class="form-select @error('role') error @enderror" name="role" required>
                                 <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
-                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL
-                                </option>
+                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL</option>
+                                @if(in_array(auth()->user()->role, ['hr', 'head_hr', 'super_admin']))
+                                    <option value="hr_review_officer" {{ old('role') === 'hr_review_officer' ? 'selected' : '' }}>HR REVIEW OFFICER</option>
+                                @endif
+                                <option value="record_personnel" {{ old('role') === 'record_personnel' ? 'selected' : '' }}>RECORD PERSONNEL</option>
                                 @if(auth()->user()->role === 'super_admin')
                                     <optgroup label="High Level Roles">
                                         <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASDS</option>
@@ -87,6 +111,31 @@
                                 <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                             @enderror
                         </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Password <span class="required">*</span></label>
+                            <div class="password-wrapper">
+                                <input type="password" class="form-control @error('password') error @enderror"
+                                    name="password" id="password" placeholder="Enter password" minlength="6" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon')">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                            @error('password')
+                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirm Password <span class="required">*</span></label>
+                            <div class="password-wrapper">
+                                <input type="password" class="form-control"
+                                    name="password_confirmation" id="password_confirmation" placeholder="Confirm password" minlength="6" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation', 'toggleIconConfirm')">
+                                    <i class="fas fa-eye" id="toggleIconConfirm"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -99,7 +148,7 @@
                         <h4 class="section-title">Personal Information</h4>
                     </div>
 
-                    <div class="form-grid-2">
+                    <div class="form-grid-3">
                         <div class="form-group">
                             <label class="form-label">First Name <span class="required">*</span></label>
                             <input type="text" class="form-control @error('first_name') error @enderror" name="first_name"
@@ -126,16 +175,9 @@
                                 <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
                             @enderror
                         </div>
-
-                        <div class="form-group">
-                            <label class="form-label">Email (Gmail)</label>
-                            <input type="email" class="form-control @error('gmail') error @enderror" name="gmail"
-                                value="{{ old('gmail') }}" placeholder="Enter email address">
-                            @error('gmail')
-                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
-                            @enderror
-                        </div>
                     </div>
+
+
                 </div>
 
                 <!-- Work Information -->
@@ -353,9 +395,9 @@
             }
         });
 
-        function togglePassword() {
-            const passwordInput = document.getElementById('password');
-            const toggleIcon = document.getElementById('toggleIcon');
+        function togglePassword(inputId, iconId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(iconId);
 
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';

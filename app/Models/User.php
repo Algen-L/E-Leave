@@ -124,12 +124,17 @@ class User extends Authenticatable
 
     public function isHR(): bool
     {
-        return in_array($this->role, ['hr', 'head_hr']);
+        return in_array($this->role, ['hr', 'head_hr', 'hr_review_officer']);
     }
 
     public function isHeadHR(): bool
     {
         return $this->role === 'head_hr';
+    }
+
+    public function isRecordPersonnel(): bool
+    {
+        return $this->role === 'record_personnel';
     }
 
     public function isImmediateHead(): bool

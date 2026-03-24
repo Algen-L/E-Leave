@@ -2,242 +2,39 @@
 
 @section('title', 'Reset Password')
 
-@push('styles')
-<style>
-    .reset-card {
-        background: #1e293b;
-        border-radius: 16px;
-        padding: 40px;
-        width: 100%;
-        max-width: 420px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        position: relative;
-        z-index: 10;
-    }
-    
-    .reset-logo {
-        text-align: center;
-        margin-bottom: 24px;
-    }
-    
-    .reset-logo img {
-        width: 80px;
-        height: 80px;
-        object-fit: contain;
-    }
-    
-    .reset-title {
-        text-align: center;
-        margin-bottom: 8px;
-    }
-    
-    .reset-title h1 {
-        color: #f8fafc;
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin: 0;
-    }
-    
-    .reset-subtitle {
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.9rem;
-        margin-bottom: 24px;
-    }
-    
-    .step-description {
-        color: #f8fafc;
-        font-size: 0.9rem;
-        margin-bottom: 24px;
-        line-height: 1.5;
-    }
-    
-    .form-label-custom {
-        display: block;
-        color: #94a3b8;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 8px;
-    }
-    
-    .form-input-custom {
-        width: 100%;
-        background: #334155;
-        border: none;
-        border-radius: 8px;
-        padding: 14px 16px;
-        color: #f8fafc;
-        font-size: 0.95rem;
-        margin-bottom: 20px;
-        transition: all 0.2s;
-    }
-    
-    .form-input-custom::placeholder {
-        color: #64748b;
-    }
-    
-    .form-input-custom:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px #0d9488;
-        background: #3d4f66;
-    }
-    
-    .btn-reset {
-        width: 100%;
-        background: linear-gradient(135deg, #0f4c5c 0%, #0d9488 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 14px;
-        color: white;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 20px;
-    }
-    
-    .btn-reset:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
-    }
-    
-    .btn-reset:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-    }
-    
-    .back-link {
-        display: block;
-        text-align: center;
-        color: #94a3b8;
-        font-size: 0.9rem;
-        text-decoration: underline;
-        background: none;
-        border: none;
-        cursor: pointer;
-        width: 100%;
-    }
-    
-    .back-link:hover {
-        color: #0d9488;
-    }
-    
-    /* Token Input Boxes */
-    .token-container {
-        margin-bottom: 24px;
-    }
-    
-    .token-boxes {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .token-box {
-        width: 48px;
-        height: 56px;
-        background: #334155;
-        border: 2px solid #475569;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #f8fafc;
-        transition: all 0.2s;
-        caret-color: #0d9488;
-    }
-    
-    .token-box::placeholder {
-        color: #64748b;
-        font-weight: 400;
-    }
-    
-    .token-box:focus {
-        outline: none;
-        border-color: #0d9488;
-        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
-        background: #3d4f66;
-    }
-    
-    .token-box.filled {
-        border-color: #0d9488;
-    }
-    
-    .token-box.error {
-        border-color: #ef4444;
-        animation: shake 0.3s ease-in-out;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
-    }
-    
-    .step-indicator {
-        display: flex;
-        justify-content: center;
-        gap: 8px;
-        margin-bottom: 24px;
-    }
-    
-    .step-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #475569;
-        transition: all 0.3s;
-    }
-    
-    .step-dot.active {
-        background: #0d9488;
-        width: 24px;
-        border-radius: 4px;
-    }
-    
-    .step-dot.completed {
-        background: #10b981;
-    }
-</style>
-@endpush
-
 @section('content')
-<div class="reset-card">
-    <div class="reset-logo">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo" onerror="this.src='https://via.placeholder.com/80'">
+<div class="login-container">
+    <div class="header">
+        <div class="logo-container">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo">
+        </div>
+        <h1 id="authTitle">Reset Password</h1>
+        <p id="authSubtitle">Recover your account access</p>
     </div>
-    
-    <div class="reset-title">
-        <h1>Reset Password</h1>
-    </div>
-    <p class="reset-subtitle">Login to your account</p>
 
     <!-- Step 1: Request Reset Token -->
-    <div id="step1" class="step-content">
-        <p class="step-description">Enter your registered Gmail address to receive a reset token.</p>
-        
-        <form id="requestForm">
-            @csrf
-            <label class="form-label-custom">Gmail Address</label>
-            <input type="email" class="form-input-custom" id="email" name="email" placeholder="example@gmail.com" required>
-            
-            <button type="submit" class="btn-reset" id="requestBtn">Send Reset Token</button>
-        </form>
-        
-        <a href="{{ route('login') }}" class="back-link">Back to Login</a>
-    </div>
+    <div id="fpSection" class="form-section active">
+        <div id="fpStep1">
+            <div class="form-group">
+                <label>Gmail Address</label>
+                <input type="email" id="fp_email" class="form-control" placeholder="example@gmail.com" required autofocus>
+                <div style="margin-top: 10px; color: var(--text-muted); font-size: 0.75rem; font-style: italic; text-align: left;">
+                    Enter your registered Gmail address and we'll send a reset token.
+                </div>
+            </div>
+            <button type="button" class="btn" id="fpRequestBtn" onclick="requestResetToken()">Send Reset Token</button>
+            <div style="margin-top: 12px; color: var(--text-muted); font-size: 0.65rem; font-style: italic; text-align: center;">
+                <i class="fas fa-info-circle"></i> Token expires in 5 minutes. (Maximum 3 requests per hour).
+            </div>
+        </div>
 
-    <!-- Step 2: Verify Token -->
-    <div id="step2" class="step-content" style="display: none;">
-        <p class="step-description">Enter the 6-digit token sent to your email.</p>
-        
-        <form id="verifyForm">
-            @csrf
-            <label class="form-label-custom">Verification Token</label>
-            <div class="token-container">
+        <!-- Step 2: Verify Token -->
+        <div id="fpStep2" style="display: none;">
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center;">
+                Enter the 6-digit token sent to your email to verify your identity.
+            </p>
+            <div class="form-group">
+                <label>Verification Token</label>
                 <div class="token-boxes">
                     <input type="text" class="token-box" maxlength="1" data-index="0" inputmode="numeric" pattern="[0-9]" placeholder="-">
                     <input type="text" class="token-box" maxlength="1" data-index="1" inputmode="numeric" pattern="[0-9]" placeholder="-">
@@ -246,282 +43,269 @@
                     <input type="text" class="token-box" maxlength="1" data-index="4" inputmode="numeric" pattern="[0-9]" placeholder="-">
                     <input type="text" class="token-box" maxlength="1" data-index="5" inputmode="numeric" pattern="[0-9]" placeholder="-">
                 </div>
+                <input type="hidden" id="fp_token">
             </div>
-            <input type="hidden" id="tokenInput" name="token">
-            
-            <button type="submit" class="btn-reset" id="verifyBtn">Verify Token</button>
-        </form>
-        
-        <button type="button" class="back-link" id="backToStep1">Back to Login</button>
+            <button type="button" class="btn" id="fpVerifyBtn" onclick="verifyResetToken()">Verify Token</button>
+            <div style="margin-top: 15px; text-align: center;">
+                <span class="toggle-link" id="fpResendBtn" onclick="resendResetToken()" style="font-size: 0.75rem; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Resend Token
+                </span>
+            </div>
+        </div>
+
+        <!-- Step 3: Set New Password -->
+        <div id="fpStep3" style="display: none;">
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; text-align: center;">
+                Token verified! Now set your new password.
+            </p>
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="fp_new_password" class="form-control" placeholder="••••••••" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" id="fp_confirm_password" class="form-control" placeholder="••••••••" minlength="6" required>
+            </div>
+            <button type="button" class="btn" id="fpResetBtn" onclick="resetPassword()">Update Password</button>
+        </div>
+
+        <div class="footer-text">
+            <a href="{{ route('login') }}" class="toggle-link">Back to Login</a>
+        </div>
     </div>
 
-    <!-- Step 3: Set New Password -->
-    <div id="step3" class="step-content" style="display: none;">
-        <p class="step-description">Set your new strong password.</p>
-        
-        <form id="resetForm">
-            @csrf
-            <input type="hidden" id="resetEmail" name="email">
-            <input type="hidden" id="verifiedToken" name="token">
-            
-            <label class="form-label-custom">New Password</label>
-            <input type="password" class="form-input-custom" id="password" name="password" placeholder="••••••••" minlength="6" required>
-            
-            <label class="form-label-custom">Confirm Password</label>
-            <input type="password" class="form-input-custom" id="password_confirmation" name="password_confirmation" placeholder="••••••••" minlength="6" required>
-
-            <button type="submit" class="btn-reset" id="resetBtn">Update Password</button>
-        </form>
-        
-        <button type="button" class="back-link" id="backToStep2">Back to Login</button>
+    <div class="auth-footer">
+        <div class="dev-info">Department of Education - Schools Division Office of San Pedro City</div>
+        <div class="dev-info">Developed by Algen Loveres & Cedrick Bacaresas</div>
     </div>
 </div>
+
+<input type="hidden" id="reset_token_email">
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    
-    const requestForm = document.getElementById('requestForm');
-    const verifyForm = document.getElementById('verifyForm');
-    const resetForm = document.getElementById('resetForm');
-    
-    const tokenBoxes = document.querySelectorAll('.token-box');
-    const tokenInput = document.getElementById('tokenInput');
-    const resetEmail = document.getElementById('resetEmail');
-    const verifiedToken = document.getElementById('verifiedToken');
-    
-    let userEmail = '';
-    
-    // Token box input handling
-    tokenBoxes.forEach((box, index) => {
-        box.addEventListener('input', function(e) {
-            // Only allow numbers
-            this.value = this.value.replace(/[^0-9]/g, '');
-            
-            if (this.value.length === 1) {
-                this.classList.add('filled');
-                if (index < tokenBoxes.length - 1) {
+    // Global reset email state
+    let resetEmail = '';
+
+    // Handle Token Box Inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const tokenBoxes = document.querySelectorAll('.token-box');
+        
+        tokenBoxes.forEach((box, index) => {
+            box.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length === 1 && index < tokenBoxes.length - 1) {
                     tokenBoxes[index + 1].focus();
                 }
-            } else {
-                this.classList.remove('filled');
-            }
-            updateTokenInput();
-        });
-        
-        box.addEventListener('keydown', function(e) {
-            if (e.key === 'Backspace') {
-                if (!this.value && index > 0) {
-                    tokenBoxes[index - 1].focus();
-                    tokenBoxes[index - 1].value = '';
-                    tokenBoxes[index - 1].classList.remove('filled');
-                }
-            }
-            // Allow paste
-            if (e.key === 'v' && (e.ctrlKey || e.metaKey)) {
-                return;
-            }
-        });
-        
-        box.addEventListener('paste', function(e) {
-            e.preventDefault();
-            const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
-            if (pastedData.length === 6) {
-                tokenBoxes.forEach((b, i) => {
-                    b.value = pastedData[i] || '';
-                    if (b.value) b.classList.add('filled');
-                });
-                tokenBoxes[5].focus();
                 updateTokenInput();
-            }
-        });
-        
-        box.addEventListener('focus', function() {
-            this.select();
-        });
-    });
-    
-    function updateTokenInput() {
-        let code = '';
-        tokenBoxes.forEach(box => code += box.value);
-        tokenInput.value = code;
-    }
-    
-    function showStep(stepNum) {
-        step1.style.display = stepNum === 1 ? 'block' : 'none';
-        step2.style.display = stepNum === 2 ? 'block' : 'none';
-        step3.style.display = stepNum === 3 ? 'block' : 'none';
-    }
-    
-    function clearTokenInputs() {
-        tokenBoxes.forEach(box => {
-            box.value = '';
-            box.classList.remove('filled', 'error');
-        });
-        tokenInput.value = '';
-    }
-    
-    function showTokenError() {
-        tokenBoxes.forEach(box => box.classList.add('error'));
-        setTimeout(() => {
-            tokenBoxes.forEach(box => box.classList.remove('error'));
-        }, 500);
-    }
-    
-    // Step 1: Request token
-    requestForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const btn = document.getElementById('requestBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-        
-        try {
-            userEmail = document.getElementById('email').value;
-            const response = await fetch('{{ route("password.email") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: userEmail })
             });
             
-            const data = await response.json();
-            
+            box.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    tokenBoxes[index - 1].focus();
+                }
+            });
+
+            box.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                if (pastedData.length === 6) {
+                    tokenBoxes.forEach((b, i) => b.value = pastedData[i] || '');
+                    tokenBoxes[5].focus();
+                    updateTokenInput();
+                }
+            });
+        });
+
+        function updateTokenInput() {
+            let code = '';
+            tokenBoxes.forEach(box => code += box.value);
+            document.getElementById('fp_token').value = code;
+        }
+    });
+
+    function requestResetToken() {
+        const emailInput = document.getElementById('fp_email');
+        const email = emailInput.value.trim();
+        const btn = document.getElementById('fpRequestBtn');
+        const originalText = btn.innerHTML;
+
+        if (!email) {
+            showToast('Please enter your registered Gmail address.', 'warning');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+        fetch('{{ route("password.email") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
             if (data.status === 'success') {
                 showToast(data.message, 'success');
-                resetEmail.value = userEmail;
-                showStep(2);
-                setTimeout(() => tokenBoxes[0].focus(), 100);
+                resetEmail = email;
+                document.getElementById('reset_token_email').value = email;
+                document.getElementById('fpStep1').style.display = 'none';
+                document.getElementById('fpStep2').style.display = 'block';
+                document.getElementById('fpStep2').classList.add('animate__animated', 'animate__fadeIn');
             } else {
                 showToast(data.message, 'error');
             }
-        } catch (error) {
-            showToast('An error occurred. Please try again.', 'error');
-        } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Send Reset Token';
-        }
-    });
-    
-    // Step 2: Verify token
-    verifyForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (tokenInput.value.length !== 6) {
-            showToast('Please enter the complete 6-digit token', 'error');
-            showTokenError();
+            btn.innerHTML = originalText;
+        })
+        .catch(error => {
+            showToast('An error occurred. Please try again.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+
+    function verifyResetToken() {
+        const email = document.getElementById('reset_token_email').value;
+        const token = document.getElementById('fp_token').value.trim();
+        const btn = document.getElementById('fpVerifyBtn');
+        const originalText = btn.innerHTML;
+
+        if (token.length !== 6) {
+            showToast("Please enter the 6-digit verification token.", 'warning');
             return;
         }
-        
-        const btn = document.getElementById('verifyBtn');
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
-        
-        try {
-            // Verify token with backend
-            const response = await fetch('{{ route("password.reset") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: userEmail,
-                    token: tokenInput.value,
-                    verify_only: true
-                })
-            });
-            
-            const data = await response.json();
-            
+
+        fetch('{{ route("password.reset") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                token: token,
+                verify_only: true
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
             if (data.status === 'success' || data.status === 'token_valid') {
-                showToast('Token verified successfully', 'success');
-                verifiedToken.value = tokenInput.value;
-                showStep(3);
+                showToast(data.message || 'Token verified successfully', 'success');
+                document.getElementById('fpStep2').style.display = 'none';
+                document.getElementById('fpStep3').style.display = 'block';
+                document.getElementById('fpStep3').classList.add('animate__animated', 'animate__fadeIn');
             } else {
                 showToast(data.message || 'Invalid token', 'error');
-                showTokenError();
             }
-        } catch (error) {
-            showToast('An error occurred. Please try again.', 'error');
-        } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Verify Token';
-        }
-    });
-    
-    // Step 3: Reset password
-    resetForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('password_confirmation').value;
-        
-        if (password !== confirmPassword) {
-            showToast('Passwords do not match', 'error');
+            btn.innerHTML = originalText;
+        })
+        .catch(e => {
+            showToast("An error occurred. Please try again.", 'error');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+
+    function resendResetToken() {
+        const email = document.getElementById('reset_token_email').value;
+        const btn = document.getElementById('fpResendBtn');
+        const originalText = btn.innerHTML;
+
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+        btn.innerHTML = '<i class="fas fa-hourglass-half"></i> Resending...';
+
+        fetch('{{ route("password.email") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(e => showToast("An error occurred. Please try again.", 'error'))
+        .finally(() => {
+            setTimeout(() => {
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+                btn.innerHTML = originalText;
+            }, 2000);
+        });
+    }
+
+    function resetPassword() {
+        const email = document.getElementById('reset_token_email').value;
+        const token = document.getElementById('fp_token').value.trim();
+        const password = document.getElementById('fp_new_password').value.trim();
+        const confirm = document.getElementById('fp_confirm_password').value.trim();
+        const btn = document.getElementById('fpResetBtn');
+
+        if (!password || !confirm) {
+            showToast("Please fill in both password fields.", 'error');
             return;
         }
-        
-        if (password.length < 6) {
-            showToast('Password must be at least 6 characters', 'error');
+
+        if (password !== confirm) {
+            showToast("Passwords do not match.", 'error');
             return;
         }
-        
-        const btn = document.getElementById('resetBtn');
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-        
-        try {
-            const response = await fetch('{{ route("password.reset") }}', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: resetEmail.value,
-                    token: verifiedToken.value,
-                    password: password,
-                    password_confirmation: confirmPassword
-                })
-            });
-            
-            const data = await response.json();
-            
+
+        fetch('{{ route("password.reset") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                token: token,
+                password: password,
+                password_confirmation: confirm
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
             if (data.status === 'success') {
-                showToast('Password updated successfully! Redirecting...', 'success');
+                showToast(data.message, 'success');
                 setTimeout(() => {
-                    window.location.href = '{{ route("login") }}';
+                    if (window.triggerExitMorph) window.triggerExitMorph('{{ route("login") }}');
+                    else window.location.href = '{{ route("login") }}';
                 }, 2000);
             } else {
                 showToast(data.message || 'Failed to update password', 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Update Password';
             }
-        } catch (error) {
-            showToast('An error occurred. Please try again.', 'error');
-        } finally {
+        })
+        .catch(e => {
+            showToast("An error occurred.", 'error');
             btn.disabled = false;
             btn.innerHTML = 'Update Password';
-        }
-    });
-    
-    // Back buttons
-    document.getElementById('backToStep1').addEventListener('click', function() {
-        clearTokenInputs();
-        showStep(1);
-    });
-    
-    document.getElementById('backToStep2').addEventListener('click', function() {
-        showStep(1);
-    });
-});
+        });
+    }
 </script>
 @endpush

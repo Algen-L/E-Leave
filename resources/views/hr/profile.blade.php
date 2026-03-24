@@ -170,6 +170,13 @@
                 @method('PUT')
 
                 <div class="form-row-custom">
+                    <div class="form-group-custom" style="grid-column: 1 / -1;">
+                        <label class="field-label">CURRENT PASSWORD</label>
+                        <input type="password" class="field-input" name="current_password" placeholder="Enter current password" required>
+                    </div>
+                </div>
+
+                <div class="form-row-custom">
                     <div class="form-group-custom">
                         <label class="field-label">NEW PASSWORD</label>
                         <input type="password" class="field-input" name="password" placeholder="Enter new password"
