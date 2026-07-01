@@ -268,10 +268,11 @@
                             <div class="sig-label-top">7.A Cert. of Leave Credits</div>
                             @php
                                 $displayVerifier = $application->hrVerifier;
-                                if ($displayVerifier && $displayVerifier->role === 'hr_review_officer') {
-                                    $displayVerifier = \App\Models\User::whereIn('role', ['head_hr', 'hr'])
+                                if ($displayVerifier && in_array($displayVerifier->role, ['hr', 'head_hr'], true)) {
+                                    $displayVerifier = \App\Models\User::where('role', 'hr_review_officer')
                                         ->where('is_active', true)
                                         ->whereNotNull('esignature')
+                                        ->orderBy('last_name')
                                         ->first() ?: $displayVerifier;
                                 }
                             @endphp

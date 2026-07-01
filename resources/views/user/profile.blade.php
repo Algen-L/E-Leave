@@ -158,7 +158,7 @@
             @endif
 
             <!-- 4. Large Management Center (Bottom Left - Tabs) -->
-            <div class="dash-card large-area animate__animated animate__fadeInUp {{ auth()->user()->role === 'user' ? 'span-3-desktop' : 'span-2-desktop' }}"
+            <div class="dash-card large-area {{ (auth()->user()->role === 'user' || auth()->user()->isHigherRole()) ? 'profile-management-full' : '' }} animate__animated animate__fadeInUp {{ (auth()->user()->role === 'user' || auth()->user()->isHigherRole()) ? 'span-3-desktop' : 'span-2-desktop' }}"
                 style="animation-delay: 0.3s;">
                 <div class="dash-tabs">
                     <button class="dash-tab-btn active" onclick="switchProfileTab('editInfo', this)">
@@ -347,7 +347,6 @@
                                      documents.
                                  </label>
                              </div>
-                             </div>
 
                             <div style="margin-top: 24px; text-align: right;">
                                 <button type="button" id="finalizeSigBtnUser" onclick="submitSigRedesign()"
@@ -361,11 +360,11 @@
 
                 <!-- Tab 3: Security & Password -->
                 <div id="security" class="profile-tab-content" style="display: none;">
-                    <form action="{{ route('user.profile.password.update') }}" method="POST">
+                    <form action="{{ route('user.profile.password.update') }}" method="POST" class="security-password-form">
                         @csrf
                         @method('PUT')
-                        <div class="dash-form-grid" style="max-width: 500px;">
-                            <div class="dash-field" style="grid-column: span 2;">
+                        <div class="dash-form-grid security-password-grid">
+                            <div class="dash-field security-password-current">
                                 <label class="dash-label">Current Password</label>
                                 <input type="password" name="current_password" class="dash-input" required>
                             </div>
@@ -379,7 +378,7 @@
                                     minlength="6">
                             </div>
                         </div>
-                        <div style="margin-top: 24px; text-align: right;">
+                        <div class="security-password-actions">
                             <button type="submit" class="dash-btn-primary"><i class="fas fa-lock"></i> Update
                                 Password</button>
                         </div>
@@ -388,8 +387,8 @@
             </div>
 
             <!-- 5. Primary Actions Card (Bottom Right Top) -->
-            @if(auth()->user()->role !== 'user')
-                <div class="dash-card animate__animated animate__fadeInRight span-1-desktop" style="animation-delay: 0.4s;">
+            @if(auth()->user()->role !== 'user' && !auth()->user()->isHigherRole())
+                <div class="dash-card primary-actions-card animate__animated animate__fadeInRight span-1-desktop" style="animation-delay: 0.4s;">
                     <div class="dash-card-header">
                         <h4 class="dash-card-title"><i class="fas fa-magic"></i> Primary Actions</h4>
                     </div>
@@ -415,36 +414,25 @@
                     @endif
 
                     @if(auth()->user()->isAdmin() || auth()->user()->isHR())
-                        <div class="d-grid gap-2 mb-3">
+                        <div class="profile-action-group">
                             <a href="{{ route('user.profile.leave-card') }}" target="_blank" class="dash-btn-primary print-btn"
-                                style="background: #475569; width: 100%;">
+                                style="background: #475569;">
                                 <i class="fas fa-print"></i> Print My Leave Card
                             </a>
-                            <p style="font-size: 0.72rem; color: #64748b; margin-top: 10px; line-height: 1.4;">
+                            <p class="profile-action-helper">
                                 <i class="fas fa-info-circle"></i> Use this to generate your official leave credit record for
                                 printing.
                             </p>
                         </div>
                     @endif
 
-                    @if(auth()->user()->isHigherRole())
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('reports.print-hub') }}" class="dash-btn-primary print-btn" style="width: 100%;">
-                                <i class="fas fa-print"></i> Print Documents / Forms
-                            </a>
-                            <p style="font-size: 0.72rem; color: #64748b; margin-top: 10px; line-height: 1.4;">
-                                <i class="fas fa-info-circle"></i> Generate Leave Cards, Summary Tables, and Individual Reports for
-                                your office.
-                            </p>
-                        </div>
-                    @endif
 
                     @if(auth()->user()->isRecordPersonnel())
-                        <div class="d-grid gap-2">
-                            <a href="{{ route('reports.print-hub') }}" class="dash-btn-primary print-btn" style="width: 100%;">
+                        <div class="profile-action-group">
+                            <a href="{{ route('reports.print-hub') }}" class="dash-btn-primary print-btn">
                                 <i class="fas fa-print"></i> Print Documents / Forms
                             </a>
-                            <p style="font-size: 0.72rem; color: #64748b; margin-top: 10px; line-height: 1.4;">
+                            <p class="profile-action-helper">
                                 <i class="fas fa-info-circle"></i> Export Leave Summaries and Bulk Application PDFs for system-wide
                                 records.
                             </p>

@@ -255,6 +255,7 @@ class HRController extends Controller
             'secretary_id' => 'nullable|exists:users,id',
             'department_head_id' => 'nullable',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'esignature' => 'nullable|image|mimes:png|max:1024',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
 
@@ -343,6 +344,41 @@ class HRController extends Controller
             $updateData['profile_picture'] = 'storage/' . $path;
         }
 
+        // Handle E-Signature upload or draw
+        $sigMode = $request->input('esignature_mode');
+
+        if ($sigMode === 'draw' && $request->input('esignature_data')) {
+            $base64Image = $request->input('esignature_data');
+
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image)) {
+                $data = substr($base64Image, strpos($base64Image, ',') + 1);
+                $data = base64_decode($data);
+
+                if ($data !== false) {
+                    if ($user->esignature) {
+                        Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+                    }
+
+                    $fileName = 'sign_' . $user->id . '_' . time() . '.png';
+                    Storage::disk('public')->put('esignatures/' . $fileName, $data);
+                    $updateData['esignature'] = 'storage/esignatures/' . $fileName;
+                }
+            }
+        } elseif ($request->hasFile('esignature')) {
+            $file = $request->file('esignature');
+
+            if (strtolower($file->getClientOriginalExtension()) !== 'png') {
+                return redirect()->back()->with('error', 'Uploaded signature must be a PNG file.');
+            }
+
+            if ($user->esignature) {
+                Storage::disk('public')->delete(str_replace('storage/', '', $user->esignature));
+            }
+
+            $fileName = 'sign_' . $user->id . '_' . time() . '.png';
+            $path = $file->storeAs('esignatures', $fileName, 'public');
+            $updateData['esignature'] = 'storage/' . $path;
+        }
         if (!empty($updateData)) {
             $user->update($updateData);
             ActivityLog::logAction($user->id, 'Profile Updated', 'HR profile updated');

@@ -190,15 +190,25 @@
                         <!-- 7.A HR Certification -->
                         <div class="sig-box">
                             <div class="sig-label-top">7.A Cert. of Leave Credits</div>
+                            @php
+                                $displayVerifier = $application->hrVerifier;
+                                if ($displayVerifier && in_array($displayVerifier->role, ['hr', 'head_hr'], true)) {
+                                    $displayVerifier = \App\Models\User::where('role', 'hr_review_officer')
+                                        ->where('is_active', true)
+                                        ->whereNotNull('esignature')
+                                        ->orderBy('last_name')
+                                        ->first() ?: $displayVerifier;
+                                }
+                            @endphp
                             <div class="signature-area-premium">
                                 @if($application->hr_verified_at)
                                     <div class="mb-2 text-center">
                                         <div class="status-badge-premium certified mb-4">
                                             <i class="fas fa-check-circle"></i> Certified {{ $application->hr_verified_at->format('M d, Y') }}
                                         </div>
-                                        @if($application->hrVerifier && $application->hrVerifier->esignature)
+                                        @if($displayVerifier && $displayVerifier->esignature)
                                             <div class="h-16 mb-2">
-                                                <img src="{{ storage_url($application->hrVerifier->esignature) }}" class="h-full mx-auto object-contain">
+                                                <img src="{{ storage_url($displayVerifier->esignature) }}" class="h-full mx-auto object-contain">
                                             </div>
                                         @endif
                                     </div>
@@ -211,8 +221,8 @@
                             </div>
                             @if($application->hr_verified_at)
                                 <div class="text-center">
-                                    <div class="font-bold uppercase text-sm text-slate-800 tracking-tight">{{ $application->hrVerifier->full_name ?? 'Verifying Officer' }}</div>
-                                    <div class="text-[0.6rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $application->hrVerifier->position ?? 'Administrative Officer' }}</div>
+                                    <div class="font-bold uppercase text-sm text-slate-800 tracking-tight">{{ $displayVerifier->full_name ?? 'Verifying Officer' }}</div>
+                                    <div class="text-[0.6rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $displayVerifier->position ?? 'Administrative Officer' }}</div>
                                 </div>
                             @endif
                         </div>

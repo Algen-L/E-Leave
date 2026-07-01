@@ -50,20 +50,16 @@ class DocumentService
         };
 
         // --- HELPER: SET IMAGE ---
-        $setImage = function ($placeholder, $user) use ($templateProcessor) {
+        $setImage = function ($placeholder, $user, $raiseSignature = false) use ($templateProcessor) {
             if (!$user || !$user->esignature) {
                 $templateProcessor->setValue($placeholder, '');
                 return;
             }
+
             $esignaturePath = storage_path('app/public/' . preg_replace('#^storage/#', '', $user->esignature));
             if (file_exists($esignaturePath)) {
                 try {
-                    $templateProcessor->setImageValue($placeholder, [
-                        'path' => $esignaturePath,
-                        'width' => 135,
-                        'height' => 65,
-                        'ratio' => false,
-                    ]);
+                    $templateProcessor->setImageValue($placeholder, $this->signatureImageStyle($esignaturePath, $raiseSignature));
                 } catch (\Exception $e) {
                     $templateProcessor->setValue($placeholder, '');
                 }
@@ -135,38 +131,25 @@ class DocumentService
         // --- E-SIGNATURES LOGIC ---
         if ($application->hr_verified_at) {
             $hrVerifier = $application->hrVerifier;
-            
-            // Signature Delegation: If the verifier is an HR Review Officer, 
-            // use the signature of the first available Head HR or HR Personnel.
-            if ($hrVerifier && $hrVerifier->role === 'hr_review_officer') {
-                $delegatedHR = User::whereIn('role', ['head_hr', 'hr'])
-                    ->where('is_active', true)
-                    ->whereNotNull('esignature')
-                    ->first();
-                
-                if ($delegatedHR) {
-                    $setImage('HRSIGN', $delegatedHR);
-                    // Also update the displayed name/position for the signature block
-                    $setVal('VOLC_NAME', strtoupper($delegatedHR->full_name));
-                    $setVal('VOLC_POS', strtoupper($delegatedHR->position ?: 'Administrative Officer'));
-                } else {
-                    $setImage('HRSIGN', $hrVerifier);
-                }
-            } else {
-                $setImage('HRSIGN', $hrVerifier);
+            $certifyingOfficer = $this->resolveHrCertificationSigner($hrVerifier);
+
+            $setImage('HRSIGN', $certifyingOfficer, true);
+            if ($certifyingOfficer) {
+                $setVal('VOLC_NAME', strtoupper($certifyingOfficer->full_name));
+                $setVal('VOLC_POS', strtoupper($certifyingOfficer->position ?: 'Administrative Officer'));
             }
         } else {
             $templateProcessor->setValue('HRSIGN', '');
         }
 
         if ($application->recommended_at || ($application->status != 'Pending HR' && $application->status != 'Pending Recommending' && $application->status != 'Disapproved')) {
-            $setImage('RECOSIGN', $recommenderRequest);
+            $setImage('RECOSIGN', $recommenderRequest, true);
         } else {
             $templateProcessor->setValue('RECOSIGN', '');
         }
 
         if ($application->status == 'Approved') {
-            $setImage('APPROVESIGN', $approverRequest);
+            $setImage('APPROVESIGN', $approverRequest, true);
         } else {
             $templateProcessor->setValue('APPROVESIGN', '');
         }
@@ -395,5 +378,169 @@ class DocumentService
             'path' => $outputPdf,
             'filename' => 'Leave_Form6_' . $lastName . '_' . $id . '.pdf'
         ];
+    }
+
+    /**
+     * HR personnel may verify records, but Form 6 certification uses the HR Review Officer signature.
+     */
+    private function resolveHrCertificationSigner(?User $hrVerifier): ?User
+    {
+        if (!$hrVerifier) {
+            return null;
+        }
+
+        if ($hrVerifier->role === 'hr_review_officer') {
+            return $hrVerifier;
+        }
+
+        if (in_array($hrVerifier->role, ['hr', 'head_hr'], true)) {
+            return User::where('role', 'hr_review_officer')
+                ->where('is_active', true)
+                ->whereNotNull('esignature')
+                ->orderBy('last_name')
+                ->first() ?: $hrVerifier;
+        }
+
+        return $hrVerifier;
+    }
+
+    /**
+     * Fit an e-signature into the Form 6 signature area without changing its aspect ratio.
+     */
+    private function signatureImageStyle(string $path, bool $raiseSignature = false): array
+    {
+        $maxWidth = 135;
+        $maxHeight = 65;
+        $signaturePath = $this->preparedSignatureImagePath($path, $raiseSignature);
+        $imageSize = @getimagesize($signaturePath);
+
+        if (!$imageSize || empty($imageSize[0]) || empty($imageSize[1])) {
+            return [
+                'path' => $signaturePath,
+                'width' => $maxWidth,
+                'height' => $maxHeight,
+                'ratio' => true,
+            ];
+        }
+
+        [$sourceWidth, $sourceHeight] = $imageSize;
+        $scale = min($maxWidth / $sourceWidth, $maxHeight / $sourceHeight);
+
+        return [
+            'path' => $signaturePath,
+            'width' => max(1, (int) round($sourceWidth * $scale)),
+            'height' => max(1, (int) round($sourceHeight * $scale)),
+            'ratio' => false,
+        ];
+    }
+
+    /**
+     * Crop blank canvas around signatures. Inline Form 6 signature placeholders
+     * balance transparent padding so the visible ink clears both the table and label text.
+     */
+    private function preparedSignatureImagePath(string $path, bool $raiseSignature): string
+    {
+        $imageSize = @getimagesize($path);
+        if (!$imageSize || empty($imageSize[0]) || empty($imageSize[1])) {
+            return $path;
+        }
+
+        [$sourceWidth, $sourceHeight, $imageType] = $imageSize;
+        $cacheDir = storage_path('app/generated_signatures');
+        if (!is_dir($cacheDir) && !mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
+            return $path;
+        }
+
+        $cacheKey = md5($path . '|' . filemtime($path) . '|signature-placement-v2|' . ($raiseSignature ? 'raised' : 'normal'));
+        $cachePath = $cacheDir . DIRECTORY_SEPARATOR . $cacheKey . '.png';
+        if (file_exists($cachePath)) {
+            return $cachePath;
+        }
+
+        $source = $this->createImageResource($path, $imageType);
+        if (!$source) {
+            return $path;
+        }
+
+        imagepalettetotruecolor($source);
+        imagealphablending($source, true);
+        imagesavealpha($source, true);
+
+        $bounds = $this->detectSignatureInkBounds($source, $sourceWidth, $sourceHeight);
+        if (!$bounds) {
+            imagedestroy($source);
+            return $path;
+        }
+
+        [$minX, $minY, $maxX, $maxY] = $bounds;
+        $cropPadding = 6;
+        $minX = max(0, $minX - $cropPadding);
+        $minY = max(0, $minY - $cropPadding);
+        $maxX = min($sourceWidth - 1, $maxX + $cropPadding);
+        $maxY = min($sourceHeight - 1, $maxY + $cropPadding);
+
+        $cropWidth = max(1, $maxX - $minX + 1);
+        $cropHeight = max(1, $maxY - $minY + 1);
+        $sidePadding = 8;
+        $verticalPadding = $raiseSignature ? max(24, min(58, (int) round($cropHeight * 0.85))) : 8;
+        $topPadding = $raiseSignature ? max(10, min(24, (int) round($verticalPadding * 0.45))) : 4;
+        $bottomPadding = $verticalPadding - $topPadding;
+
+        $canvasWidth = $cropWidth + ($sidePadding * 2);
+        $canvasHeight = $cropHeight + $topPadding + $bottomPadding;
+        $canvas = imagecreatetruecolor($canvasWidth, $canvasHeight);
+        imagealphablending($canvas, false);
+        imagesavealpha($canvas, true);
+        $transparent = imagecolorallocatealpha($canvas, 255, 255, 255, 127);
+        imagefilledrectangle($canvas, 0, 0, $canvasWidth, $canvasHeight, $transparent);
+
+        imagecopy($canvas, $source, $sidePadding, $topPadding, $minX, $minY, $cropWidth, $cropHeight);
+        $saved = imagepng($canvas, $cachePath);
+
+        imagedestroy($canvas);
+        imagedestroy($source);
+
+        return $saved ? $cachePath : $path;
+    }
+
+    private function createImageResource(string $path, int $imageType)
+    {
+        return match ($imageType) {
+            IMAGETYPE_PNG => @imagecreatefrompng($path),
+            IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
+            IMAGETYPE_GIF => @imagecreatefromgif($path),
+            default => null,
+        };
+    }
+
+    private function detectSignatureInkBounds($image, int $width, int $height): ?array
+    {
+        $minX = $width;
+        $minY = $height;
+        $maxX = -1;
+        $maxY = -1;
+
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                $rgba = imagecolorat($image, $x, $y);
+                $alpha = ($rgba & 0x7F000000) >> 24;
+                $red = ($rgba >> 16) & 0xFF;
+                $green = ($rgba >> 8) & 0xFF;
+                $blue = $rgba & 0xFF;
+
+                if ($alpha < 120 && !($red > 245 && $green > 245 && $blue > 245)) {
+                    $minX = min($minX, $x);
+                    $minY = min($minY, $y);
+                    $maxX = max($maxX, $x);
+                    $maxY = max($maxY, $y);
+                }
+            }
+        }
+
+        if ($maxX < 0 || $maxY < 0) {
+            return null;
+        }
+
+        return [$minX, $minY, $maxX, $maxY];
     }
 }

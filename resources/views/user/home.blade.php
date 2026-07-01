@@ -257,6 +257,7 @@
                     ${markerHtml}
                 </div>
             `;
+        }
     });
 </script>
 @endpush

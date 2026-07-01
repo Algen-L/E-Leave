@@ -265,7 +265,7 @@
                             <div class="balance-pill current">
                                 <span class="pill-label">{{ $startLabel }}</span>
                                 <div class="pill-value">
-                                    {{ number_format($startingBalance, 2) }}
+                                    {{ format_credit_3_decimal($startingBalance) }}
                                 </div>
                             </div>
 
@@ -273,7 +273,7 @@
                             <div class="flex flex-col items-center justify-center">
                                 <i class="fas fa-{{ $isApproved ? 'check-circle' : 'minus-circle' }} text-{{ $isApproved ? 'emerald' : 'red' }}-500 text-sm md:text-lg"></i>
                                 <span class="text-[0.6rem] md:text-[0.7rem] font-black text-{{ $isApproved ? 'emerald' : 'red' }}-600 uppercase tracking-tighter">
-                                    -{{ number_format($deduction, 2) }}
+                                    -{{ format_credit_3_decimal($deduction) }}
                                 </span>
                                 <span class="text-[0.5rem] font-bold text-slate-400 uppercase tracking-tighter">
                                     {{ $isCertified ? 'Paid Only' : 'Est. Total' }}
@@ -285,7 +285,7 @@
                             <div class="balance-pill final">
                                 <span class="pill-label">{{ $endLabel }}</span>
                                 <div class="pill-value">
-                                    {{ number_format($endingBalance, 2) }}
+                                    {{ format_credit_3_decimal($endingBalance) }}
                                 </div>
                             </div>
                         </div>

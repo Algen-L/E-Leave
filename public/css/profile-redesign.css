@@ -314,6 +314,21 @@
     }
 }
 
+.dash-card.large-area.profile-management-full {
+    grid-column: span 3;
+}
+
+@media (max-width: 1300px) {
+    .dash-card.large-area.profile-management-full {
+        grid-column: span 2;
+    }
+}
+
+@media (max-width: 992px) {
+    .dash-card.large-area.profile-management-full {
+        grid-column: span 1;
+    }
+}
 /* Tabs */
 .dash-tabs {
     display: flex;
@@ -412,6 +427,28 @@
     cursor: default;
 }
 
+.security-password-form {
+    width: min(100%, 760px);
+    margin: 0 auto;
+}
+
+.security-password-grid {
+    max-width: none;
+}
+
+.security-password-current {
+    grid-column: 1 / -1;
+}
+
+.security-password-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.security-password-actions .dash-btn-primary {
+    min-width: 166px;
+}
 /* Status Badge */
 .status-badge {
     padding: 4px 12px;
@@ -970,5 +1007,53 @@ textarea.dash-input {
     background: #1e3a8a;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(30, 64, 175, 0.2);
+}
+
+/* Primary Actions Card */
+.primary-actions-card {
+    align-self: start;
+}
+
+.primary-actions-card .profile-credits-minibox {
+    margin-bottom: 16px;
+}
+
+.profile-action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.profile-action-group + .profile-action-group {
+    margin-top: 16px;
+}
+
+.profile-action-helper {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: center;
+    text-wrap: pretty;
+}
+
+.profile-action-helper i {
+    margin-right: 4px;
+    color: var(--primary-blue);
+}
+
+.primary-actions-card .dash-btn-primary.print-btn {
+    min-height: 44px;
+    width: 100%;
+    text-align: center;
+    white-space: normal;
+}
+
+@media (max-width: 500px) {
+    .profile-action-helper {
+        text-align: left;
+    }
 }
 
