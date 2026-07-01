@@ -9,55 +9,11 @@
 
 @section('content')
 
-    <div class="page-header-modular animate__animated animate__fadeInDown">
-        <div class="header-left">
-            <a href="{{ route('records.dashboard') }}" class="back-btn-premium">
-                <i class="fas fa-chevron-left"></i>
-            </a>
-            <div class="header-titles">
-                <h1 class="page-title-premium">Application Record</h1>
-                <div class="header-metadata">
-                    <div class="meta-capsule-id">
-                        <i class="fas fa-fingerprint"></i>
-                        <span>ID: #{{ str_pad($application->id, 5, '0', STR_PAD_LEFT) }}</span>
-                    </div>
-                    <div class="meta-capsule-date">
-                        <i class="far fa-calendar-check"></i>
-                        <span>Filed: {{ $application->created_at->format('M d, Y') }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="applicant-profile-mini">
-                <div class="applicant-avatar-box">
-                    <div class="avatar-circle">
-                        {{ substr($application->user->first_name, 0, 1) }}{{ substr($application->user->last_name, 0, 1) }}
-                    </div>
-                </div>
-                <div class="applicant-info-box">
-                    <p class="applicant-name-premium text-slate-800 font-bold mb-0 leading-none">{{ $application->user->full_name }}</p>
-                    <p class="applicant-role-premium text-slate-400 text-[0.65rem] uppercase font-black tracking-tighter">{{ str_replace('_', ' ', $application->user->role) }}</p>
-                </div>
-            </div>
+    <x-leave.review-header 
+        :application="$application" 
+        :backRoute="route('records.dashboard')" 
+    />
 
-            @php
-                $statusColor = 'bg-slate-100 text-slate-600';
-                $statusIcon = 'fa-clock';
-                $stat = strtolower($application->status);
-                if (str_contains($stat, 'approve')) { $statusColor = 'bg-green-100 text-green-700'; $statusIcon = 'fa-check-circle'; }
-                elseif (str_contains($stat, 'reject') || str_contains($stat, 'disapprove')) { $statusColor = 'bg-red-100 text-red-700'; $statusIcon = 'fa-times-circle'; }
-                elseif (str_contains($stat, 'recommend')) { $statusColor = 'bg-blue-100 text-blue-700'; $statusIcon = 'fa-thumbs-up'; }
-            @endphp
-            
-            <div class="header-status-box">
-                <span class="status-pill-premium {{ $statusColor }}">
-                    <i class="fas {{ $statusIcon }}"></i>
-                    {{ $application->status }}
-                </span>
-            </div>
-        </div>
-    </div>
 
     <div class="page-layout">
 
@@ -419,15 +375,15 @@
                         <div class="space-y-1">
                             <div class="credit-row-premium">
                                 <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
-                                <span class="credit-val-dim">{{ (float) $vl['current'] }}</span>
+                                <span class="credit-val-dim">{{ format_credit_3_decimal($vl['current']) }}</span>
                             </div>
                             <div class="credit-row-premium">
                                 <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
-                                <span class="credit-val-impact">-{{ (float) $vl['less'] }}</span>
+                                <span class="credit-val-impact">-{{ format_credit_3_decimal($vl['less']) }}</span>
                             </div>
                             <div class="credit-balance-box">
                                 <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
-                                <span class="text-xl font-black {{ $vl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $vl['balance'] }}</span>
+                                <span class="text-xl font-black {{ $vl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ format_credit_3_decimal($vl['balance']) }}</span>
                             </div>
                         </div>
                     </div>
@@ -440,15 +396,15 @@
                         <div class="space-y-1">
                             <div class="credit-row-premium">
                                 <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
-                                <span class="credit-val-dim">{{ (float) $sl['current'] }}</span>
+                                <span class="credit-val-dim">{{ format_credit_3_decimal($sl['current']) }}</span>
                             </div>
                             <div class="credit-row-premium">
                                 <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
-                                <span class="credit-val-impact">-{{ (float) $sl['less'] }}</span>
+                                <span class="credit-val-impact">-{{ format_credit_3_decimal($sl['less']) }}</span>
                             </div>
                             <div class="credit-balance-box">
                                 <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
-                                <span class="text-xl font-black {{ $sl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $sl['balance'] }}</span>
+                                <span class="text-xl font-black {{ $sl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ format_credit_3_decimal($sl['balance']) }}</span>
                             </div>
                         </div>
                     </div>

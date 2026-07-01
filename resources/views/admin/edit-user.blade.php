@@ -57,7 +57,7 @@
 
             <!-- Right Column: Details -->
             <div class="edit-card">
-                <div class="form-section-title"><i class="fas fa-id-card" style="margin-right: 8px; color: var(--primary, #0f4c75);"></i> Personal details</div>
+                <div class="form-section-title"><i class="fas fa-id-card" style="margin-right: 8px; color: var(--primary, #1b4a9a);"></i> Personal details</div>
                 <div class="form-grid-inner">
                     <div class="form-group full-width">
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
@@ -87,7 +87,7 @@
 
                 </div>
 
-                <div class="form-section-title mt-4"><i class="fas fa-briefcase" style="margin-right: 8px; color: var(--primary, #0f4c75);"></i> Professional assignment</div>
+                <div class="form-section-title mt-4"><i class="fas fa-briefcase" style="margin-right: 8px; color: var(--primary, #1b4a9a);"></i> Professional assignment</div>
                 <div class="form-grid-inner">
                     <div class="form-group full-width">
                         <label class="form-label">Office / Station</label>
@@ -118,30 +118,83 @@
                             oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                         @error('employee_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
-                    <div class="form-group hidable-field">
-                        <label class="form-label">System Role <span class="text-danger">*</span></label>
-                        <select name="role" id="role-select" class="form-select @error('role') is-invalid @enderror" required>
-                            <option value="user" {{ old('role', $editUser->role) === 'user' ? 'selected' : '' }}>USER</option>
-                            <option value="head_hr" {{ old('role', $editUser->role) === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL</option>
-                            @if(in_array(auth()->user()->role, ['hr', 'head_hr', 'super_admin']))
-                                <option value="hr_review_officer" {{ old('role', $editUser->role) === 'hr_review_officer' ? 'selected' : '' }}>HR REVIEW OFFICER</option>
-                            @endif
-                            <option value="record_personnel" {{ old('role', $editUser->role) === 'record_personnel' ? 'selected' : '' }}>RECORD PERSONNEL</option>
-                            @if(auth()->user()->role === 'super_admin')
-                                <optgroup label="High Level Roles">
-                                    <option value="asds" {{ old('role', $editUser->role) === 'asds' ? 'selected' : '' }}>ASST. SCHOOLS DIVISION SUPERINTENDENT</option>
-                                    <option value="sds" {{ old('role', $editUser->role) === 'sds' ? 'selected' : '' }}>SCHOOLS DIVISION SUPERINTENDENT</option>
-                                    <option value="sgod_chief" {{ old('role', $editUser->role) === 'sgod_chief' ? 'selected' : '' }}>CHEIF EDUCATION SUPERVISOR, SGOD</option>
-                                    <option value="cid_chief" {{ old('role', $editUser->role) === 'cid_chief' ? 'selected' : '' }}>CHIEF EDUCATION SUPERVISOR, CID</option>
-                                    <option value="ao" {{ old('role', $editUser->role) === 'ao' ? 'selected' : '' }}>ADMIN OFFICER IV - ADMIN OFFICE</option>
-                                </optgroup>
-                            @endif
-                        </select>
-                        @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="form-group full-width">
+                        <label class="form-label" style="font-weight: 700; color: #1e293b; display: block; margin-bottom: 12px;">System Roles <span class="text-danger">*</span></label>
+                        @if(auth()->user()->hasRole(['hr', 'head_hr', 'hr_review_officer']) && !auth()->user()->hasRole(['super_admin', 'admin']))
+                            <div class="locked-role-field" title="Role editing is restricted for HR accounts" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-lock" style="color: #64748b;"></i>
+                                <span style="font-weight: 600; color: #334155;">{{ $editUser->role_display_name }}</span>
+                                @foreach($editUser->roles as $role)
+                                    <input type="hidden" name="roles[]" value="{{ $role->name }}">
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="roles-checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;">
+                                <label class="role-checkbox-card" style="position: relative; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary, #1b4a9a)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                                    <input type="checkbox" name="roles[]" value="user" 
+                                        {{ $editUser->hasRole('user') ? 'checked' : '' }} 
+                                        style="accent-color: var(--primary, #1b4a9a); width: 16px; height: 16px;"
+                                        onchange="if(this.checked) { this.parentElement.style.background='#f0f4fc'; this.parentElement.style.borderColor='var(--primary, #1b4a9a)'; } else { this.parentElement.style.background='white'; this.parentElement.style.borderColor='#e2e8f0'; }">
+                                    <span style="font-weight: 600; font-size: 0.85rem; color: #334155;">USER</span>
+                                </label>
+                                @if($editUser->hasRole('user'))
+                                    <script>
+                                        document.currentScript.previousElementSibling.style.background = '#f0f4fc';
+                                        document.currentScript.previousElementSibling.style.borderColor = 'var(--primary, #1b4a9a)';
+                                    </script>
+                                @endif
+
+                                 @foreach($allRoles as $role)
+                                     @if($role->name !== 'user')
+                                         @php
+                                             $isRestricted = in_array($role->name, ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao']);
+                                             $canAssign = true;
+                                             
+                                             // Exclude 'super_admin' and 'admin' when editing other accounts
+                                             if (in_array($role->name, ['super_admin', 'admin']) && $editUser->id !== auth()->id()) {
+                                                 $canAssign = false;
+                                             }
+
+                                             if ($isRestricted && !auth()->user()->isSuperAdmin()) {
+                                                 $canAssign = false;
+                                             }
+                                             if ($role->name === 'super_admin' && !auth()->user()->isSuperAdmin()) {
+                                                 $canAssign = false;
+                                             }
+                                             if ($role->name === 'hr_review_officer' && !auth()->user()->isSuperAdmin() && !auth()->user()->isHR()) {
+                                                 $canAssign = false;
+                                             }
+                                         @endphp
+                                         @if($canAssign)
+                                             @php
+                                                 $isDisabled = ($role->name === 'super_admin' && $editUser->id === auth()->id());
+                                             @endphp
+                                             <label class="role-checkbox-card" style="position: relative; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: {{ $isDisabled ? 'not-allowed' : 'pointer' }}; transition: all 0.2s;" onmouseover="if(!{{ $isDisabled ? 'true' : 'false' }}) this.style.borderColor='var(--primary, #1b4a9a)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                                                 <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                                                     {{ $editUser->hasRole($role->name) ? 'checked' : '' }} 
+                                                     {{ $isDisabled ? 'disabled' : '' }}
+                                                     style="accent-color: var(--primary, #1b4a9a); width: 16px; height: 16px;">
+                                                 <span style="font-weight: 600; font-size: 0.85rem; color: #334155;">{{ $role->display_name }}</span>
+                                             </label>
+                                             @if($isDisabled)
+                                                 <input type="hidden" name="roles[]" value="{{ $role->name }}">
+                                             @endif
+                                             @if($editUser->hasRole($role->name))
+                                                 <script>
+                                                     document.currentScript.previousElementSibling.style.background = '#f0f4fc';
+                                                     document.currentScript.previousElementSibling.style.borderColor = 'var(--primary, #1b4a9a)';
+                                                 </script>
+                                             @endif
+                                         @endif
+                                     @endif
+                                @endforeach
+                            </div>
+                        @endif
+                        @error('roles')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                 </div>
 
-                <div class="form-section-title mt-4"><i class="fas fa-shield-alt" style="margin-right: 8px; color: var(--primary, #0f4c75);"></i> Security</div>
+                <div class="form-section-title mt-4"><i class="fas fa-shield-alt" style="margin-right: 8px; color: var(--primary, #1b4a9a);"></i> Security</div>
                 <div class="form-grid-inner">
                     <div class="form-group full-width">
                         <label class="form-label">Email (DepEd Gmail) <span class="text-danger">*</span></label>
@@ -220,5 +273,5 @@
                 }
             });
         });
-    </script>
+
 @endpush

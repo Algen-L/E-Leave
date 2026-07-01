@@ -53,15 +53,24 @@
         }
 
         .premium-header-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid white;
+            background: var(--primary-gradient);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 24px 32px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 25px -5px rgba(15, 76, 117, 0.2), 0 8px 10px -6px rgba(15, 76, 117, 0.2);
             margin-bottom: 32px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .premium-header-card h2, 
+        .premium-header-card p {
+            color: white !important;
+        }
+
+        .premium-header-card p {
+            opacity: 0.9;
         }
 
         /* Policy Card Styling */
@@ -138,7 +147,7 @@
 
         .policy-card:hover .chevron:not(.active) {
             transform: translateY(2px);
-            color: #4f46e5;
+            color: var(--primary);
         }
 
         .manage-indicator {
@@ -169,7 +178,7 @@
         }
 
         .policy-card:hover .manage-text {
-            color: #4f46e5;
+            color: var(--primary);
         }
 
         .policy-header.active-header {
@@ -269,7 +278,7 @@
 
         .input-std:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #1b4a9a;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
@@ -282,25 +291,41 @@
 
         /* Action Buttons */
         .btn-premium {
-            background: #1e293b;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            border: none;
+            background: #1b4a9a !important; /* Sidebar blue shade (var--primary) */
+            color: white !important;
+            padding: 12px 32px !important;
+            border-radius: 14px !important;
+            font-weight: 800 !important;
+            font-size: 0.85rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            gap: 10px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            box-shadow: 0 4px 12px rgba(15, 76, 117, 0.3) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .btn-premium:hover {
-            background: #0f172a;
+            background: #3b66bc !important; /* primary-light */
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 0 15px rgba(30, 41, 59, 0.2);
+            box-shadow: 0 12px 24px -8px rgba(15, 76, 117, 0.4) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .btn-white-blue {
+            background: white !important;
+            color: var(--primary) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-white-blue:hover {
+            background: #f8fafc !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .btn-ghost-danger {
@@ -326,13 +351,13 @@
         }
 
         .btn-indigo {
-            background: #4f46e5;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 6px -1px rgba(15, 76, 117, 0.2);
         }
 
         .btn-indigo:hover {
-            background: #4338ca;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            background: var(--primary-dark);
+            box-shadow: 0 10px 15px -3px rgba(15, 76, 117, 0.3);
         }
 
         /* Status Badges */
@@ -361,9 +386,9 @@
         }
 
         .badge-system {
-            background: #eff6ff;
-            color: #1e40af;
-            border: 1px solid #dbeafe;
+            background: #e8f0ff;
+            color: #123166;
+            border: 1px solid #dce7ff;
         }
 
         /* Width Utilities */
@@ -377,7 +402,7 @@
 
         .chevron.active {
             transform: rotate(180deg);
-            color: #4f46e5;
+            color: var(--primary);
         }
 
         /* Limit Section */
@@ -435,7 +460,7 @@
             width: 52px;
             height: 52px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            background: var(--primary-gradient);
             color: white;
             display: flex;
             align-items: center;
@@ -476,22 +501,22 @@
         }
 
         .modal-btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-            color: white;
+            background: white !important;
+            color: var(--primary) !important;
             padding: 12px 28px;
             border-radius: 14px;
             font-weight: 800;
             font-size: 0.95rem;
-            border: none;
+            border: 1px solid rgba(15, 76, 117, 0.1);
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .modal-btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
-            filter: brightness(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            background: #f8fafc !important;
         }
 
         .modal-btn-ghost {
@@ -524,9 +549,9 @@
             top: 0;
             bottom: 0;
             width: 5px;
-            background: linear-gradient(180deg, #4f46e5 0%, #a5b4fc 100%);
+            background: var(--primary-gradient);
             border-radius: 0 4px 4px 0;
-            box-shadow: 4px 0 12px rgba(79, 70, 229, 0.2);
+            box-shadow: 4px 0 12px rgba(15, 76, 117, 0.2);
         }
 
         .modal-header-highlight h3 {
@@ -538,8 +563,8 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: #f5f3ff;
-            color: #4f46e5;
+            background: #f0f7ff;
+            color: var(--primary);
             padding: 4px 12px;
             border-radius: 8px;
             font-size: 0.7rem;
@@ -547,7 +572,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             margin-top: 8px;
-            border: 1px solid #e0e7ff;
+            border: 1px solid #dce7ff;
         }
 
         /* Scrollable Container for Policies */
@@ -583,10 +608,10 @@
     <div class="policy-wrapper">
         <div class="premium-header-card">
             <div>
-                <h2 class="text-2xl font-black text-slate-800 tracking-tight">Leave Credit Policies</h2>
-                <p class="text-slate-500 font-medium mt-1">Configure accumulation and expiration rules for each leave type.</p>
+                <h2 class="text-2xl font-black tracking-tight">Leave Credit Policies</h2>
+                <p class="font-medium mt-1">Configure accumulation and expiration rules for each leave type.</p>
             </div>
-            <button onclick="toggleCreateModal()" class="btn-premium btn-indigo">
+            <button onclick="toggleCreateModal()" class="btn-premium btn-white-blue">
                 <i class="fas fa-plus-circle text-lg"></i> New Leave Type
             </button>
         </div>
@@ -703,7 +728,7 @@
                         $headerClass = 'header-mandatory';
                     } elseif ($specialType) {
                         $headerClass = 'header-special';
-                    } elseif ($type->type_name === 'COC Compensatory Overtime Credit') {
+                    } elseif ($type->type_name === 'CTO (Compensatory Time Off)') {
                         $headerClass = 'header-manual';
                     }
                 @endphp
@@ -711,10 +736,10 @@
                 <div class="policy-card">
                     <div class="policy-header {{ $headerClass }} relative" onclick="togglePolicy('{{ $type->id }}')" id="header-{{ $type->id }}">
                         <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm">
+                            <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shadow-sm" style="flex-shrink: 0;">
                                 <i class="fas fa-file-contract text-sm"></i>
                             </div>
-                            <div>
+                            <div style="flex: 1;">
                                 <div class="flex items-center gap-2">
                                     <h3 class="text-base font-bold text-slate-800 tracking-tight">{{ $type->type_name }}</h3>
                                     @if($specialType)
@@ -770,7 +795,7 @@
                                     </div>
                                 </div>
                             </div>
-                        @elseif($type->type_name === 'COC Compensatory Overtime Credit')
+                        @elseif($type->type_name === 'CTO (Compensatory Time Off)')
                             <div class="bg-indigo-50 border border-indigo-100 rounded-md p-6">
                                 <div class="flex">
                                     <div class="flex-shrink-0">
@@ -895,16 +920,20 @@
                                     </div>
                                 </div>
 
-                                <!-- Actions -->
-                                <div class="flex flex-col items-start gap-4 mt-8">
+                                <!-- Actions Refined - Forced Horizontal -->
+                                <div class="flex flex-row items-center justify-between mt-8 pt-6 border-t border-slate-50" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; width: 100%;">
+                                    <button type="submit" class="btn-premium whitespace-nowrap !px-8">
+                                        <i class="fas fa-save text-sm"></i> Save Configuration
+                                    </button>
+
                                     @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->isHeadHR()))
-                                        <button type="button" title="Delete Leave Type" onclick="confirmDelete('{{ $type->id }}', '{{ addslashes($type->type_name) }}')" class="btn-ghost-danger w-10 h-10 p-0 flex items-center justify-center rounded-xl bg-slate-50 hover:bg-red-50 shadow-sm border border-slate-200">
-                                            <i class="fas fa-trash-alt text-sm text-red-500"></i>
+                                        <button type="button" title="Delete Leave Type" 
+                                                onclick="confirmDelete('{{ $type->id }}', '{{ addslashes($type->type_name) }}')" 
+                                                class="btn-ghost-danger w-auto h-auto flex items-center justify-center rounded-xl bg-slate-50 hover:bg-red-50 py-2.5 px-4 !border-slate-200 hover:!border-red-100 font-black text-[10px] tracking-widest uppercase text-red-500 shadow-sm border-1 border">
+                                            <i class="fas fa-trash-alt text-sm"></i>
+                                            <span class="ml-2">Remove Type</span>
                                         </button>
                                     @endif
-                                    <button type="submit" class="btn-premium whitespace-nowrap">
-                                        <i class="fas fa-save text-sm font-bold"></i> Save Configuration
-                                    </button>
                                 </div>
                             </form>
                             

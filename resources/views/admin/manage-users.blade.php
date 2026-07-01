@@ -7,30 +7,47 @@
     <link rel="stylesheet" href="{{ asset('css/manage-users.css') }}?v={{ time() }}">
     <style>
         .manage-users-premium {
-            animation: fadeIn 0.4s ease-out;
+            @if(count(request()->query()) === 0)
+                animation: fadeIn 0.4s ease-out;
+            @endif
         }
 
         /* Sequential Entrance for Top Elements */
         .management-tabs, .filter-bar-card, .table-header {
-            opacity: 0;
-            animation: fadeInDown 0.6s ease-out forwards;
+            @if(count(request()->query()) === 0)
+                opacity: 0;
+                animation: fadeInDown 0.6s ease-out forwards;
+            @else
+                opacity: 1;
+                transform: none;
+            @endif
         }
 
-        .management-tabs { animation-delay: 0.1s; }
-        .filter-bar-card { animation-delay: 0.2s; }
-        .table-header { animation-delay: 0.3s; }
+        @if(count(request()->query()) === 0)
+            .management-tabs { animation-delay: 0.1s; }
+            .filter-bar-card { animation-delay: 0.2s; }
+            .table-header { animation-delay: 0.3s; }
+        @endif
 
         /* Sequential card animation */
-        .user-list .user-card {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        @foreach(range(1, 25) as $i)
-            .user-list .user-card:nth-child({{ $i }}) {
-                animation-delay: {{ 0.35 + ($i * 0.05) }}s;
+        @if(count(request()->query()) === 0)
+            .user-list .user-card {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             }
-        @endforeach
+
+            @foreach(range(1, 25) as $i)
+                .user-list .user-card:nth-child({{ $i }}) {
+                    animation-delay: {{ 0.35 + ($i * 0.05) }}s;
+                }
+            @endforeach
+        @else
+            .user-list .user-card {
+                opacity: 1;
+                transform: none;
+                animation: none;
+            }
+        @endif
 
         @keyframes fadeInDown {
             from {
@@ -101,13 +118,15 @@
             <select class="filter-select" name="filter_role">
                 <option value="">All Roles</option>
                 @foreach($roles as $role)
-                    <option value="{{ $role }}" {{ $filters['role'] === $role ? 'selected' : '' }}>
-                        @if($role === 'head_hr')
-                            HR PERSONNEL
-                        @else
-                            {{ ucfirst(str_replace('_', ' ', $role)) }}
-                        @endif
-                    </option>
+                    @if(!in_array($role, ['admin', 'hr', 'immediate_head']))
+                        <option value="{{ $role }}" {{ $filters['role'] === $role ? 'selected' : '' }}>
+                            @if($role === 'head_hr')
+                                HR PERSONNEL
+                            @else
+                                {{ strtoupper(str_replace('_', ' ', $role)) }}
+                            @endif
+                        </option>
+                    @endif
                 @endforeach
             </select>
 
@@ -158,7 +177,11 @@
                 <div>
                     <span class="user-meta-label">Role</span>
                     <span class="badge badge-role-{{ $u->role }}">
-                        {{ ucfirst(str_replace('_', ' ', $u->role)) }}
+                        @if($u->role === 'head_hr')
+                            HR PERSONNEL
+                        @else
+                            {{ strtoupper(str_replace('_', ' ', $u->role)) }}
+                        @endif
                     </span>
                 </div>
 

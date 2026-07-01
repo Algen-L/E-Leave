@@ -6,7 +6,7 @@
     --card-bg: #1e293b;
     --input-bg: #0f172a;
     --border-color: #334155;
-    --primary-blue: #0ea5e9;
+    --primary-blue: #1b4a9a;
     --primary-hover: #0284c7;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
@@ -18,7 +18,10 @@ html {
 }
 
 body.auth-page {
-    background-color: var(--bg-dark);
+    background-image: url('../images/loginbg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     display: flex;
@@ -32,32 +35,15 @@ body.auth-page {
     line-height: 1.4;
 }
 
-/* Animated Grid Background */
-.grid-background {
-    position: fixed;
-    top: -10px;
-    left: -10px;
-    width: calc(100% + 20px);
-    height: calc(100% + 20px);
+body.auth-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
     z-index: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    grid-template-rows: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 2px;
-    background: #0f172a;
 }
 
-.grid-tile {
-    background: #1a2332;
-    border-radius: 0;
-    transition: background 0.4s ease, box-shadow 0.4s ease;
-}
 
-.grid-tile.snake-tile {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-    z-index: 2;
-}
 
 
 .login-container, .auth-card {
@@ -76,8 +62,8 @@ body.auth-page {
 /* Morphing Transition Classes */
 .morph-to-register {
     width: 780px !important;
-    height: 580px !important;
-    padding: 20px 30px !important;
+    height: 565px !important;
+    padding: 8px 30px !important;
 }
 
 .morph-to-login {
@@ -108,13 +94,13 @@ body.auth-page {
 }
 
 .register-mode .logo-container {
-    width: 60px !important;
-    height: 60px !important;
-    margin-bottom: 8px !important;
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 1px !important;
 }
 
 .register-mode .header {
-    margin-bottom: 16px !important;
+    margin-bottom: 5px !important;
 }
 
 .register-mode .header h1 {
@@ -128,7 +114,7 @@ body.auth-page {
 }
 
 .register-mode .form-group {
-    margin-bottom: 14px !important;
+    margin-bottom: 5px !important;
 }
 
 .register-mode .form-group label {
@@ -137,7 +123,7 @@ body.auth-page {
 }
 
 .register-mode .form-grid {
-    gap: 18px !important;
+    gap: 15px !important;
 }
 
 .register-mode .form-grid.grid-3 {
@@ -145,27 +131,27 @@ body.auth-page {
 }
 
 .register-mode .form-control {
-    height: 34px !important;
-    padding: 6px 12px !important;
-    font-size: 0.85rem !important;
+    height: 31px !important;
+    padding: 4px 12px !important;
+    font-size: 0.8rem !important;
 }
 
 .register-mode .ts-control {
-    height: 34px !important;
-    min-height: 34px !important;
+    height: 31px !important;
+    min-height: 31px !important;
     padding: 2px 12px !important;
-    font-size: 0.85rem !important;
+    font-size: 0.8rem !important;
 }
 
 .register-mode .btn {
-    height: 38px !important;
+    height: 34px !important;
     padding: 0 !important;
-    font-size: 0.85rem !important;
-    margin-top: 4px !important;
+    font-size: 0.82rem !important;
+    margin-top: 2px !important;
 }
 
 .register-mode .auth-footer {
-    margin-top: 20px !important;
+    margin-top: 8px !important;
 }
 
 .register-mode .footer-text {
@@ -283,7 +269,7 @@ body.auth-page {
 }
 
 .toggle-link, .auth-links a {
-    color: var(--primary-blue);
+    color: white;
     cursor: pointer;
     font-weight: 700;
     font-size: 0.7rem;
@@ -368,7 +354,7 @@ body.auth-page {
     margin-top: 6px !important;
     background: rgba(59, 130, 246, 0.1) !important;
     border-radius: 8px !important;
-    border-left: 3px solid #3b82f6 !important;
+    border-left: 3px solid #1b4a9a !important;
     color: #60a5fa !important;
 }
 
@@ -389,7 +375,7 @@ body.auth-page {
 }
 
 .ts-dropdown .option.active {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    background: linear-gradient(135deg, #1b4a9a 0%, #1b4a9a 100%) !important;
     color: #ffffff !important;
     font-weight: 600 !important;
 }

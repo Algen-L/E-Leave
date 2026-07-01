@@ -298,5 +298,15 @@
                 });
             });
         </script>
+        <script>
+            // Disable right-click and copy-paste
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            document.addEventListener('copy', event => event.preventDefault());
+            document.addEventListener('paste', event => event.preventDefault());
+            document.addEventListener('cut', event => event.preventDefault());
+
+            // Reset persistent form data if on landing page
+            localStorage.removeItem('leave_form_data');
+        </script>
     </body>
 </html>

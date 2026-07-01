@@ -8,31 +8,45 @@
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <style>
         .register-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 32px;
+            align-items: start;
             animation: fadeIn 0.4s ease-out;
+            margin-top: 10px;
         }
 
-        .avatar-panel, .form-section {
+        @media (max-width: 992px) {
+            .register-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .avatar-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Stable Entrance Animation */
+        .avatar-card, .account-card-compact, .form-panel {
             opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .avatar-panel { animation-delay: 0.1s; }
-        .form-section:nth-of-type(1) { animation-delay: 0.2s; }
-        .form-section:nth-of-type(2) { animation-delay: 0.3s; }
-        .form-section:nth-of-type(3) { animation-delay: 0.4s; }
+        .avatar-card { animation-delay: 0.1s; }
+        .account-card-compact { animation-delay: 0.2s; }
+        .form-panel { animation-delay: 0.3s; }
 
-        @keyframes backInDown {
-            0% {
-                transform: translateY(-100px) scale(0.7);
+        @keyframes fadeInUp {
+            from {
                 opacity: 0;
+                transform: translateY(20px);
             }
-            80% {
-                transform: translateY(0px) scale(0.7);
-                opacity: 0.7;
-            }
-            100% {
-                transform: scale(1);
+            to {
                 opacity: 1;
+                transform: translateY(0);
             }
         }
 
@@ -40,12 +54,22 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+
+        /* Ensure No Overlaps */
+        .avatar-card, .form-panel {
+            position: relative !important;
+            top: 0 !important;
+            margin: 0 !important;
+        }
     </style>
 @endpush
 
 @section('content')
-    <div class="register-container">
-        <!-- Avatar Side Panel -->
+    <form action="{{ route('admin.register-user.store') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <input type="file" id="profile_picture" name="profile_picture" accept="image/*" style="display: none;">
+        
+        <div class="register-container">
         <div class="avatar-panel">
             <div class="avatar-card">
                 <div class="avatar-wrapper">
@@ -59,87 +83,116 @@
                 <h3>Profile Photo</h3>
                 <p>Upload a profile picture for this user account</p>
             </div>
-        </div>
 
-        <!-- Form Panel -->
-        <div class="form-panel">
-            <form action="{{ route('admin.register-user.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="file" id="profile_picture" name="profile_picture" accept="image/*" style="display: none;">
+            <!-- Relocated Account Information -->
+            <div class="form-section account-card-compact" style="background: white; border-radius: 20px; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-md); position: relative; z-index: 1;">
+                <div class="section-header" style="padding-bottom: 12px; margin-bottom: 20px;">
+                    <div class="section-icon" style="width: 36px; height: 36px; font-size: 0.9rem;">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h4 class="section-title" style="font-size: 1rem;">Account Information</h4>
+                </div>
 
-                <!-- Account Information -->
-                <div class="form-section">
-                    <div class="section-header">
-                        <div class="section-icon">
-                            <i class="fas fa-user-shield"></i>
-                        </div>
-                        <h4 class="section-title">Account Information</h4>
+                <div class="form-grid-1" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Email (DepEd Gmail) <span class="required">*</span></label>
+                        <input type="email" class="form-control @error('gmail') error @enderror" name="gmail"
+                            value="{{ old('gmail') }}" placeholder="username@deped.gov.ph" required>
+                        @error('gmail')
+                            <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                        @enderror
                     </div>
 
-                    <div class="form-grid-2">
-                        <div class="form-group">
-                            <label class="form-label">Email (DepEd Gmail) <span class="required">*</span></label>
-                            <input type="email" class="form-control @error('gmail') error @enderror" name="gmail"
-                                value="{{ old('gmail') }}" placeholder="username@deped.gov.ph" required>
-                            @error('gmail')
-                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
-                            @enderror
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: 700; display: block; margin-bottom: 8px;">Roles <span class="required">*</span></label>
+                        <div class="roles-checkbox-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px;">
+                            <label class="role-checkbox-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #f0f4fc; border: 1.5px solid var(--primary, #1b4a9a); border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary, #1b4a9a)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                                <input type="checkbox" name="roles[]" value="user" 
+                                    {{ !old('roles') || in_array('user', old('roles')) ? 'checked' : '' }} 
+                                    style="accent-color: var(--primary, #1b4a9a); width: 16px; height: 16px;"
+                                    onchange="if(this.checked) { this.parentElement.style.background='#f0f4fc'; this.parentElement.style.borderColor='var(--primary, #1b4a9a)'; } else { this.parentElement.style.background='white'; this.parentElement.style.borderColor='#e2e8f0'; }">
+                                <span style="font-weight: 600; font-size: 0.85rem; color: #334155;">USER</span>
+                            </label>
+                            @if(old('roles') && !in_array('user', old('roles')))
+                                <script>
+                                    document.currentScript.previousElementSibling.style.background = 'white';
+                                    document.currentScript.previousElementSibling.style.borderColor = '#e2e8f0';
+                                </script>
+                            @endif
 
-                        <div class="form-group">
-                            <label class="form-label">Role <span class="required">*</span></label>
-                            <select class="form-select @error('role') error @enderror" name="role" required>
-                                <option value="user" {{ old('role') === 'user' ? 'selected' : '' }}>User</option>
-                                <option value="head_hr" {{ old('role') === 'head_hr' ? 'selected' : '' }}>HR PERSONNEL</option>
-                                @if(in_array(auth()->user()->role, ['hr', 'head_hr', 'super_admin']))
-                                    <option value="hr_review_officer" {{ old('role') === 'hr_review_officer' ? 'selected' : '' }}>HR REVIEW OFFICER</option>
+                            @foreach($allRoles as $role)
+                                @if($role->name !== 'user')
+                                    @php
+                                        $isHrOnly = auth()->user()->hasRole(['hr', 'head_hr', 'hr_review_officer']) && !auth()->user()->hasRole(['super_admin', 'admin']);
+                                        $isRestricted = in_array($role->name, ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao']);
+                                        $canAssign = true;
+                                        if ($isHrOnly) {
+                                            $canAssign = false;
+                                        }
+                                        if ($isRestricted && !auth()->user()->isSuperAdmin()) {
+                                            $canAssign = false;
+                                        }
+                                        if ($role->name === 'super_admin' && !auth()->user()->isSuperAdmin()) {
+                                            $canAssign = false;
+                                        }
+                                        if ($role->name === 'hr_review_officer' && !auth()->user()->isSuperAdmin() && !auth()->user()->isHR()) {
+                                            $canAssign = false;
+                                        }
+                                    @endphp
+                                    @if($canAssign)
+                                        <label class="role-checkbox-item" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: white; border: 1.5px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary, #1b4a9a)'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e2e8f0'">
+                                            <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                                                {{ old('roles') && in_array($role->name, old('roles')) ? 'checked' : '' }} 
+                                                style="accent-color: var(--primary, #1b4a9a); width: 16px; height: 16px;"
+                                                onchange="if(this.checked) { this.parentElement.style.background='#f0f4fc'; this.parentElement.style.borderColor='var(--primary, #1b4a9a)'; } else { this.parentElement.style.background='white'; this.parentElement.style.borderColor='#e2e8f0'; }}">
+                                            <span style="font-weight: 600; font-size: 0.85rem; color: #334155;">{{ $role->display_name }}</span>
+                                        </label>
+                                        @if(old('roles') && in_array($role->name, old('roles')))
+                                            <script>
+                                                document.currentScript.previousElementSibling.style.background = '#f0f4fc';
+                                                document.currentScript.previousElementSibling.style.borderColor = 'var(--primary, #1b4a9a)';
+                                            </script>
+                                        @endif
+                                    @endif
                                 @endif
-                                <option value="record_personnel" {{ old('role') === 'record_personnel' ? 'selected' : '' }}>RECORD PERSONNEL</option>
-                                @if(auth()->user()->role === 'super_admin')
-                                    <optgroup label="High Level Roles">
-                                        <option value="asds" {{ old('role') === 'asds' ? 'selected' : '' }}>ASDS</option>
-                                        <option value="sds" {{ old('role') === 'sds' ? 'selected' : '' }}>SDS</option>
-                                        <option value="sgod_chief" {{ old('role') === 'sgod_chief' ? 'selected' : '' }}>SGOD Chief
-                                        </option>
-                                        <option value="cid_chief" {{ old('role') === 'cid_chief' ? 'selected' : '' }}>CID Chief
-                                        </option>
-                                        <option value="ao" {{ old('role') === 'ao' ? 'selected' : '' }}>AO</option>
-                                    </optgroup>
-                                @endif
-                            </select>
-                            @error('role')
-                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
-                            @enderror
+                            @endforeach
                         </div>
+                        @error('roles')
+                            <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Password <span class="required">*</span></label>
-                            <div class="password-wrapper">
-                                <input type="password" class="form-control @error('password') error @enderror"
-                                    name="password" id="password" placeholder="Enter password" minlength="6" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon')">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
-                            </div>
-                            @error('password')
-                                <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
-                            @enderror
+                    <div class="form-group">
+                        <label class="form-label">Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control @error('password') error @enderror"
+                                name="password" id="password" placeholder="Enter password" minlength="6" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password', 'toggleIcon')">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
                         </div>
+                        @error('password')
+                            <div class="input-feedback error"><i class="fas fa-exclamation-circle"></i> {{ $message }}</div>
+                        @enderror
+                    </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Confirm Password <span class="required">*</span></label>
-                            <div class="password-wrapper">
-                                <input type="password" class="form-control"
-                                    name="password_confirmation" id="password_confirmation" placeholder="Confirm password" minlength="6" required>
-                                <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation', 'toggleIconConfirm')">
-                                    <i class="fas fa-eye" id="toggleIconConfirm"></i>
-                                </button>
-                            </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm Password <span class="required">*</span></label>
+                        <div class="password-wrapper">
+                            <input type="password" class="form-control"
+                                name="password_confirmation" id="password_confirmation" placeholder="Confirm password" minlength="6" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation', 'toggleIconConfirm')">
+                                <i class="fas fa-eye" id="toggleIconConfirm"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Personal Information -->
+
+        <div class="form-panel">
+            <!-- Personal Information -->
                 <div class="form-section">
                     <div class="section-header">
                         <div class="section-icon">
@@ -245,9 +298,9 @@
                         Create User
                     </button>
                 </div>
-            </form>
         </div>
     </div>
+</form>
 @endsection
 
 @push('scripts')

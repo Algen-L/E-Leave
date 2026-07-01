@@ -6,7 +6,7 @@
     --card-border: #e2e8f0;
     --text-main: #1e293b;
     --text-muted: #64748b;
-    --accent-blue: #0f4c75;
+    --accent-blue: #1b4a9a;
     --accent-orange: #f59e0b;
     --input-bg: #f8fafc;
     --input-border: #e2e8f0;
@@ -54,14 +54,14 @@
 .profile-section-title {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #1e40af;
+    color: #123166;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .profile-section-title i {
-    color: #1e40af;
+    color: #123166;
 }
 
 .profile-card-body {
@@ -157,7 +157,7 @@
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 600;
-    color: #0f4c75;
+    color: #1b4a9a;
     transition: all 0.2s;
 }
 
@@ -166,7 +166,7 @@
 }
 
 .btn-sync {
-    background: #0f4c75;
+    background: #1b4a9a;
     color: white;
     padding: 12px 24px;
     border-radius: 10px;
@@ -186,7 +186,7 @@
 
 /* Rights Column Cards */
 .accent-blue {
-    border-left: 4px solid #1e40af;
+    border-left: 4px solid #123166;
 }
 
 .accent-orange {
@@ -203,7 +203,7 @@
     padding: 16px;
     background: #eef2ff;
     border-radius: 12px;
-    color: #1e40af;
+    color: #123166;
     font-size: 1.2rem;
 }
 
@@ -230,7 +230,7 @@
 .notif-section-title {
     font-size: 0.95rem;
     font-weight: 700;
-    color: #1e40af;
+    color: #123166;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -268,7 +268,7 @@
 }
 
 .btn-send {
-    background: #0f4c75;
+    background: #1b4a9a;
     color: white;
     padding: 10px 24px;
     border-radius: 8px;

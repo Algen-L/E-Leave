@@ -68,8 +68,8 @@ class LeaveService
         if (empty($leaveTypeId) && !empty($othersType)) {
             if (is_numeric($othersType)) {
                 $leaveTypeId = $othersType;
-            } elseif ($othersType === 'COC COMPENSATORY OVERTIME CREDIT') {
-                $ctoType = LeaveType::firstOrCreate(['type_name' => 'COC Compensatory Overtime Credit'], ['description' => 'COC - Manual Entry']);
+            } elseif ($othersType === 'CTO (Compensatory Time Off)') {
+                $ctoType = LeaveType::firstOrCreate(['type_name' => 'CTO (Compensatory Time Off)'], ['description' => 'COC - Manual Entry']);
                 $leaveTypeId = $ctoType->id;
             } elseif ($othersType === 'Specify') {
                 $othersLeave = LeaveType::firstOrCreate(['type_name' => 'Others'], ['description' => 'Other purposes']);
@@ -77,8 +77,8 @@ class LeaveService
             }
         }
 
-        if (!$user->recommending_officer_id || !$user->approving_officer_id) {
-            throw new \Exception('Please configure your Recommending and Approving Officers in your Profile before applying.');
+        if (!$user->isRecordPersonnel() && (!$user->recommending_officer_id || !$user->approving_officer_id || (!$user->department_head_id && !$user->is_dept_head))) {
+            throw new \Exception('Please configure your Department Head, Recommending, and Approving Officers in your Profile before applying.');
         }
 
         return DB::transaction(function () use ($user, $data, $leaveTypeId) {
@@ -107,8 +107,31 @@ class LeaveService
             $startDate = $dates[0] ?? now();
             $endDate = end($dates) ?: $startDate;
 
+            // Generate tracking number
+            $random = strtoupper(\Illuminate\Support\Str::random(3));
+            $yearMonth = now()->format('Ym');
+            $count = LeaveApplication::whereYear('date_filing', now()->year)
+                ->whereMonth('date_filing', now()->month)
+                ->count();
+            $series = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+            $trackingNumber = "EL{$random}-{$yearMonth}-{$series}";
+
+            $recommendingOfficerId = $user->recommending_officer_id;
+            $approvingOfficerId = $user->approving_officer_id;
+            $asdsId = null;
+
+            if ($daysApplied > 6) {
+                $sds = User::where('role', 'sds')->first();
+                $asds = User::where('role', 'asds')->first();
+                
+                if ($sds) $approvingOfficerId = $sds->id;
+                if ($asds) $asdsId = $asds->id;
+                // Note: Recommending Officer remains the designation recorded on the User profile
+            }
+
             $application = LeaveApplication::create([
                 'user_id' => $user->id,
+                'tracking_number' => $trackingNumber,
                 'leave_type_id' => $leaveTypeId,
                 'date_filing' => now(),
                 'start_date' => $startDate,
@@ -117,13 +140,19 @@ class LeaveService
                 'days_applied' => $daysApplied,
                 'commutation' => isset($data['commutation']) ? 'Requested' : 'Not Requested',
                 'status' => 'Pending HR',
-                'recommending_officer_id' => $user->recommending_officer_id,
-                'approving_officer_id' => $user->approving_officer_id,
+                'recommending_officer_id' => $recommendingOfficerId,
+                'approving_officer_id' => $approvingOfficerId,
+                'asds_id' => $asdsId,
             ]);
 
-            $otherPurpose = ($data['others_type'] ?? '') === 'COC COMPENSATORY OVERTIME CREDIT'
-                ? 'COC COMPENSATORY OVERTIME CREDIT'
-                : ($data['other_purpose'] ?? null);
+            $otherPurpose = $data['other_purpose'] ?? null;
+            if (empty($otherPurpose)) {
+                if (($data['others_type'] ?? '') === 'CTO (Compensatory Time Off)') {
+                    $otherPurpose = 'CTO (Compensatory Time Off)';
+                } elseif (is_numeric($data['others_type'] ?? '')) {
+                    $otherPurpose = $leaveType->type_name;
+                }
+            }
 
             LeaveDetailsForm6::create([
                 'leave_application_id' => $application->id,
@@ -137,6 +166,14 @@ class LeaveService
                 'study_details' => $data['study_details'] ?? null,
                 'other_purpose' => $otherPurpose,
             ]);
+
+            // Notify Department Head of the new application
+            if ($user->department_head_id) {
+                $dateFilingStr = now()->format('F j, Y');
+                $message = "New Application Submitted: {$user->full_name} submitted a Leave Application. Submitted: {$dateFilingStr}. Status: Pending Review.";
+                $linkUrl = route('user.leave.show', ['id' => $application->id]);
+                \App\Models\Notification::send($user->id, $user->department_head_id, $message, $linkUrl);
+            }
 
             return $application;
         });

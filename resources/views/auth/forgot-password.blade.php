@@ -16,10 +16,10 @@
     <div id="fpSection" class="form-section active">
         <div id="fpStep1">
             <div class="form-group">
-                <label>Gmail Address</label>
+                <label>Email Address</label>
                 <input type="email" id="fp_email" class="form-control" placeholder="example@gmail.com" required autofocus>
                 <div style="margin-top: 10px; color: var(--text-muted); font-size: 0.75rem; font-style: italic; text-align: left;">
-                    Enter your registered Gmail address and we'll send a reset token.
+                    Enter your registered Email address and we'll send a reset token.
                 </div>
             </div>
             <button type="button" class="btn" id="fpRequestBtn" onclick="requestResetToken()">Send Reset Token</button>
@@ -76,7 +76,7 @@
 
     <div class="auth-footer">
         <div class="dev-info">Department of Education - Schools Division Office of San Pedro City</div>
-        <div class="dev-info">Developed by Algen Loveres & Cedrick Bacaresas</div>
+        <div class="dev-info">ICT UNIT 2026</div>
     </div>
 </div>
 
@@ -132,7 +132,7 @@
         const originalText = btn.innerHTML;
 
         if (!email) {
-            showToast('Please enter your registered Gmail address.', 'warning');
+            showToast('Please enter your registered Email address.', 'warning');
             return;
         }
 

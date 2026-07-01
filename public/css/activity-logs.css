@@ -255,7 +255,7 @@
 }
 
 .activity-action.create {
-    color: #3b82f6;
+    color: #1b4a9a;
 }
 
 .activity-action.update {
@@ -384,7 +384,19 @@
 
 .pagination-links {
     display: flex;
-    gap: 4px;
+}
+
+.pagination-links ul {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pagination-links li {
+    margin: 0;
+    padding: 0;
 }
 
 .page-link {
@@ -417,11 +429,63 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
-
 @media (max-width: 992px) {
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-group {
+        width: 100%;
+        min-width: 0;
+    }
+    .filter-buttons {
+        margin-left: 0;
+        width: 100%;
+        justify-content: stretch;
+    }
+    .btn-filter-apply,
+    .btn-filter-reset {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
     .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        position: relative;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+    .activity-icon-simple {
+        position: absolute;
+        top: 16px;
+        right: 12px;
+    }
+    .activity-content {
+        width: 100%;
+    }
+    .activity-time {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px dashed #e2e8f0;
+        padding-top: 8px;
+        margin-top: 4px;
+    }
+    .activity-stats {
         grid-template-columns: 1fr;
-        gap: 16px;
+    }
+    .log-tabs {
+        width: 100%;
+        flex-direction: column;
+    }
+    .log-tab {
+        width: 100%;
+        justify-content: center;
     }
 
     .activity-header {

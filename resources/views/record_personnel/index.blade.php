@@ -19,13 +19,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header-title-main {
             font-size: 2.8rem;
             font-weight: 900;
-            color: #1e293b;
+            color: #ffffff;
             letter-spacing: -0.03em;
             line-height: 1;
             position: relative;
@@ -33,10 +34,8 @@
         }
 
         .header-title-accent {
-            color: #0ea5e9;
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #ffffff;
+            opacity: 0.9;
             position: relative;
         }
 
@@ -47,168 +46,251 @@
             left: 0;
             width: 100%;
             height: 12px;
-            background: rgba(14, 165, 233, 0.1);
+            background: rgba(255, 255, 255, 0.1);
             z-index: -1;
             border-radius: 4px;
         }
 
-        /* Glassmorphism User Card (Compact Flex Layout) */
+        /* Adjust description text */
+        .header-text-group p {
+            color: rgba(255, 255, 255, 0.7) !important;
+        }
+
+        /* Responsive Grid (Adapts to Sidebar and Viewport) */
         .user-card {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: minmax(200px, 1.2fr) minmax(100px, 0.8fr) minmax(160px, 1fr) minmax(100px, 0.7fr) minmax(120px, 0.8fr) minmax(150px, 1fr);
             align-items: center;
-            border: 1px solid rgba(226, 232, 240, 0.7);
+            gap: 12px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
             margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.8) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px !important;
-            padding: 16px 24px !important;
+            background: #ffffff !important;
+            border-radius: 12px !important;
+            padding: 12px 20px !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            min-height: 85px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Sidebar Responsive Adjustments */
+        .app-layout.sidebar-collapsed .user-card {
+            grid-template-columns: minmax(240px, 1.3fr) minmax(110px, 0.9fr) minmax(180px, 1.1fr) minmax(120px, 0.8fr) minmax(140px, 0.9fr) minmax(180px, 1.1fr);
+            gap: 15px;
         }
 
         .user-card:hover {
-            border-color: var(--primary) !important;
-            background: white !important;
-            transform: translateY(-3px);
-            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1) !important;
+            border-color: #1b4a9a !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.1) !important;
         }
 
-        /* Sequential Animation */
-        .records-scroll-area .user-card {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        /* Column Headers */
+        .column-label {
+            font-size: 0.62rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 5px;
+            display: block;
+            white-space: nowrap;
         }
 
-        @foreach(range(1, 20) as $i)
-            .records-scroll-area .user-card:nth-child({{ $i }}) {
-                animation-delay: {{ $i * 0.1 }}s;
-            }
-        @endforeach
-
-        @keyframes backInDown {
-            0% {
-                transform: translateY(-50px) scale(0.95);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+        .user-profile-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 0;
         }
 
-        .btn-view {
-            background: white;
-            color: #475569;
-            padding: 10px 20px;
-            border-radius: 12px;
+        .avatar-frame {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #f1f5f9;
+        }
+
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .name-role-group {
+            line-height: 1.2;
+            overflow: hidden;
+        }
+
+        .user-full-name {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #1e293b;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role-label {
+            font-size: 0.68rem;
             font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .tracking-group {
+            vertical-align: middle;
+        }
+
+        .tracking-val {
             font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .leave-type-group {
+            line-height: 1.4;
+            overflow: hidden;
+        }
+
+        .leave-type-val {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: #0c4a6e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .filed-date-val {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .duration-pill {
+            background: #e0f2fe;
+            color: #1b4a9a;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: inline-block;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .status-pill-dot {
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            border: 1px solid #cbd5e1;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            justify-content: center;
+            min-width: 130px;
         }
 
-        .btn-view:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-            background: #f8fafc;
-            color: #0f4c75;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
 
-        /* Scrollable Container */
+        .status-pending-hr {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1px solid #ffedd5;
+        }
+        .status-pending-hr .status-dot { background: #f97316; }
+
+        .status-approved-hr {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #dcfce7;
+        }
+        .status-approved-hr .status-dot { background: #22c55e; }
+
+        .status-disapproved-hr {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fee2e2;
+        }
+        .status-disapproved-hr .status-dot { background: #ef4444; }
+
+        .btn-review-app {
+            background: #075985;
+            color: white !important;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none !important;
+            width: 100%;
+            justify-content: center;
+            white-space: nowrap;
+        }
+
+        .btn-review-app:hover {
+            background: #0c4a6e;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(7, 89, 133, 0.2);
+        }
+
+        /* Scroll Area Configuration (Shows ~6 items, scrollable for 20) */
         .records-scroll-area {
-            max-height: calc(100vh - 350px);
+            max-height: 620px;
             overflow-y: auto;
-            padding: 10px 10px 40px 10px;
-            margin: 0 -10px;
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
+            padding-right: 8px;
+            margin-right: -8px;
         }
 
+        /* Modern Scrollbar Styling */
         .records-scroll-area::-webkit-scrollbar {
-            width: 5px;
+            width: 6px;
         }
 
         .records-scroll-area::-webkit-scrollbar-track {
-            background: transparent;
+            background: #f1f5f9;
+            border-radius: 10px;
         }
 
         .records-scroll-area::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
+            transition: background 0.2s;
         }
 
-        .user-meta-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            display: block;
-            margin-bottom: 4px;
+        .records-scroll-area::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
-        .user-card .user-name {
-            font-size: 1.05rem !important;
-            font-weight: 800 !important;
-            color: #1e293b !important;
-            letter-spacing: -0.01em;
+        /* Sequential Animation */
+        .records-scroll-area .user-card {
+            opacity: 0;
+            animation: fadeIn 0.4s ease-out forwards;
         }
 
-        .leave-type-name {
-            font-weight: 700;
-            color: var(--primary);
-            font-size: 0.95rem;
-            display: block;
-        }
-
-        .badge-days {
-            background: rgba(14, 165, 233, 0.1);
-            color: #0369a1;
-            font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            display: inline-block;
-        }
-
-        .status-badge {
-            font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 99px;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 120px;
-        }
-
-        .status-approved {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .status-pending {
-            background: #ffedd5;
-            color: #9a3412;
-            border: 1px solid #fed7aa;
-        }
-
-        .status-rejected {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
+        @foreach(range(1, 20) as $i)
+            .records-scroll-area .user-card:nth-child({{ $i }}) {
+                animation-delay: {{ $i * 0.04 }}s;
+            }
+        @endforeach
     </style>
 @endpush
 
@@ -221,19 +303,9 @@
                     <h1 class="header-title-main">
                         Leave <span class="header-title-accent">Records</span>
                     </h1>
-                    <p class="text-slate-500 mt-3 font-semibold text-lg max-w-md leading-relaxed">
+                    <p class="mt-2 font-semibold text-mg max-w-md leading-relaxed">
                         Search and filter through all leave applications filed in the system.
                     </p>
-                </div>
-                
-                <div class="officer-badge-premium" style="background: white; padding: 12px 24px; border-radius: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 15px 35px -10px rgba(15, 76, 117, 0.15); border: 1px solid rgba(15, 76, 117, 0.1);">
-                    <div class="officer-icon-wrapper" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.4rem;">
-                        <i class="fas fa-archive"></i>
-                    </div>
-                    <div>
-                        <div class="text-[0.68rem] uppercase font-black text-slate-400 tracking-widest leading-none mb-1">Record Personnel</div>
-                        <div class="officer-name-highlight" style="color: #0c4a6e; font-size: 1.1rem; font-weight: 800; text-transform: uppercase;">{{ Auth::user()->full_name }}</div>
-                    </div>
                 </div>
             </div>
 
@@ -252,7 +324,7 @@
                         <option value="Pending Recommending" {{ request('status') == 'Pending Recommending' ? 'selected' : '' }}>Pending Recommending</option>
                         <option value="Pending Approval" {{ request('status') == 'Pending Approval' ? 'selected' : '' }}>Pending Approval</option>
                     </select>
-                    <button type="submit" class="btn btn-primary" style="border-radius: 16px; padding: 0 24px; background: #0ea5e9; border: none; font-weight: 700;">Filter</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 16px; padding: 0 24px; background: #1b4a9a; border: none; font-weight: 700;">Filter</button>
                     @if(request('search') || request('status'))
                         <a href="{{ route('records.index') }}" class="btn btn-light" style="border-radius: 16px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-times"></i></a>
                     @endif
@@ -262,59 +334,73 @@
                 @if(count($applications) > 0)
                     <div class="records-scroll-area">
                         @foreach($applications as $app)
-                            <div class="user-card">
-                                <div class="user-info" style="flex: 1; min-width: 250px; display: flex; align-items: center; gap: 15px;">
-                                    <div class="user-avatar" style="width: 45px; height: 45px; border-radius: 12px; background: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; flex-shrink: 0;">
+                            <div class="user-card anim-{{ $loop->iteration }}">
+                                <!-- Profile Column -->
+                                <div class="user-profile-group">
+                                    <div class="avatar-frame">
                                         @if($app->user->profile_picture)
-                                            <img src="{{ storage_url($app->user->profile_picture) }}" alt="{{ $app->user->full_name }}" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">
+                                            <img src="{{ storage_url($app->user->profile_picture) }}" class="avatar-img" alt="Profile">
                                         @else
-                                            {{ strtoupper(substr($app->user->full_name, 0, 2)) }}
+                                            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#e0f2fe; color:#1b4a9a; font-weight:800;">
+                                                {{ strtoupper(substr($app->user->first_name, 0, 1)) }}{{ strtoupper(substr($app->user->last_name, 0, 1)) }}
+                                            </div>
                                         @endif
                                     </div>
-                                    <div class="user-details">
-                                        <div class="user-name" style="line-height: 1.2; margin-bottom: 2px;">{{ $app->user->full_name }}</div>
-                                        <div class="user-email" style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">{{ str_replace('_', ' ', $app->user->role) }}</div>
+                                    <div class="name-role-group">
+                                        <span class="user-full-name">{{ $app->user->full_name }}</span>
+                                        <span class="user-role-label">USER</span>
                                     </div>
                                 </div>
 
-                                <div style="flex: 1; min-width: 200px;">
-                                    <span class="user-meta-label">Type of Leave</span>
-                                    <span class="leave-type-name"><i class="fas fa-file-alt mr-1 text-sky-500/80"></i> {{ $app->leaveType->type_name }}</span>
-                                    <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; font-weight: 700; display: flex; align-items: center; gap: 5px;">
-                                        <i class="far fa-clock"></i> Filed: {{ $app->date_filing->format('M d, Y') }}
-                                    </div>
+                                <!-- Tracking Column -->
+                                <div class="tracking-group">
+                                    <span class="column-label">Tracking No.</span>
+                                    <span class="tracking-val">---</span>
                                 </div>
 
-                                <div style="flex: 1; min-width: 200px;">
-                                    <span class="user-meta-label">Duration</span>
-                                    <span class="user-meta-value" style="display: flex; align-items: center; gap: 6px; font-weight: 600; color: #334155; margin-bottom: 4px;">
-                                        <span class="badge-days" style="padding: 4px 10px; font-size: 0.75rem;">{{ (float) $app->days_applied }}</span> Days
+                                <!-- Leave Type Column -->
+                                <div class="leave-type-group">
+                                    <span class="column-label">Type of Leave</span>
+                                    <span class="leave-type-val">
+                                        <i class="fas fa-file-invoice text-sky-600"></i> {{ $app->leaveType->type_name }}
+                                    </span>
+                                    <span class="filed-date-val"><i class="far fa-clock"></i> Filed: {{ $app->date_filing->format('M d, Y') }}</span>
+                                </div>
+
+                                <!-- Duration Column -->
+                                <div class="duration-group">
+                                    <span class="column-label">Total Duration</span>
+                                    <span class="duration-pill">
+                                        {{ (float) $app->days_applied }} Day(s)
                                     </span>
                                 </div>
 
-                                <div style="text-align: right; min-width: 150px;">
-                                    <span class="user-meta-label" style="text-align: center;">Status</span>
+                                <!-- Status Column -->
+                                <div class="status-group">
+                                    <span class="column-label" style="text-align: center;">Status</span>
                                     @php
-                                        $statusClass = 'status-pending';
-                                        if($app->status == 'Approved') $statusClass = 'status-approved';
-                                        if($app->status == 'Disapproved') $statusClass = 'status-rejected';
+                                        $statusClass = 'status-pending-hr';
+                                        if($app->status == 'Approved') $statusClass = 'status-approved-hr';
+                                        elseif($app->status == 'Disapproved') $statusClass = 'status-disapproved-hr';
+                                        
+                                        // Specific text mapping for "dot" style
+                                        $displayText = strtoupper($app->status);
+                                        if(str_contains(strtolower($app->status), 'pending')) $displayText = 'PENDING HR';
                                     @endphp
-                                    <span class="status-badge {{ $statusClass }}">
-                                        {{ $app->status }}
-                                    </span>
+                                    <div class="status-pill-dot {{ $statusClass }}">
+                                        <div class="status-dot"></div>
+                                        {{ $displayText }}
+                                    </div>
                                 </div>
 
-                                <div class="approval-actions" style="min-width: 120px; justify-content: flex-end;">
-                                    <a href="{{ route('records.leave.show', $app->id) }}" class="btn-view">
-                                        <i class="fas fa-eye text-slate-400"></i> Details
+                                <!-- Action Column -->
+                                <div class="action-column">
+                                    <a href="{{ route('records.leave.show', $app->id) }}" class="btn-review-app">
+                                        <i class="fas fa-pen-nib"></i> Review Application
                                     </a>
                                 </div>
                             </div>
                         @endforeach
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        {{ $applications->links() }}
                     </div>
                 @else
                 </div>

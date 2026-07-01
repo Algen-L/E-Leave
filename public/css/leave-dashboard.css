@@ -104,7 +104,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%);
     color: white;
 }
 
@@ -176,7 +176,7 @@
 
 /* User Dashboard - Notifications Alignment */
 .notif-header {
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%) !important;
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%) !important;
     color: white !important;
     display: flex;
     align-items: center;

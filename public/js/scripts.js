@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleMobileMenu() {
         if (sidebar) sidebar.classList.toggle('mobile-open');
-        if (overlay) overlay.classList.toggle('show');
+        if (overlay) overlay.classList.toggle('active');
     }
 
     // Logic to inject/bind the Burger Button (Top-bar Burger)
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (overlay) {
         overlay.addEventListener('click', function () {
             if (sidebar) sidebar.classList.remove('mobile-open');
-            overlay.classList.remove('show');
+            overlay.classList.remove('active');
         });
     }
 

@@ -72,7 +72,7 @@
 
 .search-wrapper .search-input:focus {
     outline: none;
-    border-color: #0f4c75;
+    border-color: #1b4a9a;
     box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
 }
 
@@ -93,14 +93,14 @@
 
 .filter-select:focus {
     outline: none;
-    border-color: #0f4c75;
+    border-color: #1b4a9a;
     box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
 }
 
 .filter-btn {
     height: 36px;
     padding: 0 16px;
-    background: #0f4c75;
+    background: #1b4a9a;
     color: white;
     border: none;
     border-radius: 8px;
@@ -115,7 +115,7 @@
 }
 
 .filter-btn:hover {
-    background: #1b6ca8;
+    background: #3b66bc;
     transform: translateY(-1px);
 }
 
@@ -126,7 +126,7 @@
 /* Record Count Badge */
 .record-count {
     font-size: 0.85rem;
-    color: #0ea5e9;
+    color: #1b4a9a;
     font-weight: 600;
 }
 
@@ -204,7 +204,7 @@
 
 .role-badge.role-user {
     background: #e0f2fe;
-    color: #0369a1;
+    color: #1b4a9a;
 }
 
 .role-badge.role-admin {

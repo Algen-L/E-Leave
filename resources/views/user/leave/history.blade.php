@@ -46,10 +46,11 @@
             </a>
         </div>
 
-        <div class="table-responsive">
-            <table class="history-table">
+        <div class="history-table-wrapper">
+            <table class="history-table stack-card-table">
                 <thead>
                     <tr>
+                        <th>Tracking No.</th>
                         <th>Date Filed</th>
                         <th>Leave Type</th>
                         <th>Inclusive Dates</th>
@@ -73,18 +74,21 @@
                             }
                         @endphp
                         <tr onclick="window.location='{{ route('user.leave.show', $app->id) }}'">
-                            <td>
+                            <td data-label="Tracking No." class="tracking-cell" style="font-family: 'Monaco', 'Consolas', monospace; font-weight: 600; color: var(--primary-blue);">
+                                {{ $app->tracking_number ?? '---' }}
+                            </td>
+                            <td data-label="Date Filed">
                                 <div class="date-primary">{{ \Carbon\Carbon::parse($app->date_filing)->format('M d, Y') }}</div>
                                 <div class="date-secondary">{{ \Carbon\Carbon::parse($app->created_at)->format('h:i A') }}</div>
                             </td>
-                            <td>
+                            <td data-label="Leave Type">
                                 <div class="type-name">{{ $app->leaveType->type_name }}</div>
                             </td>
-                            <td>
+                            <td data-label="Inclusive Dates">
                                 <div class="duration-dates">{{ \Carbon\Carbon::parse($app->start_date)->format('M d') }} - {{ \Carbon\Carbon::parse($app->end_date)->format('M d, Y') }}</div>
                                 <div class="duration-count">{{ $app->days_applied }} {{ Str::plural('day', $app->days_applied) }}</div>
                             </td>
-                            <td>
+                            <td data-label="Progress">
                                 <div class="progress-stepper">
                                     <div class="stepper-dot {{ $s1 }}" title="HR Verification"></div>
                                     <div class="stepper-line {{ $s1 == 'completed' ? 'completed' : '' }}"></div>
@@ -93,7 +97,7 @@
                                     <div class="stepper-dot {{ $s3 }}" title="Final Approval"></div>
                                 </div>
                             </td>
-                            <td class="text-center">
+                            <td data-label="Status" class="text-center">
                                 @php
                                     $badgeClass = 'status-pending';
                                     if (stripos($app->status, 'approve') !== false && stripos($app->status, 'pending') === false)
@@ -104,8 +108,13 @@
                                 <span class="status-badge {{ $badgeClass }}">
                                     {{ $app->status }}
                                 </span>
+                                @if(\Carbon\Carbon::parse($app->end_date)->isPast() && !in_array($app->status, ['Approved', 'Disapproved', 'Rejected']))
+                                    <div class="mt-1" style="font-size: 0.65rem; color: #ef4444; font-weight: 800; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                        <i class="fas fa-calendar-times"></i> Past Dated
+                                    </div>
+                                @endif
                             </td>
-                            <td>
+                            <td data-label="Actions">
                                 <div class="action-group" onclick="event.stopPropagation()">
                                     <a href="{{ route('user.leave.show', $app->id) }}" class="btn-view animate__animated animate__bounceIn animate__fast" title="View Details">
                                         <i class="fas fa-eye"></i>
@@ -115,7 +124,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
+                            <td colspan="7">
                                 <div class="empty-state">
                                     <div class="empty-icon"><i class="fas fa-folder-open"></i></div>
                                     <div class="empty-text">No leave applications found.</div>

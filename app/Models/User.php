@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -70,9 +71,13 @@ class User extends Authenticatable
         'role',
         'profile_picture',
         'is_active',
+        'dtr_minute_balance',
         'created_by',
         'passkey',
         'passkey_expires_at',
+        'secretary_id',
+        'department_head_id',
+        'is_dept_head',
     ];
 
     /**
@@ -97,6 +102,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_dept_head' => 'boolean',
             'passkey_expires_at' => 'datetime',
         ];
     }
@@ -112,34 +118,97 @@ class User extends Authenticatable
     /**
      * Role check helpers
      */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function hasRole($roles): bool
+    {
+        // Eager load if not loaded to prevent N+1
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+        $userRoles = $this->roles->pluck('name')->toArray();
+        if (is_array($roles)) {
+            return !empty(array_intersect($roles, $userRoles));
+        }
+        return in_array($roles, $userRoles);
+    }
+
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin']);
+        return $this->hasRole(['admin', 'super_admin']);
     }
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'super_admin';
+        return $this->hasRole('super_admin');
     }
 
     public function isHR(): bool
     {
-        return in_array($this->role, ['hr', 'head_hr', 'hr_review_officer']);
+        return $this->hasRole(['hr', 'head_hr', 'hr_review_officer']);
     }
 
     public function isHeadHR(): bool
     {
-        return $this->role === 'head_hr';
+        return $this->hasRole('head_hr');
     }
 
     public function isRecordPersonnel(): bool
     {
-        return $this->role === 'record_personnel';
+        return $this->hasRole('record_personnel');
     }
 
     public function isImmediateHead(): bool
     {
-        return $this->role === 'immediate_head';
+        return $this->hasRole('immediate_head');
+    }
+
+    public function isASDS(): bool
+    {
+        return $this->hasRole('asds');
+    }
+
+    public function isSDS(): bool
+    {
+        return $this->hasRole('sds');
+    }
+
+    public function isHigherRole(): bool
+    {
+        return $this->hasRole(['sgod_chief', 'cid_chief', 'ao', 'sds', 'asds']);
+    }
+
+    /**
+     * Get the display name for the user's role.
+     */
+    public function getRoleDisplayNameAttribute(): string
+    {
+        $roleMap = [
+            'user' => 'USER',
+            'super_admin' => 'SUPER ADMIN',
+            'admin' => 'ADMIN',
+            'head_hr' => 'HR PERSONNEL',
+            'hr' => 'HR STAFF',
+            'hr_review_officer' => 'HR REVIEW OFFICER',
+            'record_personnel' => 'RECORD PERSONNEL',
+            'immediate_head' => 'IMMEDIATE HEAD',
+            'asds' => 'ASDS',
+            'sds' => 'SDS',
+            'sgod_chief' => 'SGOD CHIEF',
+            'cid_chief' => 'CID CHIEF',
+            'ao' => 'AO',
+        ];
+
+        $roleNames = $this->roles->pluck('name')->toArray();
+        $displayNames = [];
+        foreach ($roleNames as $name) {
+            $displayNames[] = $roleMap[$name] ?? strtoupper(str_replace('_', ' ', $name));
+        }
+
+        return implode(' + ', $displayNames) ?: 'USER';
     }
 
     /**
@@ -180,6 +249,16 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'created_by');
     }
 
+    public function departmentHead(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'department_head_id');
+    }
+
+    public function departmentSubordinates(): HasMany
+    {
+        return $this->hasMany(User::class, 'department_head_id');
+    }
+
     /**
      * Scope for active users
      */
@@ -212,5 +291,30 @@ class User extends Authenticatable
     public function approvingOfficer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approving_officer_id');
+    }
+
+    /**
+     * Get the office station (if any)
+     */
+    public function office(): BelongsTo
+    {
+        return $this->belongsTo(Office::class, 'office_station', 'name');
+    }
+
+    public function secretary(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'secretary_id');
+    }
+
+    public function isSecretary(): bool
+    {
+        // A user is a secretary if they are assigned as a secretary to ANY user
+        return User::where('secretary_id', $this->id)->exists();
+    }
+
+    public function bosses()
+    {
+        // Users who have this user as their secretary
+        return User::where('secretary_id', $this->id)->get();
     }
 }

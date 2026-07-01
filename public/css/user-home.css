@@ -21,7 +21,7 @@
 
 .profile-summary-banner {
     height: 80px;
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 60%, #1b4a9a 100%);
     position: relative;
     border-radius: 16px 16px 0 0; /* Corner radius since parent overflow is visible */
 }
@@ -100,7 +100,7 @@
     height: 32px;
     border-radius: 8px;
     background: rgba(15, 76, 117, 0.08);
-    color: #0f4c75;
+    color: #1b4a9a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -143,7 +143,7 @@
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid #f1f5f9;
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%);
     color: white;
 }
 
@@ -256,7 +256,7 @@
 
 /* Welcome Banner */
 .welcome-banner {
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 60%, #1b4a9a 100%);
     border-radius: 16px;
     padding: 32px;
     color: white;
@@ -336,7 +336,7 @@
 .credit-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: #0f4c75;
+    border-color: #1b4a9a;
 }
 
 .credit-icon {
@@ -608,7 +608,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid #1b6ca8;
+    border: 2px solid #3b66bc;
     box-shadow: 0 2px 4px rgba(255, 71, 87, 0.3);
 }
 
@@ -687,7 +687,7 @@
 }
 
 .unread-pill {
-    background: #0f4c75;
+    background: #1b4a9a;
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -745,7 +745,7 @@
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%);
     color: white;
     display: flex;
     align-items: center;
@@ -798,14 +798,14 @@
 }
 
 .notif-dropdown-item.unread .notif-item-sender {
-    color: #0f4c75;
+    color: #1b4a9a;
 }
 
 .notif-dropdown-item.unread::after {
     content: '';
     width: 8px;
     height: 8px;
-    background: #0f4c75;
+    background: #1b4a9a;
     border-radius: 50%;
     align-self: center;
     margin-left: 8px;
@@ -830,7 +830,7 @@
     margin-bottom: 16px;
     opacity: 0.3;
     display: block;
-    color: #0f4c75;
+    color: #1b4a9a;
 }
 
 .notif-dropdown-empty p {
@@ -864,11 +864,11 @@
 }
 
 .notif-dropdown-footer a:hover {
-    color: #0f4c75;
+    color: #1b4a9a;
 }
 
 .notif-dropdown-footer .view-all-link {
-    color: #0f4c75;
+    color: #1b4a9a;
 }
 
 .footer-divider {

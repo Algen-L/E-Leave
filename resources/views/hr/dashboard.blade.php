@@ -7,10 +7,53 @@
     <!-- Ensure Bootstrap Grid is available -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Animation Keyframes */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes backInDown { 0% { transform: translateY(-70px) scale(0.85); opacity: 0; } 80% { transform: translateY(5px) scale(1.02); opacity: 0.8; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Sequential Component Animations */
+        @if(!request()->hasAny(['trend_range', 'dist_range']))
+            .metrics-grid .modern-stat-card {
+                opacity:0;
+                animation: backInDown 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
+            .metrics-grid .modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
+            .metrics-grid .modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
+            .metrics-grid .modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
+            .metrics-grid .modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+            .glass-container {
+                opacity: 0;
+                animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            }
+            .charts-row .glass-container:nth-child(1) { animation-delay: 0.5s; }
+            .charts-row .glass-container:nth-child(2) { animation-delay: 0.6s; }
+            .main-col > .glass-container, .main-col .row .glass-container { animation-delay: 0.7s; }
+            
+            .side-col .glass-container { 
+                opacity: 0;
+                animation: fadeInRight 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+                animation-delay: 0.9s; 
+            }
+
+            .custom-table tbody tr {
+                opacity: 0;
+                animation: fadeInUp 0.5s ease-out forwards;
+            }
+            @foreach(range(1, 8) as $i)
+                .custom-table tbody tr:nth-child({{ $i }}) {
+                    animation-delay: {{ 0.8 + ($i * 0.08) }}s;
+                }
+            @endforeach
+        @endif
+
         .hr-dashboard-wrapper {
             background: #f8fafc;
             color: #334155;
             padding: 1rem;
+            animation: fadeInDown 0.6s ease-out;
         }
 
         /* Compact Grid for Metrics */
@@ -43,7 +86,7 @@
         }
 
         .card-active .stat-icon-box { background: #ecfdf5; color: #10b981; }
-        .card-pending .stat-icon-box { background: #eff6ff; color: #3b82f6; }
+        .card-pending .stat-icon-box { background: #e8f0ff; color: #1b4a9a; }
         .card-warning .stat-icon-box { background: #fffbeb; color: #f59e0b; }
         .card-critical .stat-icon-box { background: #fef2f2; color: #ef4444; }
 
@@ -96,7 +139,7 @@
             font-weight: 500; transition: 0.2s; font-size: 0.85rem; margin-bottom: 0.5rem;
         }
         .modern-action-btn:hover:not([disabled]) { 
-            background: #ffffff; border-color: #3b82f6; color: #3b82f6; 
+            background: #ffffff; border-color: #1b4a9a; color: #1b4a9a; 
             transform: translateX(4px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
         .modern-action-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
@@ -105,20 +148,42 @@
         .bg-info-light { background: #e0f2fe; }
         .bg-success-light { background: #dcfce7; }
         .bg-warning-light { background: #fef3c7; }
+
+        /* Sidebar Themed Card */
+        .card-sidebar {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+        }
+        .card-sidebar .stat-label { color: rgba(255, 255, 255, 0.8) !important; }
+        .card-sidebar .stat-value { color: #ffffff !important; }
+        .card-sidebar .stat-icon-box { background: rgba(255, 255, 255, 0.2) !important; color: #ffffff !important; }
+        .card-sidebar .badge-status-light { background: rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; }
+
+        /* Chart Filters */
+        .chart-filter-select {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #475569;
+            outline: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .chart-filter-select:hover { border-color: #1b4a9a; background: #fff; }
+        .chart-filter-select:focus { border-color: #1b4a9a; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
     </style>
 @endpush
 
 @section('content')
     <div class="hr-dashboard-wrapper">
-        <!-- Header Section -->
-        <div class="mb-4">
-            <h2 class="fw-bold mb-1" style="color: #1a1c24; font-size: 1.5rem;">HR Insights Dashboard</h2>
-            <p class="text-muted small">Real-time organizational manpower and leave credit analytics.</p>
-        </div>
 
         <!-- Metric Cards Grid -->
         <div class="metrics-grid">
-            <div class="modern-stat-card card-active">
+            <div class="modern-stat-card card-sidebar">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <p class="stat-label">Active on Leave</p>
@@ -128,7 +193,7 @@
                     <div class="stat-icon-box"><i class="fas fa-users"></i></div>
                 </div>
             </div>
-            <div class="modern-stat-card card-pending">
+            <div class="modern-stat-card card-sidebar">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <p class="stat-label">Pending Verifications</p>
@@ -138,7 +203,7 @@
                     <div class="stat-icon-box"><i class="fas fa-clock"></i></div>
                 </div>
             </div>
-            <div class="modern-stat-card card-warning">
+            <div class="modern-stat-card card-sidebar">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <p class="stat-label">Expiring COC</p>
@@ -148,7 +213,7 @@
                     <div class="stat-icon-box"><i class="fas fa-hourglass-half"></i></div>
                 </div>
             </div>
-            <div class="modern-stat-card card-critical">
+            <div class="modern-stat-card card-sidebar">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <p class="stat-label">Credit Hoarders</p>
@@ -166,11 +231,25 @@
                 <!-- Charts Row -->
                 <div class="charts-row">
                     <div class="glass-container">
-                        <div class="content-header"><h6>Leave Application Trends</h6></div>
+                        <div class="content-header d-flex justify-content-between align-items-center">
+                            <h6>Leave Application Trends</h6>
+                            <select class="chart-filter-select" id="trendRangeSelect">
+                                <option value="week" {{ $trendRange === 'week' ? 'selected' : '' }}>Week</option>
+                                <option value="month" {{ $trendRange === 'month' ? 'selected' : '' }}>Month</option>
+                                <option value="year" {{ $trendRange === 'year' ? 'selected' : '' }}>Year</option>
+                            </select>
+                        </div>
                         <div class="p-3"><div style="height: 250px;"><canvas id="trendsChart"></canvas></div></div>
                     </div>
                     <div class="glass-container">
-                        <div class="content-header"><h6>Leave Distribution</h6></div>
+                        <div class="content-header d-flex justify-content-between align-items-center">
+                            <h6>Leave Distribution</h6>
+                            <select class="chart-filter-select" id="distRangeSelect">
+                                <option value="week" {{ $distRange === 'week' ? 'selected' : '' }}>Week</option>
+                                <option value="month" {{ $distRange === 'month' ? 'selected' : '' }}>Month</option>
+                                <option value="year" {{ $distRange === 'year' ? 'selected' : '' }}>Year</option>
+                            </select>
+                        </div>
                         <div class="p-3 d-flex flex-column align-items-center">
                             <div style="height: 180px; width: 100%;"><canvas id="distributionChart"></canvas></div>
                             <div id="chart-legend" class="mt-2 small text-muted"></div>
@@ -178,64 +257,74 @@
                     </div>
                 </div>
 
-                <!-- Activity Feed -->
-                <div class="glass-container">
-                    <div class="content-header d-flex justify-content-between align-items-center">
-                        <h6>Recent System Activity</h6>
-                        <a href="{{ route('admin.activity-logs') }}" class="btn btn-sm btn-link text-primary p-0 text-decoration-none small">View All</a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table custom-table">
-                            <thead>
-                                <tr>
-                                    <th>Activity</th>
-                                    <th>User</th>
-                                    <th>Details</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($recentActivities as $activity)
-                                    <tr>
-                                        <td>
-                                            <span class="activity-dot {{ $activity->action === 'Login' ? 'bg-success' : 'bg-primary' }}"></span>
-                                            <span class="fw-medium">{{ $activity->action }}</span>
-                                        </td>
-                                        <td>{{ $activity->user->full_name ?? 'System' }}</td>
-                                        <td class="text-muted">{{ Str::limit($activity->description, 40) }}</td>
-                                        <td class="text-muted opacity-75 small">{{ $activity->created_at->diffForHumans() }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                <!-- On Leave Today Row -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="glass-container">
+                            <div class="content-header d-flex justify-content-between align-items-center">
+                                <h6>On Leave Today</h6>
+                                <span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;">{{ $stats['active_today'] }} Total</span>
+                            </div>
+                            <div class="p-0">
+                                @if(isset($onLeaveToday) && $onLeaveToday->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table custom-table mb-0">
+                                            <tbody>
+                                                @foreach($onLeaveToday as $leave)
+                                                    <tr>
+                                                        <td class="border-0">
+                                                            <div class="fw-bold text-dark">{{ $leave->user->full_name }}</div>
+                                                            <div class="text-muted extra-small" style="font-size: 0.7rem;">{{ $leave->leaveType->type_name }}</div>
+                                                        </td>
+                                                        <td class="text-end border-0 align-middle">
+                                                            <span class="badge-status-light">Out</span>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="p-4 text-center text-muted small">
+                                        <i class="fas fa-calendar-check d-block mb-2 opacity-25" style="font-size: 1.5rem;"></i>
+                                        No active leaves recorded for today.
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Right Side column -->
             <div class="side-col">
-                <div class="glass-container p-3">
-                    <h6 class="fw-bold mb-3" style="font-size: 0.85rem; color: #64748b; text-transform: uppercase;">Quick Actions</h6>
-                    <div class="d-grid">
-                        <a href="{{ route('hr-staff.manage-credits') }}" class="modern-action-btn">
-                            <div class="action-icon bg-info-light"><i class="fas fa-coins text-info"></i></div>
-                            <span>Manage Credits</span>
-                        </a>
-                        <button class="modern-action-btn" disabled>
-                            <div class="action-icon bg-success-light"><i class="fas fa-file-invoice text-success"></i></div>
-                            <span>Monetization Tool</span>
-                        </button>
-                        <button class="modern-action-btn" disabled>
-                            <div class="action-icon bg-warning-light"><i class="fas fa-calendar-alt text-warning"></i></div>
-                            <span>Manpower Map</span>
-                        </button>
+                <div class="glass-container">
+                    <div class="content-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold" style="font-size: 0.8rem; color: #1e293b; text-transform: uppercase;">Recent Activity</h6>
+                        <a href="{{ route('admin.activity-logs', ['type' => 'system']) }}" class="btn btn-sm btn-link text-primary p-0 text-decoration-none extra-small" style="font-size: 0.65rem;">View All</a>
                     </div>
-                </div>
-
-                <div class="glass-container p-4 text-center">
-                    <p class="text-muted small mb-0">System Version 2.5</p>
-                    <hr class="my-2 opacity-10">
-                    <img src="{{ asset('images/logo.png') }}" alt="" style="height: 30px; opacity: 0.2; filter: grayscale(1);">
+                    <div class="p-0">
+                        <div class="table-responsive">
+                            <table class="table custom-table mb-0">
+                                <tbody>
+                                    @foreach($recentActivities as $activity)
+                                        <tr>
+                                            <td class="border-0 py-2">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="activity-dot {{ $activity->action === 'Login' ? 'bg-success' : 'bg-primary' }}" style="width: 6px; height: 6px;"></span>
+                                                    <div class="fw-bold text-dark" style="font-size: 0.8rem;">{{ $activity->action }}</div>
+                                                </div>
+                                                <div class="text-muted extra-small" style="font-size: 0.65rem;">{{ $activity->user->full_name ?? 'System' }}</div>
+                                            </td>
+                                            <td class="text-end border-0 align-middle py-2">
+                                                <div class="text-muted opacity-75" style="font-size: 0.65rem;">{{ $activity->created_at->diffForHumans(null, true) }}</div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -244,6 +333,20 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Chart Filter Handlers
+            const trendSelect = document.getElementById('trendRangeSelect');
+            const distSelect = document.getElementById('distRangeSelect');
+
+            const updateDashboard = () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('trend_range', trendSelect.value);
+                url.searchParams.set('dist_range', distSelect.value);
+                window.location.href = url.toString();
+            };
+
+            trendSelect.addEventListener('change', updateDashboard);
+            distSelect.addEventListener('change', updateDashboard);
+
             const trendsCtx = document.getElementById('trendsChart').getContext('2d');
             const gradient = trendsCtx.createLinearGradient(0, 0, 0, 300);
             gradient.addColorStop(0, 'rgba(59, 130, 246, 0.1)');
@@ -252,17 +355,17 @@
             new Chart(trendsCtx, {
                 type: 'line',
                 data: {
-                    labels: {!! json_encode($monthlyTrends->pluck('month')) !!},
+                    labels: {!! json_encode($monthlyTrends->pluck('label')) !!},
                     datasets: [{
                         label: 'Applications',
                         data: {!! json_encode($monthlyTrends->pluck('count')) !!},
-                        borderColor: '#3b82f6',
+                        borderColor: '#1b4a9a',
                         borderWidth: 2,
                         tension: 0.4,
                         fill: true,
                         backgroundColor: gradient,
                         pointBackgroundColor: '#fff',
-                        pointBorderColor: '#3b82f6',
+                        pointBorderColor: '#1b4a9a',
                         pointBorderWidth: 2,
                         pointRadius: 4,
                     }]
@@ -270,7 +373,13 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
                     scales: {
                         x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
                         y: { 
@@ -288,7 +397,7 @@
                     labels: {!! json_encode($distribution->pluck('label')) !!},
                     datasets: [{
                         data: {!! json_encode($distribution->pluck('value')) !!},
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                        backgroundColor: ['#1b4a9a', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#34d399', '#fbbf24'],
                         hoverOffset: 8,
                         borderWidth: 2,
                         borderColor: '#fff'
@@ -297,7 +406,20 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
                     cutout: '72%'
                 }
             });

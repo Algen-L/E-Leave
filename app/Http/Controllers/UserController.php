@@ -21,6 +21,12 @@ class UserController extends Controller
     {
         $user = Auth::user();
 
+        // Redirect Higher Roles to their specialized dashboard
+        $higherRoles = ['sgod_chief', 'cid_chief', 'ao', 'sds', 'asds'];
+        if (in_array($user->role, $higherRoles)) {
+            return redirect()->route('user.dashboard');
+        }
+
         // Handle AJAX notification read action
         if ($request->has('action') && $request->action === 'read_notif' && $request->has('notif_id')) {
             $notification = Notification::find($request->notif_id);
@@ -30,12 +36,63 @@ class UserController extends Controller
             return response()->json(['success' => true]);
         }
 
-        $notifications = Notification::getUnreadForUser($user->id);
+        $notifications = \App\Models\Notification::forRecipient($user->id)
+            ->with('sender:id,full_name,profile_picture')
+            ->latest('created_at')
+            ->limit(50)
+            ->get();
+
+        // --- SYSTEM PROFILE ALERTS (Virtual) ---
+        $systemAlerts = collect();
+        if (empty($user->salary)) {
+            $systemAlerts->push((object)[
+                'id' => 'sys_salary',
+                'message' => 'Profile Requirement: Please set your Monthly Salary in the My Profile page.',
+                'created_at' => now(),
+                'is_read' => false,
+                'is_system' => true,
+                'icon' => 'fa-coins'
+            ]);
+        }
+        if (empty($user->esignature)) {
+            $systemAlerts->push((object)[
+                'id' => 'sys_sig',
+                'message' => 'Profile Requirement: E-Signature is required for leave applications. Please upload or draw one.',
+                'created_at' => now(),
+                'is_read' => false,
+                'is_system' => true,
+                'icon' => 'fa-signature'
+            ]);
+        }
+        if (empty($user->recommending_officer_id)) {
+            $systemAlerts->push((object)[
+                'id' => 'sys_recom',
+                'message' => 'Profile Requirement: Please select your Recommending Officer in My Profile.',
+                'created_at' => now(),
+                'is_read' => false,
+                'is_system' => true,
+                'icon' => 'fa-user-tie'
+            ]);
+        }
+        if (empty($user->approving_officer_id)) {
+            $systemAlerts->push((object)[
+                'id' => 'sys_approv',
+                'message' => 'Profile Requirement: Please select your Final Approving Officer in My Profile.',
+                'created_at' => now(),
+                'is_read' => false,
+                'is_system' => true,
+                'icon' => 'fa-user-check'
+            ]);
+        }
+
+        // Merge system alerts at the top
+        $unreadCount = $notifications->where('is_read', false)->count() + $systemAlerts->count();
+        $notifications = $systemAlerts->merge($notifications);
 
         // --- FETCH LEAVE CREDITS ---
         $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
         $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
-        $ctoType = \App\Models\LeaveType::where('type_name', 'COC Compensatory Overtime Credit')->first();
+        $ctoType = \App\Models\LeaveType::where('type_name', 'CTO (Compensatory Time Off)')->first();
 
         $credits = [
             'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
@@ -58,21 +115,42 @@ class UserController extends Controller
             empty($user->approving_officer_id) ||
             empty($user->esignature);
 
-        // --- FETCH ACTIVITY LOGS (Leave Credit Changes) ---
-        $activityLogs = \App\Models\LeaveCreditAuditLog::with('actor')
+        // --- FETCH DEDUCTION LOGS (Leave Credit Reductions) ---
+        $deductionLogs = \App\Models\LeaveCreditAuditLog::with('actor')
             ->where('target_user_id', $user->id)
+            ->where('action', 'deduction')
             ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // --- FETCH APPLICATION PROGRESS HISTORY ---
+        $applicationHistory = \App\Models\LeaveApplication::with('leaveType')
+            ->where('user_id', $user->id)
+            ->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get();
+
+        // --- FETCH LEAVE APPLICATIONS FOR CALENDAR (Current Month) ---
+        $currentMonthApplications = \App\Models\LeaveApplication::where('user_id', $user->id)
+            ->where(function($query) {
+                $now = now();
+                $query->whereMonth('start_date', $now->month)
+                      ->whereYear('start_date', $now->year)
+                      ->orWhereMonth('end_date', $now->month)
+                      ->whereYear('end_date', $now->year);
+            })
+            ->get(['id', 'start_date', 'end_date', 'status', 'leave_type_id']);
 
         return view('user.home', [
             'user' => $user,
             'notifications' => $notifications,
-            'unreadCount' => $notifications->count(),
+            'unreadCount' => $unreadCount,
             'credits' => $credits,
             'leaveSummary' => $leaveSummary,
             'profileIncomplete' => $profileIncomplete,
-            'activityLogs' => $activityLogs,
+            'deductionLogs' => $deductionLogs,
+            'applicationHistory' => $applicationHistory,
+            'calendarApps' => $currentMonthApplications,
         ]);
     }
 
@@ -96,12 +174,68 @@ class UserController extends Controller
             ->orderBy('last_name')
             ->get();
 
+        // Fetch Leave Credits (VL, SL, CTO)
+        $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
+        $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
+        $ctoType = \App\Models\LeaveType::where('type_name', 'CTO (Compensatory Time Off)')->first();
+
+        $credits = [
+            'vl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $vlType->id ?? 0)->value('credits') ?? 0,
+            'sl' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $slType->id ?? 0)->value('credits') ?? 0,
+            'cto' => \App\Models\LeaveCredit::where('user_id', $user->id)->where('leave_type_id', $ctoType->id ?? 0)->value('credits') ?? 0,
+        ];
+
+        // Fetch subordinate users for Higher Roles OR system users for Record Personnel
+        $subordinateUsers = collect();
+        $allOffices = collect();
+
+        if ($user->isRecordPersonnel()) {
+            $subordinateUsers = User::where('is_active', true)
+                ->orderBy('full_name')
+                ->get();
+            $allOffices = \App\Models\Office::orderBy('name')->get();
+        } elseif ($user->isHigherRole()) {
+            $category = null;
+            if ($user->role === 'sgod_chief') {
+                $category = 'SGOD';
+            } elseif ($user->role === 'cid_chief') {
+                $category = 'CID';
+            } elseif (in_array($user->role, ['ao', 'sds', 'asds'])) {
+                $category = 'OSDS';
+            }
+
+            if ($category) {
+                $offices = \App\Models\Office::where('category', $category)->pluck('name')->toArray();
+                $subordinateUsers = User::whereIn('office_station', $offices)
+                    ->where('id', '!=', $user->id)
+                    ->where('is_active', true)
+                    ->orderBy('full_name')
+                    ->get();
+            }
+        }
+
+        $allUsers = User::where('role', 'user')
+            ->where('is_active', true)
+            ->where('id', '!=', $user->id)
+            ->orderBy('full_name')
+            ->get();
+
+        $departmentHeads = User::where('is_active', true)
+            ->where('id', '!=', $user->id)
+            ->orderBy('last_name')
+            ->get();
+
         return view('user.profile', [
             'user' => $user,
             'notifications' => $notifications,
             'unreadCount' => $notifications->count(),
             'recommendingOfficers' => $recommendingOfficers,
             'finalApprovers' => $finalApprovers,
+            'credits' => $credits,
+            'subordinateUsers' => $subordinateUsers,
+            'allOffices' => $allOffices,
+            'allUsers' => $allUsers,
+            'departmentHeads' => $departmentHeads,
         ]);
     }
 
@@ -111,12 +245,16 @@ class UserController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'full_name' => 'nullable|string|max:100',
+            'first_name' => 'nullable|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'office_station' => 'nullable|string|max:100',
             'salary' => 'nullable|string|max:50',
             'recommending_officer_id' => 'nullable|exists:users,id',
             'approving_officer_id' => 'nullable|exists:users,id',
+            'secretary_id' => 'nullable|exists:users,id',
+            'department_head_id' => 'nullable',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . Auth::id(),
         ]);
@@ -125,8 +263,14 @@ class UserController extends Controller
         $user = Auth::user();
         $updateData = [];
 
-        if ($request->filled('full_name')) {
-            $updateData['full_name'] = $request->full_name;
+        if ($request->filled('first_name')) {
+            $updateData['first_name'] = $request->first_name;
+        }
+        if ($request->has('middle_name')) {
+            $updateData['middle_name'] = $request->middle_name;
+        }
+        if ($request->filled('last_name')) {
+            $updateData['last_name'] = $request->last_name;
         }
         if ($request->has('position')) {
             $updateData['position'] = $request->position;
@@ -141,11 +285,31 @@ class UserController extends Controller
         if ($request->has('recommending_officer_id')) {
             $updateData['recommending_officer_id'] = $request->recommending_officer_id;
         }
-        if ($request->has('approving_officer_id')) {
-            $updateData['approving_officer_id'] = $request->approving_officer_id;
+        if ($request->has('approving_officer_id')) $updateData['approving_officer_id'] = $request->approving_officer_id;
+        if ($request->has('secretary_id')) $updateData['secretary_id'] = $request->secretary_id;
+        
+        if ($request->has('department_head_id')) {
+            $dhVal = $request->department_head_id;
+            if ($dhVal === 'bypass') {
+                $updateData['department_head_id'] = null;
+                $updateData['is_dept_head'] = true;
+            } else {
+                if (!empty($dhVal)) {
+                    if ($dhVal == Auth::id()) {
+                        return redirect()->back()->with('error', 'You cannot assign yourself as your own Department Head.');
+                    }
+                    if (!\App\Models\User::where('id', $dhVal)->exists()) {
+                        return redirect()->back()->with('error', 'Invalid Department Head selected.');
+                    }
+                    $updateData['department_head_id'] = $dhVal;
+                } else {
+                    $updateData['department_head_id'] = null;
+                }
+                $updateData['is_dept_head'] = false;
+            }
         }
-
-        if ($request->has('employee_number')) {
+        
+        if ($request->hasFile('profile_picture')) {
             $updateData['employee_number'] = $request->employee_number;
         }
 
@@ -270,15 +434,47 @@ class UserController extends Controller
     }
 
     /**
-     * Get notifications (AJAX)
+     * Get notifications (AJAX) - Redirects if direct access
      */
-    public function getNotifications()
+    public function getNotifications(Request $request)
     {
-        $notifications = Notification::getUnreadForUser(Auth::id());
+        if (!$request->ajax()) {
+            return redirect()->route('user.home');
+        }
+
+        $notifications = \App\Models\Notification::forRecipient(Auth::id())
+            ->latest('created_at')
+            ->limit(50)
+            ->get();
+
         return response()->json([
             'notifications' => $notifications,
-            'count' => $notifications->count(),
+            'count' => $notifications->where('is_read', false)->count(),
         ]);
+    }
+
+    /**
+     * Delete notification
+     */
+    public function deleteNotification($id)
+    {
+        $notification = \App\Models\Notification::findOrFail($id);
+        
+        if ($notification->recipient_id === Auth::id()) {
+            $notification->delete();
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 403);
+    }
+
+    /**
+     * Clear all notifications
+     */
+    public function clearAllNotifications()
+    {
+        \App\Models\Notification::where('recipient_id', Auth::id())->delete();
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -293,5 +489,13 @@ class UserController extends Controller
             $message->to($to)
                 ->subject($subject);
         });
+    }
+
+    /**
+     * Display help page
+     */
+    public function help()
+    {
+        return view('user.help');
     }
 }

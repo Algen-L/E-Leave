@@ -1,7 +1,7 @@
 @extends('layouts.sdo')
 
-@section('title', 'Audit Logs')
-@section('page-title', 'Leave Credit Audit Logs')
+@section('title', 'Credit Audit Log')
+@section('page-title', 'Credit Audit Log')
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/activity-logs.css') }}">
@@ -12,7 +12,7 @@
             --bg-saas: #ffffff;
             --card-white: #ffffff;
             --accent-indigo: #4F46E5;
-            --accent-blue: #3B82F6;
+            --accent-blue: #1b4a9a;
             --accent-green: #10B981;
             --accent-orange: #F59E0B;
             --accent-purple: #8B5CF6;
@@ -33,7 +33,9 @@
             flex-direction: column;
             gap: 12px; /* Reduced gap further */
             padding-bottom: 16px;
-            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            @if(count(request()->query()) === 0)
+                animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            @endif
         }
 
         @keyframes fadeIn {
@@ -41,22 +43,37 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Sequential Animations */
-        .stat-premium {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+        /* Sequential Animations for Top Stats - First View Only */
+        @if(count(request()->query()) === 0)
+            .stat-premium {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
 
-        .stat-premium:nth-child(1) { animation-delay: 0.1s; }
-        .stat-premium:nth-child(2) { animation-delay: 0.2s; }
-        .stat-premium:nth-child(3) { animation-delay: 0.3s; }
-        .stat-premium:nth-child(4) { animation-delay: 0.4s; }
+            .stat-premium:nth-child(1) { animation-delay: 0.1s; }
+            .stat-premium:nth-child(2) { animation-delay: 0.2s; }
+            .stat-premium:nth-child(3) { animation-delay: 0.3s; }
+            .stat-premium:nth-child(4) { animation-delay: 0.4s; }
+        @else
+            .stat-premium {
+                opacity: 1;
+                transform: none;
+                animation: none;
+            }
+        @endif
 
         .log-section-header {
-            opacity: 0;
-            animation: fadeInDown 0.6s ease-out 0.5s forwards;
+            @if(count(request()->query()) === 0)
+                opacity: 0;
+                animation: fadeInDown 0.6s ease-out 0.5s forwards;
+            @else
+                opacity: 1;
+                transform: none;
+                animation: none;
+            @endif
         }
 
+        /* Log Items - Always Animate on Load/Filter for Data Feedback */
         .log-item {
             opacity: 0;
             animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -64,7 +81,7 @@
 
         @foreach(range(1, 20) as $i)
             .log-item:nth-child({{ $i }}) {
-                animation-delay: {{ 0.6 + ($i * 0.05) }}s;
+                animation-delay: {{ ($i * 0.05) + (count(request()->query()) === 0 ? 0.6 : 0.1) }}s;
             }
         @endforeach
 
@@ -100,7 +117,7 @@
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: 16px 16px 0 0; /* Reduced radius slightly to save vertical space */
             box-shadow: var(--saas-shadow);
-            overflow: hidden;
+            overflow: visible; /* Changed from hidden to show dropdowns */
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -158,56 +175,64 @@
         /* Filter Row Redesign */
         .premium-filter-container {
             padding: 12px 16px;
+            position: relative;
+            z-index: 101;
         }
-
+        /* High-Definition Header System (Redesigned to Two-Tone) */
         .log-section-header {
-            padding: 12px 20px; /* Reduced padding further */
-            display: flex;
-            flex-direction: column;
-            gap: 12px; /* Reduced gap from 20px */
-            background: #0f4c75 !important;
+            padding: 0;
+            background: transparent !important;
             border-radius: 16px 16px 0 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: visible;
+            border: 1px solid #f1f5f9;
+            box-shadow: var(--saas-shadow);
+            position: relative;
+            z-index: 100;
         }
 
         .header-top-row {
+            padding: 12px 20px;
+            background: var(--primary-gradient) !important;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;
-        }
-
-        .header-filters-row {
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            background: transparent !important;
         }
 
         .header-title-box {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            background: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         .header-icon-container {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            border-radius: 12px;
+            width: 24px;
+            height: 24px;
+            background: #f1f5f9;
+            color: var(--primary);
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
         }
 
         .header-text-main {
-            font-size: 1.15rem;
+            font-size: 0.9rem;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--primary);
             letter-spacing: -0.01em;
-            text-transform: uppercase;
+            text-transform: capitalize;
+        }
+
+        .header-filters-row {
+            width: 100%;
+            background: white;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(15, 76, 117, 0.05);
         }
 
         .filter-row {
@@ -304,6 +329,77 @@
             width: 100%;
         }
 
+        .custom-select-trigger.saas-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .custom-select-trigger.saas-trigger:hover {
+            border-color: #cbd5e1;
+        }
+
+        .custom-select-trigger.saas-trigger.active {
+            border-color: var(--accent-indigo);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .custom-select-options.saas-options {
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            padding: 6px;
+        }
+
+        .custom-select-options.saas-options.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .custom-option {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-option:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .custom-option.selected {
+            background: #e8f0ff;
+            color: #1b4a9a;
+        }
+
         .option-icon-box {
             width: 28px;
             height: 28px;
@@ -315,58 +411,62 @@
             flex-shrink: 0;
         }
 
-        /* SaaS Segmented Control */
-        .saas-segmented-control {
+        /* SaaS Date Pills (Replacing Segmented Control) */
+        .quick-dates {
             display: flex;
-            background: rgba(15, 23, 42, 0.4) !important;
-            padding: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            gap: 4px;
-            height: 40px; /* match inputs */
+            gap: 8px;
+            margin-top: 4px;
+            flex-wrap: wrap;
         }
 
-        .segmented-item {
-            flex: 1;
-            text-align: center;
-            padding: 6px 10px; /* Squeezed inner padding */
-            font-size: 0.75rem;
-            font-weight: 800;
-            color: rgba(255, 255, 255, 0.7);
+        .date-pill {
+            padding: 8px 18px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #64748b;
             cursor: pointer;
-            border-radius: 8px; /* Slightly tighter */
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            user-select: none;
         }
 
-        .segmented-item.active {
-            background: #ffffff !important;
-            color: #0f4c75 !important;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .date-pill:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: #334155;
+            transform: translateY(-1px);
         }
 
-        .segmented-item:hover:not(.active) {
+        .date-pill.active {
+            background: #1b4a9a;
             color: #ffffff;
-            background: rgba(255, 255, 255, 0.15);
+            border-color: #1b4a9a;
+            box-shadow: 0 4px 12px rgba(15, 76, 117, 0.2);
         }
 
-        /* SaaS Primary Button (Vibrant Orange) */
+        /* SaaS Primary Button (Matching Activity Logs) */
         .saas-primary-btn {
-            background: #f59e0b !important;
-            border: 1px solid #d97706;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border-radius: 12px;
+            background: #1b4a9a !important;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(15, 76, 117, 0.2);
+            border-radius: 10px;
             color: white;
             font-weight: 700;
-            height: 44px;
-            padding: 0 24px;
+            height: 40px;
+            padding: 0 20px;
             display: flex;
             align-items: center;
             gap: 8px;
             transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .saas-primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgba(15, 76, 117, 0.3);
+            filter: brightness(1.1);
         }
 
         .saas-primary-btn:hover {
@@ -405,12 +505,12 @@
         }
 
         .log-item {
-            padding: 16px; /* Squeezed from 24px */
-            margin: 10px 0; /* Squeezed from 16px */
-            border-radius: 16px; /* Slightly tighter border radius */
+            padding: 12px; /* Condensed for better space utilization */
+            margin: 8px 0; /* Tightened from 10px */
+            border-radius: 14px; /* Squeezed from 16px */
             border: 1px solid #f1f5f9;
             display: flex;
-            gap: 16px; /* Reduced from 20px */
+            gap: 12px; /* Reduced from 16px */
             background: white;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -419,18 +519,18 @@
 
         .log-item:hover {
             border-color: #e2e8f0;
-            box-shadow: 0 8px 16px -6px rgba(0, 0, 0, 0.08); /* Condensed shadow */
-            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.08); /* Condensed shadow */
+            transform: translateY(-1px);
         }
 
         .log-icon-wrapper {
-            width: 44px; /* Reduced from 56px */
-            height: 44px; /* Reduced from 56px */
-            border-radius: 12px;
+            width: 40px; /* Reduced from 44px */
+            height: 40px; /* Reduced from 44px */
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem; /* Scaled down icon */
+            font-size: 1rem; /* Scaled down icon */
             flex-shrink: 0;
             transition: transform 0.3s ease;
         }
@@ -441,7 +541,7 @@
 
         .icon-allocate { background: #f0fdf4; color: #16a34a; }
         .icon-deduct { background: #fef2f2; color: #dc2626; }
-        .icon-update { background: #eff6ff; color: #2563eb; }
+        .icon-update { background: #e8f0ff; color: #1b4a9a; }
         .icon-add_coc { background: #faf5ff; color: #9333ea; }
 
         .log-content {
@@ -469,7 +569,7 @@
             font-family: 'Inter', sans-serif;
             font-weight: 700; 
             color: #0f172a; 
-            font-size: 1.1rem;
+            font-size: 1rem; /* Smaller for compaction */
             letter-spacing: -0.01em;
         }
 
@@ -500,7 +600,7 @@
 
         .tag-allocate { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .tag-deduct { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .tag-update { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .tag-update { background: #dce7ff; color: #123166; border: 1px solid #bfdbfe; }
         .tag-add_coc { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
 
         .log-metadata {
@@ -548,11 +648,11 @@
         .balance-pill {
             display: inline-flex;
             align-items: center;
-            padding: 6px 12px;
-            border-radius: 12px;
+            padding: 4px 10px;
+            border-radius: 10px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
-            gap: 12px;
+            gap: 10px;
         }
 
         .val-box {
@@ -638,16 +738,27 @@
 
         .badge-text {
             font-size: 0.85rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.95);
+            font-weight: 600;
+            color: #475569;
             letter-spacing: 0.01em;
             font-family: 'Inter', sans-serif;
         }
 
+        .premium-badge-glass {
+            background: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 99px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
         /* SaaS Pagination Design */
         .saas-pagination-wrapper {
-            margin-top: 16px; /* Reduced from 24px */
-            padding: 12px 16px; /* Squeezed from 16px 32px */
+            margin-top: 12px; /* Reduced from 16px */
+            padding: 8px 16px; /* More compact */
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -694,7 +805,7 @@
         .pagination-premium .page-item.active .page-link {
             background: #f0f9ff !important;
             border: none !important;
-            color: #0f4c75 !important;
+            color: #1b4a9a !important;
             box-shadow: none;
         }
 
@@ -707,7 +818,7 @@
 
         .pagination-premium .page-link:hover:not(.disabled):not(.active) {
             border: none;
-            color: #0f4c75;
+            color: #1b4a9a;
             background: #f8fafc;
             transform: translateY(-2px);
         }
@@ -726,48 +837,6 @@
 
 @section('content')
     <div class="logs-container">
-        <!-- Stats Overview -->
-        <div class="stats-grid">
-            <div class="stat-premium">
-                <div class="stat-top">
-                    <div class="stat-icon-box box-blue">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <div class="stat-value">{{ $stats['total'] }}</div>
-                </div>
-                <div class="stat-label">Total Activities</div>
-            </div>
-
-            <div class="stat-premium">
-                <div class="stat-top">
-                    <div class="stat-icon-box box-green">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="stat-value">{{ $stats['allocate'] }}+</div>
-                </div>
-                <div class="stat-label">Allocations</div>
-            </div>
-
-            <div class="stat-premium">
-                <div class="stat-top">
-                    <div class="stat-icon-box box-orange">
-                        <i class="fas fa-minus-circle"></i>
-                    </div>
-                    <div class="stat-value">{{ $stats['deduct'] }}+</div>
-                </div>
-                <div class="stat-label">Deductions</div>
-            </div>
-
-            <div class="stat-premium">
-                <div class="stat-top">
-                    <div class="stat-icon-box box-purple">
-                        <i class="fas fa-edit"></i>
-                    </div>
-                    <div class="stat-value">{{ $stats['update'] }}+</div>
-                </div>
-                <div class="stat-label">Updates</div>
-            </div>
-        </div>
 
         <!-- Logs Section -->
         <div class="glass-card">
@@ -775,10 +844,10 @@
                 <div class="header-top-row">
                     <div class="header-title-box">
                         <div class="header-icon-container">
-                            <i class="fas fa-history"></i>
+                            <i class="fas fa-filter"></i>
                         </div>
                         <div class="header-text-main">
-                            Audit Activity Stream
+                            Filter Records
                         </div>
                     </div>
                     
@@ -791,7 +860,7 @@
                 <div class="header-filters-row">
                     <form action="{{ route('head-hr.audit-logs') }}" method="GET">
                         <div class="filter-row">
-                            <div class="filter-group">
+                            <div class="filter-group" style="flex: 2;">
                                 <label class="filter-label">Quick Search</label>
                                 <input type="text" class="input-premium" name="search"
                                     placeholder="User, action, or details..." value="{{ $filters['search'] ?? '' }}">
@@ -837,26 +906,23 @@
                                 </div>
                             </div>
 
-                            <div class="filter-group" style="flex: 1.5; min-width: 320px;">
-                                <label class="filter-label">Time Range</label>
-                                <input type="hidden" name="date_range" id="dateRangeInput" value="{{ $filters['date_range'] ?? '' }}">
-                                <div class="saas-segmented-control">
-                                    <div class="segmented-item {{ ($filters['date_range'] ?? '') == '' ? 'active' : '' }}" data-range="">All-time</div>
-                                    <div class="segmented-item {{ ($filters['date_range'] ?? '') == 'today' ? 'active' : '' }}" data-range="today">Today</div>
-                                    <div class="segmented-item {{ ($filters['date_range'] ?? '') == '7days' ? 'active' : '' }}" data-range="7days">Week</div>
-                                    <div class="segmented-item {{ ($filters['date_range'] ?? '') == '30days' ? 'active' : '' }}" data-range="30days">Month</div>
-                                </div>
-                            </div>
-
-                            <div class="filter-group" style="flex: 0 0 auto; min-width: auto; display: flex; gap: 10px; align-items: flex-end; padding-bottom: 1px;">
-                                <button type="submit" class="btn-filter-apply saas-primary-btn">
-                                    <i class="fas fa-filter"></i>
+                            <div class="filter-group" style="flex: 0 0 auto; display: flex; gap: 8px;">
+                                <button type="submit" class="saas-primary-btn">
+                                    <i class="fas fa-search"></i>
                                     Apply Filter
                                 </button>
-                                <a href="{{ route('head-hr.audit-logs') }}" class="btn-filter-reset" title="Clear Filters">
-                                    <i class="fas fa-redo-alt"></i>
+                                <a href="{{ route('head-hr.audit-logs') }}" class="btn-filter-reset" title="Clear Filters" style="height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #e2e8f0; border-radius: 10px; color: #64748b;">
+                                    <i class="fas fa-redo"></i>
                                 </a>
                             </div>
+                        </div>
+
+                        <input type="hidden" name="date_range" id="dateRangeInput" value="{{ $filters['date_range'] ?? '' }}">
+                        <div class="quick-dates">
+                            <div class="date-pill {{ ($filters['date_range'] ?? '') == '' ? 'active' : '' }}" data-range="">All-time</div>
+                            <div class="date-pill {{ ($filters['date_range'] ?? '') == 'today' ? 'active' : '' }}" data-range="today">Today</div>
+                            <div class="date-pill {{ ($filters['date_range'] ?? '') == '7days' ? 'active' : '' }}" data-range="7days">This Week</div>
+                            <div class="date-pill {{ ($filters['date_range'] ?? '') == '30days' ? 'active' : '' }}" data-range="30days">This Month</div>
                         </div>
                     </form>
                 </div>
@@ -1022,10 +1088,10 @@
                 }
             });
 
-            // SaaS Segmented Control Interaction
-            document.querySelectorAll('.segmented-item').forEach(item => {
+            // SaaS Date Pill Interaction
+            document.querySelectorAll('.date-pill').forEach(item => {
                 item.addEventListener('click', function () {
-                    document.querySelectorAll('.segmented-item').forEach(p => p.classList.remove('active'));
+                    document.querySelectorAll('.date-pill').forEach(p => p.classList.remove('active'));
                     this.classList.add('active');
                     document.getElementById('dateRangeInput').value = this.dataset.range;
                     this.closest('form').submit();

@@ -14,6 +14,7 @@ class Notification extends Model
         'recipient_id',
         'message',
         'is_read',
+        'link_url',
     ];
 
     protected $casts = [
@@ -40,12 +41,13 @@ class Notification extends Model
     /**
      * Send a notification
      */
-    public static function send(int $senderId, int $recipientId, string $message): static
+    public static function send(int $senderId, int $recipientId, string $message, ?string $linkUrl = null): static
     {
         return static::create([
             'sender_id' => $senderId,
             'recipient_id' => $recipientId,
             'message' => $message,
+            'link_url' => $linkUrl,
         ]);
     }
 

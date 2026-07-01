@@ -64,7 +64,7 @@ class CreditService
     public function addCocCredit(User $user, array $data)
     {
         $ctoType = LeaveType::firstOrCreate(
-            ['type_name' => 'COC Compensatory Overtime Credit'],
+            ['type_name' => 'CTO (Compensatory Time Off)'],
             ['description' => 'COC - Manual Entry', 'category' => 'Statutory', 'is_active' => true]
         );
 
@@ -85,6 +85,7 @@ class CreditService
                 'expiration_date' => $data['expiration_date'],
                 'remarks' => $data['remarks'] ?? null,
                 'status' => 'Active',
+                'added_by' => Auth::id(),
             ]);
 
             $creditRecord = LeaveCredit::firstOrNew([
@@ -104,6 +105,12 @@ class CreditService
                 'new_value' => $creditRecord->credits,
                 'reason' => 'Added COC batch: ' . $data['credit_amount'] . ' expiring ' . $data['expiration_date'],
             ]);
+
+            ActivityLog::logAction(
+                Auth::id(),
+                'add_coc',
+                "Added {$data['credit_amount']} COC credits for {$user->full_name}. New Balance: {$creditRecord->credits}"
+            );
 
             return $creditRecord;
         });
@@ -172,5 +179,104 @@ class CreditService
             ActivityLog::logAction(0, 'system_expiration', "System expired/reset {$policy->leaveType->type_name} credits for {$affected} users.");
         }
         return $affected;
+    }
+
+    /**
+     * Reset CTO (Compensatory Time Off) balance to zero for a user
+     */
+    public function resetCtoBalance(User $user)
+    {
+        return DB::transaction(function () use ($user) {
+            $ctoType = LeaveType::where('type_name', 'CTO (Compensatory Time Off)')->first();
+            if (!$ctoType) return false;
+
+            $creditRecord = LeaveCredit::where('user_id', $user->id)
+                ->where('leave_type_id', $ctoType->id)
+                ->first();
+
+            $oldValue = $creditRecord ? (float) $creditRecord->credits : 0;
+
+            if ($creditRecord) {
+                $creditRecord->credits = 0;
+                $creditRecord->save();
+            } else {
+                // If no record exists, we create one with zero
+                LeaveCredit::create([
+                    'user_id' => $user->id,
+                    'leave_type_id' => $ctoType->id,
+                    'credits' => 0
+                ]);
+            }
+
+            // Also mark all related CompensatoryLeaveCredit as expired/used
+            CompensatoryLeaveCredit::where('user_id', $user->id)
+                ->where('leave_type_id', $ctoType->id)
+                ->where('status', 'Active')
+                ->update(['remaining_credits' => 0, 'status' => 'Expired']);
+
+            LeaveCreditAuditLog::create([
+                'actor_id' => Auth::id(),
+                'target_user_id' => $user->id,
+                'action' => 'reset_cto',
+                'leave_type_name' => 'CTO (Compensatory Time Off)',
+                'previous_value' => $oldValue,
+                'new_value' => 0,
+                'reason' => 'Manual balance reset to zero by HR',
+            ]);
+
+            ActivityLog::logAction(
+                Auth::id(),
+                'reset_cto',
+                "Reset CTO balance for {$user->full_name} from {$oldValue} to 0."
+            );
+
+            return true;
+        });
+    }
+
+    /**
+     * Delete a specific COC batch and adjust user balance
+     */
+    public function deleteCocCredit(CompensatoryLeaveCredit $batch)
+    {
+        return DB::transaction(function () use ($batch) {
+            $user = $batch->user;
+            $amountToDelete = (float) $batch->remaining_credits;
+            $originalAmount = (float) $batch->credits;
+
+            $ctoType = LeaveType::where('type_name', 'CTO (Compensatory Time Off)')->first();
+            if (!$ctoType) throw new \Exception("CTO Leave Type not found.");
+
+            $creditRecord = LeaveCredit::where('user_id', $user->id)
+                ->where('leave_type_id', $ctoType->id)
+                ->first();
+
+            $oldValue = $creditRecord ? (float) $creditRecord->credits : 0;
+
+            if ($creditRecord) {
+                $creditRecord->credits = max(0, $oldValue - $amountToDelete);
+                $creditRecord->save();
+            }
+
+            $batch->delete();
+
+            LeaveCreditAuditLog::create([
+                'actor_id' => Auth::id(),
+                'target_user_id' => $user->id,
+                'action' => 'delete_coc_batch',
+                'leave_type_name' => 'CTO (Compensatory Time Off)',
+                'previous_value' => $oldValue,
+                'new_value' => $creditRecord ? $creditRecord->credits : 0,
+                'reason' => "Deleted COC batch added on {$batch->created_at->format('Y-m-d')}. Original: {$originalAmount}, Remaining: {$amountToDelete}",
+            ]);
+
+            ActivityLog::logAction(
+                Auth::id(),
+                'delete_coc_batch',
+                "Deleted COC batch for {$user->full_name}. Deducted {$amountToDelete} remaining credits. New Balance: " . ($creditRecord ? $creditRecord->credits : 0)
+            );
+
+            return true;
+        });
     }
 }

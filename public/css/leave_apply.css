@@ -104,8 +104,8 @@
 }
 
 .bg-blue-soft {
-    background: #eff6ff;
-    color: #2563eb;
+    background: #e8f0ff;
+    color: #1b4a9a;
 }
 
 .bg-indigo-soft {
@@ -150,7 +150,7 @@
 .select-premium:focus,
 .input-premium:focus {
     background: white;
-    border-color: #3b82f6;
+    border-color: #1b4a9a;
     outline: none;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
 }
@@ -198,8 +198,8 @@
 }
 
 .selection-card.selected {
-    border-color: #3b82f6;
-    background: #eff6ff;
+    border-color: #1b4a9a;
+    background: #e8f0ff;
 }
 
 .selection-card input[type="radio"],
@@ -314,7 +314,7 @@
 }
 
 .btn-submit-premium {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #123166 100%);
     color: white;
     padding: 16px 48px;
     border-radius: 16px;

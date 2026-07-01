@@ -9,106 +9,161 @@
             position: relative;
         }
 
-        /* Header Hero Section Update */
         .approvals-header-hero {
             position: relative;
-            padding: 35px 40px 24px 40px;
+            background: #1b4a9a !important; /* Sidebar blue shade */
+            padding: 24px 44px !important;
+            border-radius: 24px !important;
+            margin: 0 !important;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 12px 30px -5px rgba(15, 76, 117, 0.2) !important;
+            overflow: hidden;
+            z-index: 10;
         }
 
-        .approvals-header-hero::before {
-            display: none;
+        /* Abstract background glow */
+        .approvals-header-hero::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(27, 108, 168, 0.25) 0%, rgba(15, 76, 117, 0) 70%);
+            z-index: 0;
+            pointer-events: none;
         }
 
         .header-title-main {
-            font-size: 2.8rem;
-            font-weight: 900;
-            color: #1e293b;
-            letter-spacing: -0.03em;
-            line-height: 1;
+            font-size: 2.8rem !important;
+            font-weight: 900 !important;
+            color: white !important;
+            letter-spacing: -0.04em !important;
+            line-height: 1 !important;
             position: relative;
             z-index: 1;
         }
 
         .header-title-accent {
-            color: #f97316;
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            position: relative;
+            color: rgba(255, 255, 255, 0.7) !important;
+            background: none !important;
+            -webkit-text-fill-color: initial !important;
         }
 
-        .header-title-accent::after {
-            content: '';
-            position: absolute;
-            bottom: 8px;
-            left: 0;
-            width: 100%;
-            height: 12px;
-            background: rgba(249, 115, 22, 0.1);
-            z-index: -1;
-            border-radius: 4px;
+        .header-text-group p {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 0.95rem !important;
+            font-weight: 500 !important;
+            max-width: 550px !important;
+            margin-top: 8px !important;
+            line-height: 1.4 !important;
         }
 
-        .officer-badge-premium {
-            background: white;
-            padding: 12px 24px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 15px 35px -10px rgba(15, 76, 117, 0.15);
-            border: 1px solid rgba(15, 76, 117, 0.1);
+        /* Glassmorphic Tabs (integrated in hero) */
+        .tab-toggle-container {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px !important;
+            border-radius: 99px !important;
+            display: inline-flex;
+            gap: 2px;
+            margin-top: 18px !important;
             position: relative;
             z-index: 1;
-            transition: all 0.3s ease;
         }
 
-        .officer-badge-premium:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 20px 40px -5px rgba(15, 76, 117, 0.2);
+        .tab-btn {
+            color: rgba(255, 255, 255, 0.75) !important;
+            padding: 8px 22px !important;
+            border-radius: 99px !important;
+            font-weight: 800 !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.04em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border: none !important;
+            background: transparent !important;
+            text-decoration: none !important; /* Added to remove underline */
+        }
+
+        .tab-btn.active {
+            background: white !important;
+            color: #1b4a9a !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+            transform: translateY(0) !important;
+        }
+
+        .tab-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.18) !important;
+            color: white !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Officer Badge (Glass Card) */
+        .officer-badge-premium {
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            padding: 24px 32px !important;
+            border-radius: 28px !important;
+            box-shadow: 0 15px 35px rgba(15, 76, 117, 0.2) !important;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1;
         }
 
         .officer-icon-wrapper {
-            width: 50px;
-            height: 50px;
-            background: var(--primary-gradient);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.4rem;
-            box-shadow: 0 8px 15px rgba(15, 76, 117, 0.2);
+            background: white !important;
+            color: #1b4a9a !important;
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 16px !important;
+            font-size: 1.5rem !important;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
         }
 
         .officer-name-highlight {
-            color: #0f4c75;
-            font-size: 1.1rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
+            color: white !important;
+            font-weight: 900 !important;
+            font-size: 1.35rem !important;
+            letter-spacing: 0.02em !important;
+            text-transform: uppercase !important;
         }
 
         /* Glassmorphism User Card (Compact Flex Layout) */
         .user-card {
             display: grid;
-            grid-template-columns: 2.2fr 1.2fr 1.2fr 1fr 1fr;
-            gap: 24px;
-            align-items: center;
-            border: 1px solid rgba(226, 232, 240, 0.7);
-            margin-bottom: 12px;
-            background: rgba(255, 255, 255, 0.8) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px !important;
-            padding: 16px 24px !important;
+            grid-template-columns: 1.4fr 0.9fr 1.1fr 0.8fr 0.9fr 1fr; /* Optimized distribution */
+            gap: 12px;
+            padding: 10px 16px !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
             width: 100%;
+            align-items: center;
+            position: relative; /* Added for absolute children */
+        }
+
+        .badge-new-dot {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.55rem;
+            font-weight: 900;
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            z-index: 5;
+            letter-spacing: 0.05em;
         }
 
         @media (max-width: 1200px) {
@@ -116,6 +171,53 @@
                 display: flex;
                 flex-wrap: wrap;
                 grid-template-columns: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .user-card {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px !important;
+                gap: 15px;
+            }
+
+            .user-card > div {
+                width: 100%;
+                min-width: 0 !important;
+                text-align: left !important;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid var(--border-light);
+                padding-bottom: 10px;
+            }
+
+            .user-card > div.user-info {
+                border-bottom: 2px solid var(--primary-light);
+                padding-bottom: 12px;
+                margin-bottom: 5px;
+            }
+
+            .user-card > div.approval-actions {
+                border-bottom: none;
+                padding-bottom: 0;
+                margin-top: 10px;
+                justify-content: stretch;
+            }
+
+            .btn-review {
+                width: 100%;
+                justify-content: center;
+                padding: 12px !important;
+            }
+
+            .user-card .user-meta-label {
+                display: block !important;
+            }
+
+            .user-card .status-badge-pending, .user-card .badge-days {
+                margin-left: auto;
             }
         }
 
@@ -161,12 +263,12 @@
         }
 
         .btn-review {
-            background: var(--primary-gradient, linear-gradient(135deg, #0f4c75 0%, #3282b8 100%));
+            background: var(--primary-gradient, linear-gradient(135deg, #1b4a9a 0%, #3282b8 100%));
             color: white;
-            padding: 10px 20px;
-            border-radius: 12px;
+            padding: 8px 16px;
+            border-radius: 10px;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: inline-flex;
             align-items: center;
             gap: 10px;
@@ -216,7 +318,7 @@
         }
 
         .user-card .user-name {
-            font-size: 1.05rem !important;
+            font-size: 0.95rem !important;
             font-weight: 800 !important;
             color: #1e293b !important;
             letter-spacing: -0.01em;
@@ -231,11 +333,11 @@
 
         .badge-days {
             background: rgba(14, 165, 233, 0.1);
-            color: #0369a1;
+            color: #1b4a9a;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
             display: inline-block;
         }
 
@@ -244,20 +346,20 @@
             color: #ea580c;
             border: 1px solid rgba(249, 115, 22, 0.2);
             font-weight: 800;
-            padding: 6px 14px;
+            padding: 4px 10px;
             border-radius: 99px;
-            font-size: 0.72rem;
+            font-size: 0.62rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
 
         .status-badge-pending::before {
             content: '';
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background: #f97316;
             border-radius: 50%;
             display: inline-block;
@@ -268,6 +370,30 @@
             0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
             70% { box-shadow: 0 0 0 8px rgba(249, 115, 22, 0); }
             100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
+
+        .status-badge-past {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 0.62rem;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-badge-past::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
         }
 
         /* Modal Enhancements */
@@ -309,110 +435,242 @@
             box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1) !important;
             background: white !important;
         }
-        .tab-toggle-container {
-            display: inline-flex;
-            background: #f1f5f9;
-            padding: 6px;
-            border-radius: 16px;
-            gap: 5px;
-            margin-top: 20px;
-        }
-
-        .tab-btn {
-            padding: 10px 24px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            text-decoration: none !important;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         .tab-btn.active {
             background: white;
-            color: #0f4c75;
+            color: #1b4a9a;
             box-shadow: 0 4px 15px rgba(15, 76, 117, 0.1);
         }
 
-        .tab-btn:not(.active):hover {
+        /* Advanced Filter Bar */
+        .filter-section-premium {
+            background: white;
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-wrap: nowrap; /* Force single row */
+            gap: 16px;
+            align-items: flex-end;
+            overflow-x: auto; /* Handle overflow if screen is small */
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 120px; 
+        }
+
+        .filter-group.narrow {
+            flex: 0.5;
+            min-width: 120px;
+        }
+
+        .filter-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .filter-input-wrapper {
+            position: relative;
+        }
+
+        .filter-input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .filter-input {
+            width: 100%;
+            height: 38px;
+            padding: 8px 12px 8px 36px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: #1e293b;
-            background: rgba(255,255,255,0.8);
+            transition: all 0.2s;
+        }
+
+        .filter-input:focus {
+            border-color: #1b4a9a;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.05);
+            outline: none;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0; /* Don't shrink buttons */
+            margin-bottom: 0px; /* Alignment fix */
+        }
+
+        .btn-filter {
+            height: 38px;
+            padding: 0 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .btn-apply {
+            background: #1b4a9a;
+            color: white;
+        }
+
+        .btn-apply:hover {
+            background: #3b66bc;
             transform: translateY(-1px);
+        }
+
+        .btn-reset {
+            background: #f1f5f9;
+            color: #64748b;
+            text-decoration: none;
+        }
+
+        .btn-reset:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-pdf {
+            background: #dc2626;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.1);
+            width: 38px; /* Square button for icon-only */
+        }
+
+        .btn-pdf:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px -2px rgba(220, 38, 38, 0.2);
+        }
+
+        .btn-icon-only {
+            width: 38px;
+            padding: 0 !important;
         }
     </style>
 @endpush
 
 @section('content')
-    <div class="container-fluid approvals-premium" style="padding: 24px;">
-        <div class="unified-approvals-container animate__animated animate__fadeInUp" style="background: white; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05); border: 1px solid rgba(226, 232, 240, 0.8); overflow: hidden;">
-            <!-- Refined Header Hero -->
+    <div class="container-fluid approvals-premium" style="padding: 16px 20px;">
+        <div class="unified-approvals-container animate__animated animate__fadeInUp" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05); border: 1px solid rgba(226, 232, 240, 0.8); overflow: hidden;">
+            <!-- Compact Redesigned Hero Header -->
             <div class="approvals-header-hero">
-            <div class="header-text-group">
-                <h1 class="header-title-main">
-                    @php
-                        $titleParts = explode(' ', $title);
-                        $lastWord = array_pop($titleParts);
-                        $firstWords = implode(' ', $titleParts);
-                    @endphp
-                    {{ $firstWords }} <span class="header-title-accent">{{ $lastWord }}</span>
-                </h1>
-                <p class="text-slate-500 mt-3 font-semibold text-lg max-w-md leading-relaxed">
-                    Efficiency starts here. Review and process leave applications with precision.
-                </p>
+                <div class="header-text-group">
+                    <h1 class="header-title-main">
+                        @php
+                            $titleParts = explode(' ', $title);
+                            $lastWord = array_pop($titleParts);
+                            $firstWords = implode(' ', $titleParts);
+                        @endphp
+                        {{ $firstWords }} <span class="header-title-accent">{{ $lastWord }}</span>
+                    </h1>
+                    <p>Efficiency starts here. Review and process leave applications with precision.</p>
 
-                <div class="tab-toggle-container animate__animated animate__fadeInLeft" style="animation-delay: 0.2s;">
-                    <a href="{{ route('user.leave.approvals', ['tab' => 'pending']) }}" class="tab-btn {{ ($tab ?? 'pending') !== 'processed' ? 'active' : '' }}">
-                        <i class="fas fa-clock"></i> Pending ({{ ($tab ?? 'pending') !== 'processed' ? count($applications) : '...' }})
-                    </a>
-                    <a href="{{ route('user.leave.approvals', ['tab' => 'processed']) }}" class="tab-btn {{ ($tab ?? 'pending') === 'processed' ? 'active' : '' }}">
-                        <i class="fas fa-check-circle"></i> Processed
-                    </a>
+                    <div class="tab-toggle-container animate__animated animate__fadeInLeft" style="animation-delay: 0.1s;">
+                        <a href="{{ route('user.leave.approvals', ['tab' => 'pending']) }}" class="tab-btn {{ ($tab ?? 'pending') !== 'processed' ? 'active' : '' }}">
+                            <i class="fas fa-clock"></i> Pending ({{ ($tab ?? 'pending') !== 'processed' ? count($applications) : '...' }})
+                        </a>
+                        <a href="{{ route('user.leave.approvals', ['tab' => 'processed']) }}" class="tab-btn {{ ($tab ?? 'pending') === 'processed' ? 'active' : '' }}">
+                            <i class="fas fa-check-circle"></i> Processed
+                        </a>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="officer-badge-premium">
-                <div class="officer-icon-wrapper">
-                    <i class="fas fa-shield-alt"></i>
-                </div>
-                <div>
-                    <div class="text-[0.68rem] uppercase font-black text-slate-400 tracking-widest leading-none mb-1">Authenticated Officer</div>
-                    <div class="officer-name-highlight">{{ Auth::user()->full_name }}</div>
-                </div>
-            </div>
             </div>
         </div>
 
-        <div style="padding: 24px 40px 40px 40px; background: rgba(248, 250, 252, 0.4);">
-            <!-- Search Bar Section -->
-            <div class="search-container" style="margin-bottom: 24px; position: relative; max-width: 600px;">
-            <i class="fas fa-search" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; z-index: 5;"></i>
-            <input type="text" id="approvalSearchInput" class="form-control" placeholder="Search by applicant name, role, or leave type..." style="width: 100%; padding-left: 48px !important; border-radius: 16px; height: 54px; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); border: 1px solid rgba(226, 232, 240, 0.8);">
-        </div>
+        <div style="padding: 16px 40px 24px 40px; background: rgba(248, 250, 252, 0.4);">
+            <!-- Advanced Filter Bar -->
+            <form action="{{ route('user.leave.approvals') }}" method="GET" class="filter-section-premium animate__animated animate__fadeInDown">
+                <input type="hidden" name="tab" value="{{ $tab ?? 'pending' }}">
+                
+                <div class="filter-group">
+                    <label class="filter-label">Search Applicant</label>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="search" class="filter-input" placeholder="Name or position..." value="{{ $search ?? '' }}">
+                    </div>
+                </div>
 
-        @if(session('success'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
-                <p>{{ session('success') }}</p>
-            </div>
-        @endif
+                <div class="filter-group narrow">
+                    <label class="filter-label">From Date (Filing)</label>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="date" name="start_date" class="filter-input" value="{{ $startDate ?? '' }}">
+                    </div>
+                </div>
 
-        @if(session('error'))
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-                <p>{{ session('error') }}</p>
-            </div>
-        @endif
+                <div class="filter-group narrow">
+                    <label class="filter-label">To Date (Filing)</label>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="date" name="end_date" class="filter-input" value="{{ $endDate ?? '' }}">
+                    </div>
+                </div>
+
+                @if(($tab ?? 'pending') === 'processed')
+                <div class="filter-group">
+                    <label class="filter-label">Application Progress</label>
+                    <div class="filter-input-wrapper">
+                        <i class="fas fa-tasks"></i>
+                        <select name="status" class="filter-input" style="padding-left: 36px; -webkit-appearance: none; -moz-appearance: none; appearance: none; cursor: pointer;">
+                            <option value="">All Progress</option>
+                            <option value="Approved" {{ ($status ?? '') === 'Approved' ? 'selected' : '' }}>Already Approved</option>
+                            <option value="Pending Recommending" {{ ($status ?? '') === 'Pending Recommending' ? 'selected' : '' }}>Pending Recommendation</option>
+                            <option value="Pending Approval" {{ ($status ?? '') === 'Pending Approval' ? 'selected' : '' }}>For Approval</option>
+                            <option value="Rejected" {{ ($status ?? '') === 'Rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                </div>
+                @endif
+
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter btn-apply" title="Apply Filters">
+                        <i class="fas fa-filter"></i> Apply
+                    </button>
+                    <a href="{{ route('user.leave.approvals', ['tab' => $tab ?? 'pending']) }}" class="btn-filter btn-reset btn-icon-only" title="Reset Filters">
+                        <i class="fas fa-undo"></i>
+                    </a>
+                    
+                </div>
+            </form>
+
+
 
         <div class="user-list">
             @if(count($applications) > 0)
                 <div class="approvals-scroll-area">
                     @foreach($applications as $app)
                         <div class="user-card">
+                            @if(!$app->is_viewed && ($tab ?? 'pending') !== 'processed')
+                                <div class="badge-new-dot animate__animated animate__pulse animate__infinite">NEW</div>
+                            @endif
                             <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
-                                <div class="user-avatar" style="width: 45px; height: 45px; border-radius: 12px; background: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; flex-shrink: 0;">
+                                <div class="user-avatar" style="width: 45px; height: 45px; border-radius: 12px; background: #e0f2fe; color: #1b4a9a; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.1rem; flex-shrink: 0;">
                                     @if($app->user->profile_picture)
                                         <img src="{{ storage_url($app->user->profile_picture) }}" alt="{{ $app->user->full_name }}" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover;">
                                     @else
@@ -425,32 +683,49 @@
                                 </div>
                             </div>
 
-                            <div style="flex: 1; min-width: 200px;">
+                            <div style="flex: 1; min-width: 100px;">
+                                <span class="user-meta-label">Tracking No.</span>
+                                <span class="tracking-number-highlight-list" style="font-family: 'Monaco', 'Consolas', monospace; font-weight: 800; color: #1b4a9a; font-size: 0.8rem; display: block; margin-top: 2px;">
+                                    {{ $app->tracking_number ?? '---' }}
+                                </span>
+                            </div>
+
+                            <div style="flex: 1; min-width: 140px;">
                                 <span class="user-meta-label">Type of Leave</span>
-                                <span class="leave-type-name"><i class="fas fa-file-alt mr-1 text-primary/60"></i> {{ $app->leaveType->type_name }}</span>
-                                <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 4px; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                                <span class="leave-type-name" style="font-size: 0.85rem;"><i class="fas fa-file-alt mr-1 text-primary/60"></i> {{ $app->leaveType->type_name }}</span>
+                                <div style="font-size: 0.65rem; color: #94a3b8; margin-top: 2px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
                                     <i class="far fa-clock"></i> Filed: {{ $app->date_filing->format('M d, Y') }}
                                 </div>
                             </div>
 
-                            <div style="flex: 1; min-width: 150px;">
+                            <div style="flex: 1; min-width: 100px;">
                                 <span class="user-meta-label">Total Duration</span>
-                                <div class="mt-2">
-                                    <span class="badge-days" style="padding: 8px 16px; font-size: 1.1rem; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1);">
+                                <div class="mt-1">
+                                    <span class="badge-days" style="box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.1);">
                                         {{ (float) $app->days_applied }} Day(s)
                                     </span>
                                 </div>
                             </div>
 
-                            <div style="text-align: right;">
-                                <span class="user-meta-label" style="display: block; margin-bottom: 4px; text-align: right;">Status</span>
-                                <span class="status-badge-pending" style="white-space: nowrap;">
+                            <div style="text-align: center;"> <!-- Centered for better separation -->
+                                <span class="user-meta-label" style="display: block; margin-bottom: 4px; text-align: center;">Status</span>
+                                 <span class="status-badge-pending" style="white-space: nowrap;">
                                     {{ $app->status }}
                                 </span>
+                                @php
+                                    $isPast = $app->end_date && $app->end_date->isPast();
+                                @endphp
+                                @if($isPast && ($tab ?? 'pending') !== 'processed')
+                                    <div class="mt-1">
+                                        <span class="status-badge-past" title="This leave period has already passed.">
+                                            Past Date
+                                        </span>
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="approval-actions" style="display: flex; justify-content: flex-end;">
-                                <a href="{{ route('user.leave.approvals.show', $app->id) }}" class="btn-review" style="white-space: nowrap;">
+                                <a href="{{ route('user.leave.approvals.show', ['id' => $app->id, 'tab' => $tab ?? 'pending']) }}" class="btn-review" style="white-space: nowrap;">
                                     <i class="fas {{ ($tab ?? 'pending') === 'processed' ? 'fa-eye' : 'fa-pen-nib' }}"></i>
                                     {{ ($tab ?? 'pending') === 'processed' ? 'View Details' : 'Review Application' }}
                                 </a>

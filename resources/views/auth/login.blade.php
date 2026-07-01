@@ -9,7 +9,6 @@
             <img src="{{ asset('images/logo.png') }}" alt="Logo">
         </div>
         <h1>E-Leave Application System</h1>
-        <p>San Pedro Division Office</p>
     </div>
 
     <!-- Login Form -->
@@ -36,7 +35,7 @@
             @endif
 
             <div class="form-group">
-                <label for="email">Gmail Address</label>
+                <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" class="form-control" placeholder="example@deped.gov.ph" value="{{ old('email') }}" required autofocus autocomplete="email">
             </div>
 
@@ -59,7 +58,7 @@
     
     <div class="auth-footer">
         <div class="dev-info">Department of Education - Schools Division Office of San Pedro City</div>
-        <div class="dev-info">Developed by Algen Loveres & Cedrick Bacaresas</div>
+        <div class="dev-info">ICT UNIT 2026</div>
     </div>
 </div>
 @endsection

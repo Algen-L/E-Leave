@@ -4,26 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Inventory System')</title>
+    <title>@yield('title', 'E-Leave Application System')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-indigo-600 shadow-lg">
+    <nav class="bg-[#1b4a9a] shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="{{ route('items.index') }}" class="flex items-center">
                         <i class="fas fa-boxes text-white text-2xl mr-3"></i>
-                        <span class="text-white text-xl font-bold">Inventory System</span>
+                        <span class="text-white text-xl font-bold">E-Leave Application System</span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <a href="{{ route('items.index') }}" class="text-white hover:text-indigo-200 px-3 py-2 rounded-md text-sm font-medium">
+                    <a href="{{ route('items.index') }}" class="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium">
                         <i class="fas fa-list mr-1"></i> Items
                     </a>
-                    <a href="{{ route('items.create') }}" class="bg-white text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-md text-sm font-medium">
+                    <a href="{{ route('items.create') }}" class="bg-white text-[#1b4a9a] hover:bg-blue-50 px-4 py-2 rounded-md text-sm font-medium">
                         <i class="fas fa-plus mr-1"></i> Add Item
                     </a>
                 </div>
@@ -53,12 +53,19 @@
     <footer class="bg-white border-t mt-auto py-4 px-4 sm:px-6 lg:px-8">
         <div class="max-w-7xl mx-auto flex flex-col justify-center items-center gap-1 text-gray-500 text-sm">
             <div class="flex items-center gap-2">
-                <span>&copy; {{ date('Y') }} SDO System. All rights reserved.</span>
+                <span>&copy; {{ date('Y') }} E-Leave Application System. All rights reserved.</span>
             </div>
             <div class="text-xs text-gray-400 font-semibold uppercase tracking-wider">
-                Developed by: Algen D. Loveres & Cedrick V. Bacaresas
+                ICT UNIT {{ date('Y') }}
             </div>
         </div>
     </footer>
+    <script>
+        // Disable right-click and copy-paste
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', event => event.preventDefault());
+        document.addEventListener('paste', event => event.preventDefault());
+        document.addEventListener('cut', event => event.preventDefault());
+    </script>
 </body>
 </html>

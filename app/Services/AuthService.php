@@ -109,6 +109,12 @@ class AuthService
             'role' => 'user',
         ]);
 
+        // Attach default user role
+        $userRole = \App\Models\Role::where('name', 'user')->first();
+        if ($userRole) {
+            $user->roles()->attach($userRole->id);
+        }
+
         // Notify Head HR
         $headHRs = User::where('role', 'head_hr')->get();
         foreach ($headHRs as $hr) {

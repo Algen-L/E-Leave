@@ -78,7 +78,7 @@
             display: inline-block;
             padding: 15px 30px;
             background-color: #f1f5f9;
-            border: 2px dashed #1b6ca8;
+            border: 2px dashed #3b66bc;
             border-radius: 12px;
             font-size: 36px;
             font-weight: 800;

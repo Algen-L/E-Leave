@@ -6,39 +6,66 @@
 @push('styles')
 <style>
     .page-header {
-        background: white;
-        padding: 20px 24px;
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        border: 1px solid #eef2f6;
-        margin-bottom: 24px;
+        background: var(--primary-gradient);
+        padding: 24px 32px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px -5px rgba(15, 76, 117, 0.2), 0 8px 10px -6px rgba(15, 76, 117, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 32px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 16px;
     }
-    .page-title h2 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin: 0; }
-    .page-title p { font-size: 0.875rem; color: #64748b; margin-top: 4px; }
+    .page-title {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 2px;
+        padding-left: 16px;
+        border-left: 4px solid rgba(255, 255, 255, 0.4);
+    }
+    .page-title h2 { font-size: 1.5rem; font-weight: 800; color: white; margin: 0; letter-spacing: -0.02em; line-height: 1.1; }
+    .page-title p { font-size: 0.9rem; color: rgba(255, 255, 255, 0.85); margin: 0; font-weight: 500; }
     
     .search-form { display: flex; gap: 8px; }
     .search-input {
-        border: 1px solid #cbd5e1;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-size: 0.9rem;
-        width: 260px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        width: 280px;
         outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        background: white;
+        color: var(--primary);
+        font-weight: 600;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
-    .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .search-input:focus { 
+        border-color: white; 
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15); 
+    }
     .search-btn {
-        background: #3b82f6; color: white; border: none;
-        padding: 8px 16px; border-radius: 8px; cursor: pointer;
-        transition: background 0.2s;
+        background: white; 
+        color: var(--primary); 
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px; 
+        cursor: pointer;
+        transition: all 0.2s;
         display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
-    .search-btn:hover { background: #2563eb; }
+    .search-btn:hover { 
+        background: #f8fafc; 
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
 
     .users-table-container {
         background: white;
@@ -93,9 +120,118 @@
         padding: 6px 14px; border-radius: 6px;
         text-decoration: none; transition: all 0.2s;
     }
-    .action-btn:hover { border-color: #3b82f6; color: #2563eb; background: #eff6ff; }
+    .action-btn:hover { border-color: #1b4a9a; color: #1b4a9a; background: #e8f0ff; }
     
     .pagination-wrapper { padding: 16px 24px; border-top: 1px solid #f1f5f9; }
+
+    /* Stack Pattern for Mobile */
+    @media screen and (max-width: 768px) {
+        .page-header {
+            padding: 20px;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+        .page-title {
+            border-left: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+            padding-left: 0;
+            padding-bottom: 12px;
+            align-items: center;
+        }
+        .search-form { width: 100%; }
+        .search-input { flex: 1; width: auto; }
+
+        .stack-card-table thead { display: none; }
+        .stack-card-table, .stack-card-table tbody, .stack-card-table tr, .stack-card-table td {
+            display: block;
+            width: 100%;
+        }
+        .stack-card-table tr {
+            margin-bottom: 20px;
+            border: 1px solid #eef2f6;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .stack-card-table td {
+            text-align: right !important;
+            padding: 14px 16px 14px 40% !important;
+            position: relative;
+            border-bottom: 1px solid #f8fafc;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .stack-card-table td:last-child {
+            border-bottom: none;
+            background: #f8fafc;
+            justify-content: center;
+            padding-left: 16px !important;
+        }
+        .stack-card-table td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 16px;
+            width: 35%;
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: 800;
+            color: #94a3b8;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .user-profile { 
+            justify-content: flex-end; 
+            width: 100%;
+        }
+        .user-info { text-align: right; }
+        .user-info .name { font-size: 0.85rem; line-height: 1.2; }
+        .user-info .email { font-size: 0.7rem; opacity: 0.8; }
+        .user-avatar { width: 32px; height: 32px; font-size: 0.85rem; }
+        
+        [data-label="Position"] {
+            font-size: 0.8rem !important;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+        
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 10px;
+            background: white;
+        }
+    }
+
+    /* Desktop Specific Fixes for Stack Card Table */
+    @media screen and (min-width: 993px) {
+        .stack-card-table td[data-label="Employee"] {
+            flex: 1.5 !important;
+            min-width: 250px !important;
+        }
+        .stack-card-table td[data-label="Position"] {
+            flex: 1 !important;
+        }
+        .user-info {
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+        }
+        .user-info .email {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+    }
 </style>
 @endpush
 
@@ -115,7 +251,7 @@
     </div>
 
     <div class="users-table-container">
-        <table class="users-table">
+        <table class="users-table stack-card-table">
             <thead>
                 <tr>
                     <th>Employee</th>
@@ -127,7 +263,7 @@
             <tbody>
                 @forelse($users as $user)
                 <tr>
-                    <td>
+                    <td data-label="Employee">
                         <div class="user-profile">
                             <div class="user-avatar">
                                 {{ substr($user->first_name, 0, 1) }}
@@ -138,8 +274,8 @@
                             </div>
                         </div>
                     </td>
-                    <td style="color: #475569; font-size: 0.9rem;">{{ $user->position ?? 'N/A' }}</td>
-                    <td>
+                    <td data-label="Position" style="color: #475569; font-size: 0.9rem;">{{ $user->position ?? 'N/A' }}</td>
+                    <td data-label="Credits Status">
                         @php
                             $hasCredits = \App\Models\LeaveCredit::where('user_id', $user->id)->exists();
                         @endphp
@@ -149,7 +285,7 @@
                             <span class="badge badge-pending">Pending</span>
                         @endif
                     </td>
-                    <td style="text-align: right;">
+                    <td data-label="Action" style="text-align: right;">
                         <a href="{{ route('hr-staff.manage-credits.edit', $user->id) }}" class="action-btn">
                             <i class="fas fa-sliders-h"></i> Manage
                         </a>

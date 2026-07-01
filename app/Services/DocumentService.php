@@ -60,8 +60,8 @@ class DocumentService
                 try {
                     $templateProcessor->setImageValue($placeholder, [
                         'path' => $esignaturePath,
-                        'width' => 100,
-                        'height' => 50,
+                        'width' => 135,
+                        'height' => 65,
                         'ratio' => false,
                     ]);
                 } catch (\Exception $e) {
@@ -134,7 +134,27 @@ class DocumentService
 
         // --- E-SIGNATURES LOGIC ---
         if ($application->hr_verified_at) {
-            $setImage('HRSIGN', $application->hrVerifier);
+            $hrVerifier = $application->hrVerifier;
+            
+            // Signature Delegation: If the verifier is an HR Review Officer, 
+            // use the signature of the first available Head HR or HR Personnel.
+            if ($hrVerifier && $hrVerifier->role === 'hr_review_officer') {
+                $delegatedHR = User::whereIn('role', ['head_hr', 'hr'])
+                    ->where('is_active', true)
+                    ->whereNotNull('esignature')
+                    ->first();
+                
+                if ($delegatedHR) {
+                    $setImage('HRSIGN', $delegatedHR);
+                    // Also update the displayed name/position for the signature block
+                    $setVal('VOLC_NAME', strtoupper($delegatedHR->full_name));
+                    $setVal('VOLC_POS', strtoupper($delegatedHR->position ?: 'Administrative Officer'));
+                } else {
+                    $setImage('HRSIGN', $hrVerifier);
+                }
+            } else {
+                $setImage('HRSIGN', $hrVerifier);
+            }
         } else {
             $templateProcessor->setValue('HRSIGN', '');
         }
@@ -205,7 +225,13 @@ class DocumentService
         $setVal('type_wellness', (stripos($typeName, 'Wellness') !== false) ? '☑' : '☐');
 
         $isStandard = $this->isStandardLeave($typeName);
-        $setVal('type_others', !$isStandard ? '☑ ' . $typeName : '☐');
+        $otherPurpose = $details->other_purpose ?? '';
+        
+        if (!empty($otherPurpose)) {
+            $setVal('type_others', '☑ ' . $otherPurpose);
+        } else {
+            $setVal('type_others', !$isStandard ? '☑ ' . $typeName : '☐');
+        }
 
         // --- 6.B DETAILS OF LEAVE ---
         if ($details) {
@@ -268,7 +294,7 @@ class DocumentService
         $fmtNum = fn($val) => $val ? (string) ((float) $val + 0) : '';
         $setVal('DAYWPAY', $fmtNum($application->days_with_pay));
         $setVal('DAYWOPAY', $fmtNum($application->days_without_pay));
-        $setVal('OTHERS', $application->others_remarks ? strtoupper($application->others_remarks) : '');
+        $setVal('OTHERS', '');
 
         $formatString = fn($prefix, $date) => $date ? sprintf("%s %s by:", $prefix, Carbon::parse($date)->format('F d, Y')) : '';
         $setVal('CertifyDate', $formatString("Digitally Verified in this", $application->hr_verified_at));
@@ -284,7 +310,7 @@ class DocumentService
 
     private function isStandardLeave($typeName)
     {
-        $standards = ['Vacation', 'Mandatory', 'Forced', 'Sick', 'Maternity', 'Paternity', 'Privilege', 'Solo Parent', 'Study', 'VAWC', 'Rehabilitation', 'Benefits for Women', 'Calamity', 'Adoption', 'Wellness', 'Monetization', 'Terminal'];
+        $standards = ['Vacation', 'Mandatory', 'Forced', 'Sick', 'Maternity', 'Paternity', 'Privilege', 'Solo Parent', 'Study', 'VAWC', 'Rehabilitation', 'Benefits for Women', 'Calamity', 'Adoption'];
         foreach ($standards as $s) {
             if (stripos($typeName, $s) !== false)
                 return true;
@@ -294,9 +320,10 @@ class DocumentService
 
     private function setCreditValues($templateProcessor, $userId, $application)
     {
-        $vlType = LeaveType::where('type_name', 'Vacation Leave')->first();
-        $slType = LeaveType::where('type_name', 'Sick Leave')->first();
+        $vlType = \App\Models\LeaveType::where('type_name', 'Vacation Leave')->first();
+        $slType = \App\Models\LeaveType::where('type_name', 'Sick Leave')->first();
 
+        // Current credits from DB
         $vlCredit = $vlType ? (\App\Models\LeaveCredit::where('user_id', $userId)->where('leave_type_id', $vlType->id)->first()->credits ?? 0) : 0;
         $slCredit = $slType ? (\App\Models\LeaveCredit::where('user_id', $userId)->where('leave_type_id', $slType->id)->first()->credits ?? 0) : 0;
 
@@ -305,10 +332,25 @@ class DocumentService
         $appTypeName = $application->leaveType->type_name;
         $isCompensatory = optional($application->details)->other_purpose === 'COC COMPENSATORY OVERTIME CREDIT';
 
+        // Use certified days if available, otherwise applied days
+        $deductionAmount = $application->hr_verified_at 
+            ? ($application->days_with_pay ?? 0) 
+            : $application->days_applied;
+
         if (stripos($appTypeName, 'Vacation') !== false || stripos($appTypeName, 'Forced') !== false || stripos($appTypeName, 'Mandatory') !== false || $isCompensatory) {
-            $lessVl = $application->days_applied;
+            $lessVl = $deductionAmount;
         } elseif (stripos($appTypeName, 'Sick') !== false) {
-            $lessSl = $application->days_applied;
+            $lessSl = $deductionAmount;
+        }
+
+        // --- FIX: Double Deduction Prevention ---
+        // If the application is already APPROVED, the DB credits already have the deduction.
+        // We must virtually "add back" the credits to show the balance BEFORE this application.
+        $isApproved = stripos($application->status, 'approved') !== false;
+        
+        if ($isApproved) {
+            if ($lessVl > 0) $vlCredit += $lessVl;
+            if ($lessSl > 0) $slCredit += $lessSl;
         }
 
         $fmt = fn($val) => (float) $val + 0;

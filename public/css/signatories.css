@@ -2,7 +2,7 @@
 :root {
     --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.08);
-    --soft-blue: #0f4c75;
+    --soft-blue: #1b4a9a;
     --soft-blue-bg: #e0f2fe;
 }
 
@@ -64,7 +64,7 @@
 /* Header Background Color Variations */
 .sig-card-header.header-cid {
     background: #0284c7; /* Vibrant Light Blue */
-    border-bottom-color: #0369a1;
+    border-bottom-color: #1b4a9a;
 }
 .sig-card-header.header-cid .sig-role-badge { background: transparent; color: #ffffff; }
 .sig-card-header.header-cid .sig-active-status { color: #e0f2fe; }
@@ -243,7 +243,7 @@
 }
 
 .btn-save-fixed:hover {
-    background: #1b6ca8;
+    background: #3b66bc;
     transform: translateY(-2px);
     box-shadow: 0 6px 15px rgba(15, 76, 117, 0.3);
 }
@@ -251,7 +251,7 @@
 /* Role Specific Colors */
 .role-badge-cid {
     background: #e0f2fe;
-    color: #0369a1;
+    color: #1b4a9a;
 }
 
 .role-badge-sgod {

@@ -15,7 +15,7 @@ class PrintLeaveCardController extends Controller
         $user = Auth::user();
         $applications = LeaveApplication::with('leaveType')
             ->where('user_id', $user->id)
-            ->where('status', 'approved')
+            ->where('status', 'Approved')
             ->orderBy('approved_at', 'asc')
             ->get();
 
@@ -26,8 +26,8 @@ class PrintLeaveCardController extends Controller
         $templateProcessor->setValue('FIRSTNAME', strtoupper($user->first_name ?? ''));
         $templateProcessor->setValue('MIDNAME', strtoupper($user->middle_name ?? ''));
         $templateProcessor->setValue('DISTRICT', strtoupper($user->office_station ?? ''));
-        $templateProcessor->setValue('name', $user->full_name);
-        $templateProcessor->setValue('status', $user->status ?? '');
+        $templateProcessor->setValue('STATUS', strtoupper($user->status ?? 'ACTIVE'));
+        $templateProcessor->setValue('DOA', $user->created_at->format('m/d/Y'));
 
         if ($applications->count() > 0) {
             $replacements = [];
@@ -50,8 +50,8 @@ class PrintLeaveCardController extends Controller
                 $sbal = '';
                 if ($audit) {
                     $at = strtolower($audit->leave_type_name);
-                    if (str_contains($at, 'vacation')) $vbal = number_format($audit->new_value, 3);
-                    if (str_contains($at, 'sick')) $sbal = number_format($audit->new_value, 3);
+                    if (str_contains($at, 'vacation')) $vbal = format_credit_3_decimal($audit->new_value);
+                    if (str_contains($at, 'sick')) $sbal = format_credit_3_decimal($audit->new_value);
                 }
 
                 $replacements[] = [

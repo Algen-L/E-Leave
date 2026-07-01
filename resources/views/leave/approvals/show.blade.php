@@ -23,39 +23,11 @@
         }
     @endphp
 
-    <div class="page-header-modular animate__animated animate__fadeInDown">
-        <div class="header-centered-content">
-            <a href="{{ route('user.leave.approvals') }}" class="back-btn-premium-abs">
-                <i class="fas fa-chevron-left"></i>
-            </a>
+    <x-leave.review-header 
+        :application="$application" 
+        :backRoute="route('user.leave.approvals', ['tab' => request()->query('tab', 'pending')])" 
+    />
 
-            <div class="header-identity text-center">
-                <span class="text-[0.6rem] font-bold uppercase tracking-[0.25em] text-slate-400 mb-1 block">CS Form No. 6 (Revised 2020)</span>
-                <h1 class="page-title-premium-centered">Application for Leave</h1>
-                <p class="text-[0.65rem] font-bold text-slate-500 tracking-tight">Department of Education - Schools Division Office</p>
-            </div>
-
-            <div class="header-bottom-row mt-6">
-                <div class="header-metadata-compact">
-                    <div class="meta-capsule-compact">
-                        <i class="fas fa-fingerprint text-blue-500"></i>
-                        <span>#{{ str_pad($application->id, 5, '0', STR_PAD_LEFT) }}</span>
-                    </div>
-                    <div class="meta-capsule-compact">
-                        <i class="far fa-calendar-check text-slate-400"></i>
-                        <span>{{ $application->created_at->format('M d, Y') }}</span>
-                    </div>
-                </div>
-
-                <div class="header-actions-compact">
-                    <a href="{{ route('user.leave.form6', ['id' => $application->id, 'format' => 'pdf']) }}" target="_blank" class="btn-action-mini">
-                        <i class="fas fa-file-pdf text-red-500"></i>
-                        <span>PREVIEW FORM 6</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="page-layout">
 
@@ -73,13 +45,25 @@
                         @php
                             $currentStatus = strtolower($application->status);
                             $isRejected = str_contains($currentStatus, 'reject') || str_contains($currentStatus, 'disapprove');
+                            
                             $s1 = $application->hr_verified_at ? 'completed' : 'active';
+                            
                             $recoComplete = $application->recommended_at;
                             $s2 = $recoComplete ? 'completed' : ($application->hr_verified_at ? 'active' : '');
-                            $s3 = $application->approved_at ? 'completed' : ($recoComplete ? 'active' : '');
+                            
+                            $asdsComplete = $application->asds_approved_at;
+                            $s2_5 = $asdsComplete ? 'completed' : ($recoComplete ? 'active' : '');
+                            
+                            $s3 = $application->approved_at ? 'completed' : 
+                                ($application->asds_id 
+                                    ? ($asdsComplete ? 'active' : '') 
+                                    : ($recoComplete ? 'active' : '')
+                                );
+
                             if ($isRejected) {
                                 if (!$application->hr_verified_at) $s1 = 'rejected';
                                 else if (!$recoComplete) $s2 = 'rejected';
+                                else if ($application->asds_id && !$asdsComplete) $s2_5 = 'rejected';
                                 else $s3 = 'rejected';
                             }
                         @endphp
@@ -105,6 +89,15 @@
                                     {{ $application->recommended_at ? $application->recommended_at->format('M d, Y') : ($s2 == 'active' ? 'Under Review' : 'Upcoming') }}
                                 </div>
                             </div>
+                            @if($application->asds_id)
+                            <div class="h-step {{ $s2_5 }}">
+                                <div class="h-marker"><i class="fas fa-check"></i></div>
+                                <div class="h-step-label">ASDS Approval</div>
+                                <div class="h-step-sub">
+                                    {{ $application->asds_approved_at ? $application->asds_approved_at->format('M d, Y') : ($s2_5 == 'active' ? 'Under Review' : 'Upcoming') }}
+                                </div>
+                            </div>
+                            @endif
                             <div class="h-step {{ $s3 }}">
                                 <div class="h-marker"><i class="fas fa-check"></i></div>
                                 <div class="h-step-label">Final Approval</div>
@@ -269,19 +262,28 @@
                     <h3>Certification & Approvals</h3>
                 </div>
                 <div class="review-card-body">
-                    <div class="review-grid-three-col">
+                    <div class="review-grid-{{ $application->asds_id ? 'four' : 'three' }}-col">
                         <!-- 7.A HR Certification -->
                         <div class="sig-box">
                             <div class="sig-label-top">7.A Cert. of Leave Credits</div>
+                            @php
+                                $displayVerifier = $application->hrVerifier;
+                                if ($displayVerifier && $displayVerifier->role === 'hr_review_officer') {
+                                    $displayVerifier = \App\Models\User::whereIn('role', ['head_hr', 'hr'])
+                                        ->where('is_active', true)
+                                        ->whereNotNull('esignature')
+                                        ->first() ?: $displayVerifier;
+                                }
+                            @endphp
                             <div class="signature-area-premium">
                                 @if($application->hr_verified_at)
                                     <div class="mb-2 text-center">
                                         <div class="status-badge-premium certified mb-4">
                                             <i class="fas fa-check-circle"></i> Certified {{ $application->hr_verified_at->format('M d, Y') }}
                                         </div>
-                                        @if($application->hrVerifier && $application->hrVerifier->esignature)
+                                        @if($displayVerifier && $displayVerifier->esignature)
                                             <div class="mb-2">
-                                                <img src="{{ storage_url($application->hrVerifier->esignature) }}" class="esign-premium" alt="Signature">
+                                                <img src="{{ storage_url($displayVerifier->esignature) }}" class="esign-premium" alt="Signature">
                                             </div>
                                         @endif
                                     </div>
@@ -294,8 +296,8 @@
                             </div>
                             @if($application->hr_verified_at)
                                 <div class="text-center">
-                                    <div class="font-bold uppercase text-xs text-slate-800 tracking-tight">{{ $application->hrVerifier->full_name ?? 'Verifying Officer' }}</div>
-                                    <div class="text-[0.55rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $application->hrVerifier->position ?? 'Administrative Officer' }}</div>
+                                    <div class="font-bold uppercase text-xs text-slate-800 tracking-tight">{{ $displayVerifier->full_name ?? 'Verifying Officer' }}</div>
+                                    <div class="text-[0.55rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $displayVerifier->position ?? 'Administrative Officer' }}</div>
                                 </div>
                             @endif
                         </div>
@@ -330,34 +332,64 @@
                             @endif
                         </div>
 
+                        <!-- 7.B.2 ASDS Approval (If applicable) -->
+                        @if($application->asds_id)
+                        <div class="sig-box">
+                            <div class="sig-label-top">7.B ASDS 1st Approval</div>
+                            <div class="signature-area-premium">
+                                @if($application->asds_approved_at)
+                                    <div class="mb-2 text-center">
+                                        <div class="status-badge-premium approved mb-4">
+                                            <i class="fas fa-check-double"></i> ASDS Signed {{ $application->asds_approved_at->format('M d, Y') }}
+                                        </div>
+                                        @if($application->asds && $application->asds->esignature)
+                                            <div class="mb-2">
+                                                <img src="{{ storage_url($application->asds->esignature) }}" class="esign-premium" alt="Signature">
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="signature-placeholder-premium">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span>Awaiting ASDS</span>
+                                    </div>
+                                @endif
+                            </div>
+                            @if($application->asds_approved_at)
+                                <div class="text-center">
+                                    <div class="font-bold uppercase text-xs text-slate-800 tracking-tight">{{ $application->asds->full_name }}</div>
+                                    <div class="text-[0.55rem] text-slate-400 font-black uppercase tracking-widest mt-0.5">{{ $application->asds->position }}</div>
+                                </div>
+                            @endif
+                        </div>
+                        @endif
+
                         <!-- 7.C/D Final Approval -->
-                        <div class="sig-box bg-slate-50/30 border-slate-200" style="grid-column: span 1;">
+                        <div class="sig-box bg-slate-50/30 border-slate-200">
                             <div class="sig-label-top">7.C / 7.D Final Executive Approval</div>
                             <div class="signature-area-premium">
                                 @if($application->approved_at)
-                                    <div class="status-badge-premium approved mb-6">
-                                        <i class="fas fa-shield-check"></i> Exec Signed {{ $application->approved_at->format('M d, Y') }}
-                                    </div>
-                                    @if($application->approvingOfficer && $application->approvingOfficer->esignature)
-                                        <div class="mb-4">
-                                            <img src="{{ storage_url($application->approvingOfficer->esignature) }}" class="esign-premium" alt="Signature">
+                                    <div class="mb-2 text-center">
+                                        <div class="status-badge-premium approved mb-4">
+                                            <i class="fas fa-shield-check"></i> Exec Signed {{ $application->approved_at->format('M d, Y') }}
                                         </div>
-                                    @endif
-                                    <div class="text-center">
-                                        <div class="font-black uppercase text-sm text-blue-950 tracking-tight leading-none mb-1">{{ $application->approvingOfficer->full_name }}</div>
-                                        <div class="text-[0.55rem] text-blue-400 font-black uppercase tracking-[0.1em]">{{ $application->approvingOfficer->position }}</div>
+                                        @if($application->approvingOfficer && $application->approvingOfficer->esignature)
+                                            <div class="mb-2">
+                                                <img src="{{ storage_url($application->approvingOfficer->esignature) }}" class="esign-premium" alt="Signature">
+                                            </div>
+                                        @endif
                                     </div>
                                 @else
                                     @if($application->hr_verified_at)
-                                        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm mb-4">
-                                            <div class="space-y-2">
-                                                <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                    <span class="text-[0.6rem] font-black text-slate-400 uppercase">With Pay</span>
-                                                    <span class="font-black text-blue-600">{{ $application->days_with_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
+                                        <div class="p-3 bg-white/80 rounded-xl border border-slate-200/60 shadow-sm mb-3 w-full">
+                                            <div class="space-y-1.5">
+                                                <div class="flex justify-between items-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/50">
+                                                    <span class="text-[0.55rem] font-black text-slate-400 uppercase">With Pay</span>
+                                                    <span class="font-black text-blue-600 text-xs">{{ $application->days_with_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
                                                 </div>
-                                                <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                    <span class="text-[0.6rem] font-black text-slate-400 uppercase">W/O Pay</span>
-                                                    <span class="font-black text-slate-700">{{ $application->days_without_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
+                                                <div class="flex justify-between items-center bg-slate-50/50 p-1.5 rounded-lg border border-slate-100/50">
+                                                    <span class="text-[0.55rem] font-black text-slate-400 uppercase">W/O Pay</span>
+                                                    <span class="font-black text-slate-700 text-xs">{{ $application->days_without_pay ?? 0 }} <span class="text-[0.5rem]">D</span></span>
                                                 </div>
                                             </div>
                                         </div>
@@ -368,6 +400,12 @@
                                     </div>
                                 @endif
                             </div>
+                            @if($application->approved_at)
+                                <div class="text-center">
+                                    <div class="font-black uppercase text-sm text-blue-950 tracking-tight leading-none mb-1">{{ $application->approvingOfficer->full_name }}</div>
+                                    <div class="text-[0.55rem] text-blue-400 font-black uppercase tracking-[0.1em]">{{ $application->approvingOfficer->position }}</div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -377,6 +415,21 @@
         <!-- --- RIGHT: SIDEBAR --- -->
         <div class="flex flex-col gap-6">
 
+            <!-- Past Date Warning (If applicable) -->
+            @if($application->end_date && $application->end_date->isPast() && $application->status !== 'Approved' && $application->status !== 'Rejected')
+                <div class="deficit-critical-card mb-6 animate__animated animate__shakeX" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: none; margin-bottom: 24px; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); padding: 20px;">
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; flex-shrink: 0;">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.8); margin-bottom: 4px;">Post-Date Notification</span>
+                            <p style="font-size: 0.75rem; font-weight: 700; color: white; margin: 0; line-height: 1.4;">This leave period has already concluded. Please ensure this late verification meets regulatory guidelines.</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Credit Analysis Card -->
             <div class="sidebar-modular-card animate__animated animate__fadeInRight" style="animation-delay: 0.6s;">
                 <div class="sidebar-modular-header text-blue-900">
@@ -384,67 +437,76 @@
                     <span>Credit Analysis</span>
                 </div>
 
-                <div class="sidebar-content-modular">
+                <div class="sidebar-content-modular flex flex-col gap-6">
                     @php
-                        $vl = $credits['vl'];
-                        $sl = $credits['sl'];
-                        $insufficient = ($vl['balance'] < 0 || $sl['balance'] < 0);
+                        $hasInsufficient = false;
+                        foreach($displayPools as $pool) {
+                            if($pool['balance'] < 0) { $hasInsufficient = true; break; }
+                        }
                     @endphp
 
-                    @if($insufficient)
-                        <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-6 animate__animated animate__pulse animate__infinite">
-                            <div class="flex gap-3">
-                                <i class="fas fa-exclamation-triangle text-amber-500 mt-1"></i>
-                                <div>
-                                    <span class="text-[0.65rem] font-black text-amber-600 uppercase tracking-widest block mb-1">Deficit Warning</span>
-                                    <p class="text-[0.75rem] text-amber-700 font-bold leading-tight">This application will result in negative leave credits.</p>
+                    @if($hasInsufficient)
+                        <div class="deficit-critical-card mb-12" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: none; margin-bottom: 40px !important; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); padding: 20px;">
+                            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; flex-shrink: 0;">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.8); margin-bottom: 4px;">Deficit Warning</span>
+                                    <p style="font-size: 0.75rem; font-weight: 700; color: white; margin: 0; line-height: 1.4;">This application will result in negative leave credits if approved.</p>
+                                    <p style="font-size: 0.65rem; font-weight: 500; color: rgba(255, 255, 255, 0.9); margin-top: 6px; font-style: italic; line-height: 1.4;">
+                                        Note: Negative results in credit may reflect on the salary deduction.
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     @endif
 
-                    <div class="space-y-8">
-                        <!-- VL Pool -->
-                        <div class="credit-pool-card-premium">
-                            <div class="credit-pool-label">
-                                <i class="fas fa-sun text-orange-400"></i> Vacation Leave Pool
+                    @if($application->status === 'Approved')
+                        <div class="premium-note-box info mb-10 animate__animated animate__fadeIn">
+                            <div class="premium-note-icon">
+                                <i class="fas fa-history"></i>
                             </div>
-                            <div class="space-y-1">
-                                <div class="credit-row-premium">
-                                    <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
-                                    <span class="credit-val-dim">{{ (float) $vl['current'] }}</span>
-                                </div>
-                                <div class="credit-row-premium">
-                                    <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
-                                    <span class="credit-val-impact">-{{ (float) $vl['less'] }}</span>
-                                </div>
-                                <div class="credit-balance-box">
-                                    <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
-                                    <span class="text-xl font-black {{ $vl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $vl['balance'] }}</span>
-                                </div>
+                            <div class="premium-note-content">
+                                <span class="premium-note-title">Post-Approval Snapshot</span>
+                                <p class="premium-note-text">This view shows the credit deduction that occurred upon final approval.</p>
                             </div>
                         </div>
+                    @endif
 
-                        <!-- SL Pool -->
-                        <div class="credit-pool-card-premium">
-                            <div class="credit-pool-label">
-                                <i class="fas fa-briefcase-medical text-red-400"></i> Sick Leave Pool
+                    <div class="space-y-8">
+                        @forelse($displayPools as $pool)
+                            <!-- Dynamic Credit Pool -->
+                            <div class="credit-pool-card-premium">
+                                <div class="credit-pool-label">
+                                    <i class="{{ $pool['icon'] }} {{ $pool['color'] }}"></i> {{ $pool['name'] }} Pool
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="credit-row-premium">
+                                        <span class="text-[0.7rem] font-bold text-slate-400">{{ $application->status === 'Approved' ? 'Balance Before' : 'Current Balance' }}</span>
+                                        <span class="credit-val-dim">{{ (float) $pool['current'] }}</span>
+                                    </div>
+                                    <div class="credit-row-premium">
+                                        <span class="text-[0.7rem] font-bold text-slate-400">{{ $application->status === 'Approved' ? 'Deducted Credits' : 'Less This App' }}</span>
+                                        <span class="credit-val-impact">-{{ (float) $pool['less'] }}</span>
+                                    </div>
+                                    <div class="credit-balance-box">
+                                        <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">{{ $application->status === 'Approved' ? 'Post-Approval Balance' : 'New Balance' }}</span>
+                                        <span class="text-xl font-black {{ $pool['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $pool['balance'] }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="space-y-1">
-                                <div class="credit-row-premium">
-                                    <span class="text-[0.7rem] font-bold text-slate-400">Current Balance</span>
-                                    <span class="credit-val-dim">{{ (float) $sl['current'] }}</span>
+                        @empty
+                            <div class="premium-note-box empty">
+                                <div class="premium-note-icon">
+                                    <i class="fas fa-database"></i>
                                 </div>
-                                <div class="credit-row-premium">
-                                    <span class="text-[0.7rem] font-bold text-slate-400">Less This App</span>
-                                    <span class="credit-val-impact">-{{ (float) $sl['less'] }}</span>
-                                </div>
-                                <div class="credit-balance-box">
-                                    <span class="text-[0.6rem] font-black text-slate-800 uppercase tracking-tighter">New Balance</span>
-                                    <span class="text-xl font-black {{ $sl['balance'] < 0 ? 'text-red-600' : 'text-green-600' }} font-mono leading-none">{{ (float) $sl['balance'] }}</span>
+                                <div class="premium-note-content">
+                                    <span class="premium-note-title">No Tracked Credits</span>
+                                    <p class="premium-note-text">This leave type does not track specific credit balances in the system.</p>
                                 </div>
                             </div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -456,90 +518,113 @@
                     <span>Authority Actions</span>
                 </div>
 
-                <div class="sidebar-content-modular flex flex-col gap-4">
+                <div class="sidebar-content-modular authority-actions-wrapper">
                     @php
                         $user = Auth::user();
                         $role = $user->role;
                         $status = $application->status;
                         $canAct = false;
                         $actionType = '';
-                        if (in_array($role, ['hr', 'head_hr', 'super_admin']) && $status === 'Pending HR') $actionType = 'verify';
+                        if (in_array($role, ['hr', 'head_hr', 'hr_review_officer', 'super_admin']) && $status === 'Pending HR') $actionType = 'verify';
                         elseif ($application->recommending_officer_id == $user->id && $status === 'Pending Recommending') $actionType = 'recommend';
+                        elseif ($application->asds_id == $user->id && $status === 'Pending ASDS Approval') $actionType = 'asds-approve';
                         elseif ($application->approving_officer_id == $user->id && $status === 'Pending Approval') $actionType = 'approve';
                         if ($actionType) $canAct = true;
                     @endphp
                     @if($canAct)
                         @if($actionType === 'verify')
-                            <form action="{{ route('user.leave.verify', $application->id) }}" method="POST" class="w-full space-y-4">
-                                @csrf
-                                <div class="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-5">
-                                    <div class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2"><i class="fas fa-file-signature text-blue-400"></i> Verification Form</div>
-                                    
-                                    <div class="verification-date-board-premium">
-                                        <div class="flex justify-between items-center mb-4">
-                                            <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-wider">Date Breakdown Selection</span>
-                                            <div class="flex gap-2">
-                                                <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full" id="paid-total-pill">0.0 Paid</div>
-                                                <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full" id="unpaid-total-pill">0.0 Unpaid</div>
+                            <div class="action-form-container">
+                                <form action="{{ route('user.leave.verify', $application->id) }}" id="verifyForm" method="POST" class="w-full space-y-4">
+                                    @csrf
+                                    <div class="bg-slate-50/50 p-6 rounded-3xl border border-slate-100 space-y-5">
+                                        <div class="text-[0.65rem] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-2"><i class="fas fa-file-signature text-blue-400"></i> Verification Form</div>
+                                        
+                                        <div class="verification-date-board-premium">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <span class="text-[0.6rem] font-black text-slate-500 uppercase tracking-wider">Date Breakdown Selection</span>
+                                                <div class="flex gap-2">
+                                                    <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full" id="paid-total-pill">0.0 Paid</div>
+                                                    <div class="text-[0.6rem] font-bold px-2 py-0.5 bg-slate-200 text-slate-600 rounded-full" id="unpaid-total-pill">0.0 Unpaid</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar-premium">
+                                                @foreach($applicationDates as $index => $date)
+                                                    @php $d = \Carbon\Carbon::parse($date); @endphp
+                                                    <div class="date-selector-row-premium">
+                                                        <div class="flex flex-col">
+                                                            <span class="text-[0.7rem] font-bold text-slate-700 leading-none">{{ $d->format('D, M d') }}</span>
+                                                            <span class="text-[0.55rem] text-slate-400 font-bold uppercase mt-0.5">{{ $d->format('Y') }}</span>
+                                                        </div>
+                                                        <div class="pay-toggle-group-premium">
+                                                            <input type="radio" id="p_{{ $index }}" name="date_pay_{{ $index }}" value="1" class="pay-radio-hidden" checked onchange="calculateVerificationTotals()">
+                                                            <label for="p_{{ $index }}" class="pay-toggle-btn-premium paid">Paid</label>
+                                                            
+                                                            <input type="radio" id="u_{{ $index }}" name="date_pay_{{ $index }}" value="0" class="pay-radio-hidden" onchange="calculateVerificationTotals()">
+                                                            <label for="u_{{ $index }}" class="pay-toggle-btn-premium unpaid">Unpaid</label>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                             </div>
                                         </div>
 
-                                        <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar-premium">
-                                            @foreach($applicationDates as $index => $date)
-                                                @php $d = \Carbon\Carbon::parse($date); @endphp
-                                                <div class="date-selector-row-premium">
-                                                    <div class="flex flex-col">
-                                                        <span class="text-[0.7rem] font-bold text-slate-700 leading-none">{{ $d->format('D, M d') }}</span>
-                                                        <span class="text-[0.55rem] text-slate-400 font-bold uppercase mt-0.5">{{ $d->format('Y') }}</span>
-                                                    </div>
-                                                    <div class="pay-toggle-group-premium">
-                                                        <input type="radio" id="p_{{ $index }}" name="date_pay_{{ $index }}" value="1" class="pay-radio-hidden" checked onchange="calculateVerificationTotals()">
-                                                        <label for="p_{{ $index }}" class="pay-toggle-btn-premium paid">Paid</label>
-                                                        
-                                                        <input type="radio" id="u_{{ $index }}" name="date_pay_{{ $index }}" value="0" class="pay-radio-hidden" onchange="calculateVerificationTotals()">
-                                                        <label for="u_{{ $index }}" class="pay-toggle-btn-premium unpaid">Unpaid</label>
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                        <input type="hidden" name="days_with_pay" id="days_with_pay_hidden" value="{{ $application->days_with_pay }}">
+                                        <input type="hidden" name="days_without_pay" id="days_without_pay_hidden" value="{{ $application->days_without_pay }}">
+
+                                        <div>
+                                            <label class="action-label-premium">Remarks / Internal Notes</label>
+                                            <input type="text" name="others_remarks" value="{{ $application->others_remarks }}"
+                                                class="action-input-premium shadow-sm" placeholder="Add remarks here...">
                                         </div>
                                     </div>
-
-                                    <input type="hidden" name="days_with_pay" id="days_with_pay_hidden" value="{{ $application->days_with_pay }}">
-                                    <input type="hidden" name="days_without_pay" id="days_without_pay_hidden" value="{{ $application->days_without_pay }}">
-
-                                    <div>
-                                        <label class="action-label-premium">Remarks / Internal Notes</label>
-                                        <input type="text" name="others_remarks" value="{{ $application->others_remarks }}"
-                                            class="action-input-premium shadow-sm" placeholder="Add remarks here...">
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn-review-primary shadow-xl shadow-blue-500/10 py-4">
-                                    <i class="fas fa-check-double scale-125"></i> <span class="tracking-tight">Verify Application</span>
-                                </button>
-                            </form>
+                                    <button type="button" onclick="triggerActionConfirm('verifyForm', 'Confirm HR Verification', 'Are you sure you want to verify these leave credits and dates? This will finalize the HR certification step.')" class="btn-review-primary shadow-xl shadow-blue-500/10 py-4">
+                                        <i class="fas fa-check-double scale-125"></i> <span class="tracking-tight">Verify Application</span>
+                                    </button>
+                                </form>
+                            </div>
                         @elseif($actionType === 'recommend')
-                             <form action="{{ route('user.leave.recommend', $application->id) }}" method="POST" class="w-full">
-                                @csrf
-                                <button type="submit" class="btn-review-primary shadow-xl shadow-blue-500/10">
-                                    <i class="fas fa-award scale-125"></i> <span class="tracking-tight">Submit Recommendation</span>
-                                </button>
-                            </form>
+                             <div class="action-form-container">
+                                <form action="{{ route('user.leave.recommend', $application->id) }}" id="recommendForm" method="POST" class="w-full">
+                                    @csrf
+                                    <button type="button" onclick="triggerActionConfirm('recommendForm', 'Submit Recommendation', 'Are you sure you want to submit your recommendation for this application?')" class="btn-review-primary shadow-xl shadow-blue-500/10">
+                                        <i class="fas fa-award scale-125"></i> <span class="tracking-tight">Submit Recommendation</span>
+                                    </button>
+                                </form>
+                             </div>
+                        @elseif($actionType === 'asds-approve')
+                             <div class="action-form-container">
+                                <form action="{{ route('user.leave.asds-approve', $application->id) }}" id="asdsApproveForm" method="POST" class="w-full">
+                                    @csrf
+                                    <button type="button" onclick="triggerActionConfirm('asdsApproveForm', 'Grant ASDS Approval', 'Are you sure you want to grant ASDS 1st approval for this application? It will then move to SDS for final approval.')" class="btn-review-primary shadow-xl shadow-blue-500/10">
+                                        <i class="fas fa-check-double scale-125"></i> <span class="tracking-tight">Approve (ASDS)</span>
+                                    </button>
+                                </form>
+                             </div>
                         @elseif($actionType === 'approve')
-                             <form action="{{ route('user.leave.approve', $application->id) }}" method="POST" class="w-full">
-                                @csrf
-                                <button type="submit" class="btn-review-primary shadow-xl shadow-green-500/10 !bg-green-600">
-                                    <i class="fas fa-signature scale-125"></i> <span class="tracking-tight">Grant Final Approval</span>
-                                </button>
-                            </form>
+                             <div class="action-form-container">
+                                <form action="{{ route('user.leave.approve', $application->id) }}" id="approveForm" method="POST" class="w-full">
+                                    @csrf
+                                    <button type="button" onclick="triggerActionConfirm('approveForm', 'Grant Final Approval', 'Are you sure you want to grant final approval for this application? This action cannot be undone.')" class="btn-review-primary shadow-xl shadow-green-500/10 !bg-green-600">
+                                        <i class="fas fa-signature scale-125"></i> <span class="tracking-tight">Grant Final Approval</span>
+                                    </button>
+                                </form>
+                             </div>
                         @endif
 
-                        <button id="openRejectModalBtn" type="button" class="btn-review-reject">
-                            <i class="fas fa-undo mr-2"></i> Reject & Return
-                        </button>
+                        <div class="action-form-container">
+                            <button id="openRejectModalBtn" type="button" class="btn-review-reject w-full">
+                                <i class="fas fa-undo mr-2"></i> Reject & Return
+                            </button>
+                        </div>
                     @else
-                        <div class="p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center">
-                            <i class="fas fa-info-circle text-slate-300 text-2xl mb-2"></i>
-                            <div class="text-slate-400 text-[0.7rem] font-bold uppercase tracking-widest leading-relaxed"> No pending actions <br> for your profile </div>
+                        <div class="premium-note-box empty mt-2">
+                            <div class="premium-note-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="premium-note-content">
+                                <span class="premium-note-title">No Actions Needed</span>
+                                <p class="premium-note-text">There are no pending actions for your role at this stage of the workflow.</p>
+                            </div>
                         </div>
                     @endif
 
@@ -578,7 +663,94 @@
     </div>
 
 
+    <!-- Action Confirmation Modal (Premium Redesign) -->
+    <div id="confirmActionModal" class="modal-backdrop">
+        <div class="modal-content-modular-premium">
+            <div class="modal-header-premium">
+                <div class="modal-header-left">
+                    <div class="modal-header-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="modal-header-title" id="confirmActionTitle">Confirm Action</h3>
+                </div>
+                <button type="button" onclick="closeConfirmModal()" class="modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body-premium">
+                <p class="modal-body-text" id="confirmActionDesc">
+                    Are you sure you want to proceed with this authority action?
+                </p>
+
+                <!-- Info Box -->
+                <div class="modal-info-box">
+                    <div class="flex flex-col gap-1">
+                        <span class="modal-info-main" id="confirmActionTracking">---</span>
+                        <span class="modal-info-sub" id="confirmActionName">---</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer-premium">
+                <button type="button" onclick="closeConfirmModal()" class="btn-action-cancel">
+                    Cancel
+                </button>
+                <button type="button" id="finalConfirmBtn" class="btn-action-confirm">
+                    <i class="fas fa-check"></i> <span id="confirmActionBtnText">Yes, proceed</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let currentActionForm = null;
+
+        function triggerActionConfirm(formId, title, message) {
+            currentActionForm = document.getElementById(formId);
+            document.getElementById('confirmActionTitle').innerText = title;
+            document.getElementById('confirmActionDesc').innerText = message;
+            
+            // Populate tracking and name from existing elements
+            const trackingNo = "{{ $application->tracking_no ?? 'UNTRACKED' }}";
+            const applicantName = "{{ $application->user->full_name }}";
+            document.getElementById('confirmActionTracking').innerText = trackingNo;
+            document.getElementById('confirmActionName').innerText = applicantName;
+
+            const confirmModal = document.getElementById('confirmActionModal');
+            confirmModal.classList.add('active');
+
+            // Apply specific button text and color
+            const finalBtn = document.getElementById('finalConfirmBtn');
+            const btnText = document.getElementById('confirmActionBtnText');
+
+            if (formId === 'approveForm') {
+                finalBtn.style.backgroundColor = '#10b981'; // Green
+                btnText.innerText = "Yes, Approve";
+            } else if (formId === 'recommendForm') {
+                finalBtn.style.backgroundColor = '#1b4a9a'; // Blue
+                btnText.innerText = "Yes, Recommend";
+            } else if (formId === 'asdsApproveForm') {
+                finalBtn.style.backgroundColor = '#1b4a9a'; // Blue-600
+                btnText.innerText = "Yes, ASDS Approve";
+            } else {
+                finalBtn.style.backgroundColor = '#1b4a9a'; // Blue
+                btnText.innerText = "Yes, Verify";
+            }
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmActionModal').classList.remove('active');
+        }
+
+        document.getElementById('finalConfirmBtn').addEventListener('click', function() {
+            if (currentActionForm) {
+                currentActionForm.submit();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
             const rejectModal = document.getElementById('rejectModal');
             const rejectBtn = document.getElementById('openRejectModalBtn');
@@ -601,6 +773,14 @@
             rejectModal.addEventListener('click', function (e) {
                 if (e.target === rejectModal) {
                     rejectModal.classList.remove('active');
+                }
+            });
+
+            // Close confirm modal when clicking outside
+            const confirmActionModal = document.getElementById('confirmActionModal');
+            confirmActionModal.addEventListener('click', function (e) {
+                if (e.target === confirmActionModal) {
+                    closeConfirmModal();
                 }
             });
         });

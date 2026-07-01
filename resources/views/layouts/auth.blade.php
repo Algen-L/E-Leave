@@ -19,8 +19,7 @@
     @stack('styles')
 </head>
 <body class="auth-page morph-init">
-    <!-- Animated Grid Background -->
-    <div class="grid-background" id="gridBackground"></div>
+
     
     <!-- Toast Container -->
     <div id="toast-container"></div>
@@ -149,94 +148,7 @@
             }
         });
 
-        // Grid Background Animation (Snake Style)
-        document.addEventListener('DOMContentLoaded', function() {
-            const gridBg = document.getElementById('gridBackground');
-            const tileSize = 100;
-            const gap = 2;
-            const cols = Math.ceil(window.innerWidth / (tileSize + gap)) + 1;
-            const rows = Math.ceil(window.innerHeight / (tileSize + gap)) + 1;
-            const totalTiles = cols * rows;
 
-            gridBg.style.gridTemplateColumns = `repeat(${cols}, ${tileSize}px)`;
-            gridBg.style.gridTemplateRows = `repeat(${rows}, ${tileSize}px)`;
-
-            for (let i = 0; i < totalTiles; i++) {
-                const tile = document.createElement('div');
-                tile.className = 'grid-tile';
-                gridBg.appendChild(tile);
-            }
-
-            const tiles = document.querySelectorAll('.grid-tile');
-
-            function createSnake() {
-                const startX = Math.floor(Math.random() * cols);
-                const startY = Math.floor(Math.random() * rows);
-                
-                // Randomly choose movement type: 'straight' or 'circular'
-                const moveType = Math.random() > 0.3 ? 'straight' : 'circular';
-                
-                const directions = [
-                    { x: 0, y: -1 }, // Up (0)
-                    { x: 1, y: 0 },  // Right (1)
-                    { x: 0, y: 1 },  // Down (2)
-                    { x: -1, y: 0 }  // Left (3)
-                ];
-
-                let path = [];
-                let curX = startX;
-                let curY = startY;
-
-                if (moveType === 'straight') {
-                    const dir = directions[Math.floor(Math.random() * directions.length)];
-                    const length = Math.floor(Math.random() * 8) + 3;
-                    for (let i = 0; i < length; i++) {
-                        path.push({ x: curX, y: curY });
-                        curX += dir.x;
-                        curY += dir.y;
-                    }
-                } else {
-                    // Circular (Square) movement
-                    const sideLength = Math.floor(Math.random() * 3) + 2; // 2 to 4 tiles per side
-                    let dirIdx = Math.floor(Math.random() * 4); // Random starting direction
-                    
-                    for (let side = 0; side < 4; side++) {
-                        const dir = directions[dirIdx];
-                        for (let i = 0; i < sideLength; i++) {
-                            path.push({ x: curX, y: curY });
-                            curX += dir.x;
-                            curY += dir.y;
-                        }
-                        dirIdx = (dirIdx + 1) % 4; // Turn 90 degrees clockwise
-                    }
-                }
-
-                // Animate the calculated path
-                path.forEach((pos, i) => {
-                    // Stay within bounds
-                    if (pos.x < 0 || pos.x >= cols || pos.y < 0 || pos.y >= rows) return;
-                    
-                    const idx = pos.y * cols + pos.x;
-                    const tile = tiles[idx];
-                    if (tile) {
-                        setTimeout(() => {
-                            tile.classList.add('snake-tile');
-                            setTimeout(() => {
-                                tile.classList.remove('snake-tile');
-                            }, 3000); // Much longer trail for slower speed
-                        }, i * 400); // 400ms per step (Very Slow)
-                    }
-                });
-            }
-
-            // Start 2-3 snakes periodically
-            setInterval(() => {
-                const count = Math.floor(Math.random() * 2) + 2; // 2 or 3
-                for (let i = 0; i < count; i++) {
-                    setTimeout(createSnake, i * 600); // Stagger them even more
-                }
-            }, 2400); // Much slower spawning interval
-        });
         
         // Toast Notification System (LDPVER2 Style)
         function showToast(message, type = 'error', duration = 5000) {
@@ -278,5 +190,15 @@
     </script>
     
     @stack('scripts')
+    <script>
+        // Disable right-click and copy-paste
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('copy', event => event.preventDefault());
+        document.addEventListener('paste', event => event.preventDefault());
+        document.addEventListener('cut', event => event.preventDefault());
+
+        // Reset persistent form data on logout/login page
+        localStorage.removeItem('leave_form_data');
+    </script>
 </body>
 </html>

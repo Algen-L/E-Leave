@@ -22,52 +22,77 @@
             color: #334155;
             padding: 0.75rem;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            animation: fadeIn 0.6s ease-out;
+            @if(count(request()->query()) === 0)
+                animation: fadeIn 0.6s ease-out;
+            @endif
         }
 
         /* Sequential Animations for Metric Cards */
-        .metrics-grid .modern-stat-card {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+        @if(count(request()->query()) === 0)
+            .metrics-grid .modern-stat-card {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
 
-        .metrics-grid .modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .metrics-grid .modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .metrics-grid .modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .metrics-grid .modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
+            .metrics-grid .modern-stat-card:nth-child(1) { animation-delay: 0.1s; }
+            .metrics-grid .modern-stat-card:nth-child(2) { animation-delay: 0.2s; }
+            .metrics-grid .modern-stat-card:nth-child(3) { animation-delay: 0.3s; }
+            .metrics-grid .modern-stat-card:nth-child(4) { animation-delay: 0.4s; }
 
-        /* Sequential Animations for Middle Row */
-        .middle-row-grid .glass-container {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
+            /* Sequential Animations for Middle Row */
+            .middle-row-grid .glass-container {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
 
-        .middle-row-grid .glass-container:nth-child(3) { animation-delay: 0.7s; }
+            .middle-row-grid .glass-container:nth-child(3) { animation-delay: 0.7s; }
+        @else
+            .metrics-grid .modern-stat-card,
+            .middle-row-grid .glass-container {
+                opacity: 1;
+                transform: none;
+                animation: none;
+            }
+        @endif
 
         /* Page Header Entrance */
         .page-title, .current-date-box {
-            opacity: 0;
-            animation: fadeInDown 0.6s ease-out forwards;
+            @if(count(request()->query()) === 0)
+                opacity: 0;
+                animation: fadeInDown 0.6s ease-out forwards;
+            @else
+                opacity: 1;
+                transform: none;
+            @endif
         }
 
         /* Sequential Animations for Audit Trail */
-        .audit-table tbody tr {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        @foreach(range(1, 10) as $i)
-            .audit-table tbody tr:nth-child({{ $i }}) {
-                animation-delay: {{ 0.9 + ($i * 0.05) }}s;
+        @if(count(request()->query()) === 0)
+            .audit-table tbody tr {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
             }
-        @endforeach
 
-        /* Audit Container Entrance */
-        .audit-container {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-            animation-delay: 0.8s;
-        }
+            @foreach(range(1, 10) as $i)
+                .audit-table tbody tr:nth-child({{ $i }}) {
+                    animation-delay: {{ 0.9 + ($i * 0.05) }}s;
+                }
+            @endforeach
+
+            /* Audit Container Entrance */
+            .audit-container {
+                opacity: 0;
+                animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+                animation-delay: 0.8s;
+            }
+        @else
+            .audit-table tbody tr,
+            .audit-container {
+                opacity: 1;
+                transform: none;
+                animation: none;
+            }
+        @endif
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -92,18 +117,32 @@
         }
 
         .privilege-chart-wrapper.complex-sequence {
-            animation: privilegeFlipCenter 1s forwards;
-            animation-delay: 0.6s;
-            opacity: 0; /* Start hidden */
+            @if(count(request()->query()) === 0)
+                animation: privilegeFlipCenter 1s forwards;
+                animation-delay: 0.6s;
+                opacity: 0; /* Start hidden */
+            @else
+                opacity: 1;
+                transform: none;
+                animation: none;
+            @endif
         }
 
         .privilege-legend.complex-sequence {
-            max-width: 0;
-            opacity: 0;
-            overflow: hidden;
-            white-space: nowrap;
-            animation: privilegeLegendReveal 1s forwards;
-            animation-delay: 1.6s; /* Starts after flip */
+            @if(count(request()->query()) === 0)
+                max-width: 0;
+                opacity: 0;
+                overflow: hidden;
+                white-space: nowrap;
+                animation: privilegeLegendReveal 1s forwards;
+                animation-delay: 1.6s; /* Starts after flip */
+            @else
+                opacity: 1;
+                max-width: 500px;
+                transform: none;
+                animation: none;
+                margin-left: 2rem;
+            @endif
         }
 
         @keyframes fadeInDown {
@@ -156,14 +195,13 @@
             }
         }
 
-        /* Modern Stat Cards - Compact */
         .modern-stat-card {
-            background: #ffffff;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
             border-radius: 0.85rem;
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 0.7rem;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
             gap: 0.75rem;
@@ -173,12 +211,12 @@
 
         .modern-stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -5px rgba(0, 0, 0, 0.04);
-            border-color: rgba(59, 130, 246, 0.2);
+            box-shadow: 0 12px 24px -5px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .stat-label {
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.75);
             font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -187,7 +225,7 @@
             letter-spacing: 0.05em;
         }
         .stat-value {
-            color: #1e293b;
+            color: #ffffff;
             font-weight: 800;
             font-size: 1.6rem;
             margin: 0;
@@ -213,7 +251,7 @@
         .badge-status-light {
             font-size: 0.65rem;
             font-weight: 600;
-            color: #94a3b8;
+            color: rgba(255, 255, 255, 0.5);
             white-space: nowrap;
         }
 
@@ -298,10 +336,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        .card-primary .stat-icon-box { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-        .card-success .stat-icon-box { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-        .card-warning .stat-icon-box { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-        .card-danger .stat-icon-box { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .card-primary .stat-icon-box { background: rgba(255, 255, 255, 0.15); color: #60a5fa; }
+        .card-success .stat-icon-box { background: rgba(255, 255, 255, 0.15); color: #34d399; }
+        .card-warning .stat-icon-box { background: rgba(255, 255, 255, 0.15); color: #fbbf24; }
+        .card-danger .stat-icon-box { background: rgba(255, 255, 255, 0.15); color: #f87171; }
 
         /* Tables - Compact */
         .custom-table {
@@ -379,8 +417,8 @@
 
         .modern-action-btn:hover {
             background: #f8fafc;
-            border-color: #3b82f6;
-            color: #3b82f6 !important;
+            border-color: #1b4a9a;
+            color: #1b4a9a !important;
             transform: translateX(6px);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
@@ -525,7 +563,7 @@
             display: block;
             font-size: 1.75rem;
             font-weight: 800;
-            color: #3b82f6;
+            color: #1b4a9a;
             line-height: 1;
         }
 
@@ -613,7 +651,7 @@
         .control-action-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
-            border-color: #3b82f6;
+            border-color: #1b4a9a;
         }
 
         .card-icon-wrapper {
@@ -768,6 +806,42 @@
         .badge-delete { background: #fef2f2; color: #ef4444; }
         .badge-default { background: #f1f5f9; color: #64748b; }
 
+        /* Audit Header Specifics */
+        .audit-container .content-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            border-bottom: none;
+            padding: 1.15rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .audit-container .content-header h6 {
+            color: #ffffff;
+            margin: 0;
+            flex: 1; /* Allow header to take space and push button */
+        }
+
+        .audit-container .btn-audit-link {
+            background: #ffffff;
+            color: var(--primary) !important;
+            padding: 0.5rem 1.15rem !important;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-decoration: none !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-left: auto; /* Force to the very right */
+        }
+
+        .audit-container .btn-audit-link:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            background: #f8fafc;
+        }
+
         .audit-user-box {
             display: flex;
             align-items: center;
@@ -888,27 +962,27 @@
         <!-- Middle Row: Charts & Control -->
         <div class="middle-row-grid">
             @if(auth()->user()->isSuperAdmin())
-                <!-- User Growth & Engagement -->
+                <!-- Application Filed Analytics -->
                 <div class="glass-container">
                     <div class="content-header">
-                        <h6>User Growth & Engagement</h6>
+                        <h6>Application Filed Analytics</h6>
                     </div>
                     <div class="chart-header-metrics">
                         <div class="chart-metric-item">
-                            <span class="chart-metric-label">Total Users</span>
+                            <span class="chart-metric-label">Total Filed</span>
                             <div class="chart-metric-value-wrapper">
-                                <span class="chart-metric-value">{{ $totalUsers }}</span>
-                                <div class="chart-metric-icon-purple">
-                                    <i class="fas fa-circle"></i>
+                                <span class="chart-metric-value">{{ $totalApplications }}</span>
+                                <div class="chart-metric-icon-purple" style="border-color: #6366f1; color: #6366f1;">
+                                    <i class="fas fa-file-invoice"></i>
                                 </div>
                             </div>
                         </div>
                         <div class="chart-metric-divider"></div>
                         <div class="chart-metric-item">
-                            <span class="chart-metric-label">Monthly Engagement</span>
+                            <span class="chart-metric-label">Growth Rate</span>
                             <div class="chart-metric-value-wrapper">
-                                <span class="chart-metric-value">{{ $monthlyEngagement }}%</span>
-                                @if($registrationTrendUp)
+                                <span class="chart-metric-value">{{ $filedGrowthRate }}%</span>
+                                @if($filedTrendUp)
                                     <span class="chart-metric-trend-up">↑</span>
                                 @else
                                     <span class="chart-metric-trend-up" style="color: #ef4444;">↓</span>
@@ -920,35 +994,35 @@
                         <div class="animate__animated animate__lightSpeedInLeft" style="height: 220px; animation-delay: 0.6s;"><canvas id="growthChart"></canvas></div>
                     </div>
                     <div class="chart-legend-bottom">
-                        <span><span class="legend-dot-purple"></span> New Users <span style="color: #8b5cf6">(Purple)</span></span>
+                        <span><span class="legend-dot-purple" style="background: #6366f1;"></span> Forms Filed <span style="color: #6366f1">(Indigo)</span></span>
                     </div>
                 </div>
 
-                <!-- Platform Privilege Map -->
+                <!-- Office Application Analysis -->
                 <div class="glass-container">
                     <div class="content-header">
-                        <h6>Platform Privilege Map</h6>
+                        <h6>Office Application Analysis</h6>
                     </div>
                     <div class="privilege-container complex-sequence">
                         <div class="privilege-chart-wrapper complex-sequence">
                             <canvas id="roleChart"></canvas>
                             <div class="privilege-center-text">
-                                <span class="center-label">Total Privileges</span>
-                                <span class="center-value">{{ $roleDistribution->sum('value') }}</span>
+                                <span class="center-label">Total Filed</span>
+                                <span class="center-value">{{ $officeCategoryDistribution->sum('value') }}</span>
                             </div>
                         </div>
                         <div class="privilege-legend complex-sequence">
-                            <div class="legend-header">Legend</div>
+                            <div class="legend-header">Office Distribution</div>
                             @php
-                                $colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#3b82f6'];
-                            @endphp
-                                @foreach($roleDistribution as $index => $role)
+                                $officeColors = ['#1b4a9a', '#f97316', '#14b8a6'];
+                                @endphp
+                                @foreach($officeCategoryDistribution as $index => $office)
                                     <div class="legend-item">
                                         <div class="legend-item-left">
-                                            <div class="legend-color-box" style="background: {{ $colors[$index % count($colors)] }}"></div>
-                                            <span>{{ strtoupper(str_replace('_', ' ', $role->label)) }}</span>
+                                            <div class="legend-color-box" style="background: {{ $officeColors[$index % count($officeColors)] }}"></div>
+                                            <span>{{ strtoupper($office->label) }}</span>
                                         </div>
-                                        <span class="legend-count">{{ $role->value }}</span>
+                                        <span class="legend-count">{{ $office->value }}</span>
                                     </div>
                                 @endforeach
                         </div>
@@ -1011,13 +1085,14 @@
 
         <!-- Bottom Row: Global Infrastructure Audit (Full Width) -->
         <div class="glass-container audit-container">
-            <div class="content-header d-flex justify-content-between align-items-center">
+            <div class="content-header">
                 <h6>Global Infrastructure Audit</h6>
-                <a href="{{ route('admin.activity-logs') }}"
-                    class="btn btn-sm btn-link text-primary p-0 text-decoration-none small fw-bold">Audit Logs</a>
+                <a href="{{ route('admin.activity-logs') }}" class="btn-audit-link">
+                    Audit Logs
+                </a>
             </div>
             <div class="audit-scroll-container">
-                <table class="audit-table">
+                <table class="audit-table stack-card-table">
                     <thead>
                         <tr>
                             <th>Timestamp</th>
@@ -1038,10 +1113,10 @@
                                 elseif (str_contains($action, 'delet') || str_contains($action, 'remov')) $badgeClass = 'badge-delete';
                             @endphp
                             <tr>
-                                <td>
+                                <td data-label="Timestamp">
                                     <span class="audit-timestamp">{{ $log->created_at->format('M j, g:i A') }}</span>
                                 </td>
-                                <td>
+                                <td data-label="User">
                                     <div class="audit-user-box">
                                         @if($log->user && $log->user->profile_picture)
                                             <img src="{{ storage_url($log->user->profile_picture) }}" alt="" class="audit-avatar">
@@ -1053,10 +1128,10 @@
                                         <span class="fw-bold text-dark">{{ $log->user->full_name ?? 'Unknown' }}</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="Action">
                                     <span class="audit-action-badge {{ $badgeClass }}">{{ $log->action }}</span>
                                 </td>
-                                <td class="audit-details">{{ Str::limit($log->details, 60) }}</td>
+                                <td data-label="Details" class="audit-details">{{ Str::limit($log->details, 60) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -1069,26 +1144,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             @if(auth()->user()->isSuperAdmin())
-                // Growth Chart
+                // Application Growth Chart
                 const growthCtx = document.getElementById('growthChart').getContext('2d');
                 const gradient = growthCtx.createLinearGradient(0, 0, 0, 220);
-                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.15)');
+                gradient.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
                 gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
 
                 new Chart(growthCtx, {
                     type: 'line',
                     data: {
-                        labels: {!! json_encode(collect($userGrowth)->pluck('month')) !!},
+                        labels: {!! json_encode(collect($applicationGrowth)->pluck('month')) !!},
                         datasets: [{
-                            label: 'New Users',
-                            data: {!! json_encode(collect($userGrowth)->pluck('count')) !!},
-                            borderColor: '#8b5cf6',
+                            label: 'Forms Filed',
+                            data: {!! json_encode(collect($applicationGrowth)->pluck('count')) !!},
+                            borderColor: '#6366f1',
                             borderWidth: 3,
                             tension: 0.4,
                             fill: true,
                             backgroundColor: gradient,
                             pointBackgroundColor: '#fff',
-                            pointBorderColor: '#8b5cf6',
+                            pointBorderColor: '#6366f1',
                             pointBorderWidth: 2,
                             pointRadius: 4,
                             pointHoverRadius: 6,
@@ -1149,15 +1224,15 @@
                     }
                 });
 
-                // Role Distribution Chart
+                // Office Category Distribution Chart
                 const roleCtx = document.getElementById('roleChart').getContext('2d');
                 const roleChart = new Chart(roleCtx, {
                     type: 'doughnut',
                     data: {
-                        labels: {!! json_encode($roleDistribution->pluck('label')) !!},
+                        labels: {!! json_encode($officeCategoryDistribution->pluck('label')) !!},
                         datasets: [{
-                            data: {!! json_encode($roleDistribution->pluck('value')) !!},
-                            backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#3b82f6'],
+                            data: {!! json_encode($officeCategoryDistribution->pluck('value')) !!},
+                            backgroundColor: ['#1b4a9a', '#f97316', '#14b8a6'],
                             hoverOffset: 12,
                             borderWidth: 4,
                             borderColor: '#fff'

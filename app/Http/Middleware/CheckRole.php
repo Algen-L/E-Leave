@@ -20,14 +20,22 @@ class CheckRole
             return redirect()->route('login');
         }
 
-        $userRole = auth()->user()->role;
+        $user = auth()->user();
 
         // Check if user has any of the required roles
-        if (!in_array($userRole, $roles)) {
+        $hasRequiredRole = false;
+        foreach ($roles as $role) {
+            if ($user->hasRole($role)) {
+                $hasRequiredRole = true;
+                break;
+            }
+        }
+
+        if (!$hasRequiredRole) {
             // Redirect to appropriate dashboard or show forbidden
-            if (in_array($userRole, ['admin', 'super_admin', 'head_hr'])) {
+            if ($user->hasRole(['admin', 'super_admin', 'head_hr'])) {
                 return redirect()->route('admin.dashboard');
-            } elseif ($userRole === 'hr') {
+            } elseif ($user->hasRole('hr')) {
                 return redirect()->route('hr.dashboard');
             } else {
                 return redirect()->route('user.home');

@@ -15,10 +15,8 @@
 }
 
 .avatar-card {
-    position: sticky !important;
-    top: calc(56px + 20px) !important;
-    /* Header height + 20px padding */
-    z-index: 100;
+    /* Sticky removed to prevent overlapping with Account Information section below */
+    z-index: 5;
     transition: all 0.3s ease;
     background: white;
     border-radius: 20px;
@@ -266,7 +264,7 @@
 }
 
 .info-box p {
-    color: #0369a1;
+    color: #1b4a9a;
     font-size: 0.85rem;
     line-height: 1.6;
 }

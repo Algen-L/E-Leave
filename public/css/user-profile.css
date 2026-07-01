@@ -2,7 +2,7 @@
 
 /* Profile Banner */
 .profile-banner {
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 60%, #1b4a9a 100%);
     border-radius: 16px;
     padding: 32px;
     margin-bottom: 24px;
@@ -120,7 +120,7 @@
 
 .banner-btn-white {
     background: white;
-    color: #0f4c75;
+    color: #1b4a9a;
     border-color: white;
 }
 
@@ -164,7 +164,7 @@
     height: 40px;
     border-radius: 10px;
     background: rgba(15, 76, 117, 0.08);
-    color: #0f4c75;
+    color: #1b4a9a;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -210,7 +210,7 @@
 .section-header h2 {
     font-size: 1.05rem;
     font-weight: 700;
-    color: #0f4c75;
+    color: #1b4a9a;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -252,7 +252,7 @@
 
 .field-input:focus {
     outline: none;
-    border-color: #0f4c75;
+    border-color: #1b4a9a;
     background: white;
     box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.1);
 }
@@ -319,7 +319,7 @@
     gap: 8px;
     padding: 8px 16px;
     background: rgba(15, 76, 117, 0.08);
-    color: #0f4c75;
+    color: #1b4a9a;
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -431,7 +431,7 @@
     gap: 8px;
     padding: 12px 28px;
     background: var(--primary-gradient);
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 60%, #1b4a9a 100%);
     /* Fallback gradient */
     color: white;
     border: none;
@@ -506,7 +506,7 @@
 }
 
 .custom-modal-header {
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 60%, #1b4a9a 100%);
     padding: 20px 24px;
     display: flex;
     align-items: center;
@@ -575,7 +575,7 @@
 }
 
 .verification-input:focus {
-    border-color: #0ea5e9;
+    border-color: #1b4a9a;
     box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
     outline: none;
 }

@@ -12,14 +12,23 @@ class RecordPersonnelController extends Controller
      */
     public function dashboard()
     {
+        $now = \Carbon\Carbon::now();
+        
         $stats = [
             'total' => LeaveApplication::count(),
             'approved' => LeaveApplication::where('status', 'Approved')->count(),
             'pending' => LeaveApplication::where('status', 'like', 'Pending%')->count(),
             'disapproved' => LeaveApplication::where('status', 'Disapproved')->count(),
+            'this_month' => LeaveApplication::whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count(),
+            'last_month' => LeaveApplication::whereMonth('created_at', $now->subMonth()->month)->whereYear('created_at', $now->year)->count(),
         ];
 
-        return view('record_personnel.home', compact('stats'));
+        $recentApplications = LeaveApplication::with(['user', 'leaveType'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('record_personnel.home', compact('stats', 'recentApplications'));
     }
 
     /**
@@ -83,7 +92,7 @@ class RecordPersonnelController extends Controller
         $lessVl = 0;
         $lessSl = 0;
 
-        $isCompensatory = optional($application->details)->other_purpose === 'COC COMPENSATORY OVERTIME CREDIT';
+        $isCompensatory = optional($application->details)->other_purpose === 'CTO (Compensatory Time Off)';
         $vlRelatedTypes = ['Vacation', 'Forced', 'Mandatory'];
 
         $isVlRelated = false;

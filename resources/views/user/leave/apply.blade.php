@@ -64,15 +64,52 @@
             </div>
         @endif
 
+        <!-- Hero Preloader Overlay -->
+        <div class="hero-preloader">
+            <div class="preloader-calendar-wrapper">
+                <div class="calendar-hero-animation">
+                    <div class="calendar-base">
+                        <div class="cal-grid">
+                            <div class="cal-dot"></div>
+                            <div class="cal-dot"></div>
+                            <div class="cal-dot"></div>
+                            <div class="cal-dot"></div>
+                            <div class="cal-dot highlight"></div>
+                            <div class="cal-dot highlight"></div>
+                            <div class="cal-dot strike"></div>
+                            <div class="cal-dot"></div>
+                            <div class="cal-dot"></div>
+                        </div>
+                        <div class="calendar-cursor">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper-hidden">
         <div class="apply-header">
             <div class="apply-header-top">
                 <div class="apply-title-group">
                     <div class="apply-header-icon">
-                        <span class="globe-hero-entrance">
-                            <i class="fas fa-globe"></i>
-                        </span>
+                        <div class="calendar-hero-animation static">
+                            <div class="calendar-base">
+                                <div class="cal-grid">
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot highlight" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot highlight" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot strike" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                    <div class="cal-dot" style="opacity: 1; animation: none;"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="apply-title animate__animated animate__backInDown" style="animation-delay: 1.8s;">
+                    <div class="apply-title animate__animated animate__fadeIn">
                         <h1>New Leave Application</h1>
                         <p>Fill in the details below to submit your request.</p>
                     </div>
@@ -379,6 +416,7 @@
             </div>
         </form>
     </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -386,13 +424,13 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>        document.addEventListener('DOMContentLoaded', function () {
-            // Initialize Flatpickr and store instance
             window.fp = flatpickr("#date_picker", {
                 mode: "multiple",
                 dateFormat: "Y-m-d",
-                minDate: "today", // Optional: prevent past dates if appropriate
+                // minDate is now set dynamically in updateDateRestrictions
                 onChange: function (selectedDates, dateStr, instance) {
                     updateCalculations(selectedDates);
+                    saveFormData();
                 }
             });
 
@@ -429,8 +467,11 @@
                 }
             });
             
-            // Trigger initial details if needed
-            if (document.getElementById('real_leave_type_id').value) {
+            // Load persistent data
+            loadFormData();
+
+            // Trigger initial details if needed (fallback if loadFormData didn't handle something)
+            if (document.getElementById('real_leave_type_id').value && !searchInput.value) {
                 // Find existing name if we have an ID (e.g. from old input)
                 const initialId = document.getElementById('real_leave_type_id').value;
                 const initialItem = Array.from(dropdownItems).find(item => item.getAttribute('data-id') == initialId);
@@ -441,16 +482,117 @@
                     updateDateRestrictions(initialName);
                 }
             }
+
+            // Attach change listeners to all inputs for persistence
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('change', saveFormData);
+                if (input.type === 'text' || input.tagName === 'TEXTAREA') {
+                    input.addEventListener('input', saveFormData);
+                }
+            });
+
+            // Clear storage on form submit
+            document.querySelector('form').addEventListener('submit', function() {
+                localStorage.removeItem('leave_form_data');
+            });
         });
 
+        function saveFormData() {
+            const formData = {
+                leave_type_search: document.getElementById('leave_type_search').value,
+                real_leave_type_id: document.getElementById('real_leave_type_id').value,
+                vacation_loc_type: document.querySelector('input[name="vacation_loc_type"]:checked')?.value,
+                vacation_loc_details: document.getElementById('vacation_specify').value,
+                sick_loc_type: document.querySelector('input[name="sick_loc_type"]:checked')?.value,
+                sick_hospital: document.getElementById('sick_hospital').value,
+                sick_outpatient: document.getElementById('sick_outpatient').value,
+                women_illness: document.querySelector('input[name="women_illness"]')?.value,
+                study_type: document.querySelector('input[name="study_type"]:checked')?.value,
+                study_specify: document.getElementById('study_specify').value,
+                others_type: document.querySelector('input[name="others_type"]:checked')?.value,
+                others_specify: document.getElementById('others_specify').value,
+                date_picker: document.getElementById('date_picker').value,
+                days_applied: document.getElementById('days_applied').value,
+                selected_dates: document.getElementById('selected_dates').value,
+                commutation: document.querySelector('input[name="commutation"]').checked
+            };
+            localStorage.setItem('leave_form_data', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const data = localStorage.getItem('leave_form_data');
+            if (!data) return;
+            const formData = JSON.parse(data);
+
+            if (formData.leave_type_search) {
+                document.getElementById('leave_type_search').value = formData.leave_type_search;
+                toggleDetails(formData.leave_type_search, formData.real_leave_type_id);
+                updateDateRestrictions(formData.leave_type_search, true);
+            }
+            if (formData.real_leave_type_id) {
+                document.getElementById('real_leave_type_id').value = formData.real_leave_type_id;
+            }
+
+            // Radio buttons
+            if (formData.vacation_loc_type) {
+                const radio = document.querySelector(`input[name="vacation_loc_type"][value="${formData.vacation_loc_type}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    toggleInput('vacation_specify', formData.vacation_loc_type === 'Abroad');
+                }
+            }
+            if (formData.vacation_loc_details) document.getElementById('vacation_specify').value = formData.vacation_loc_details;
+
+            if (formData.sick_loc_type) {
+                const radio = document.querySelector(`input[name="sick_loc_type"][value="${formData.sick_loc_type}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    toggleInput('sick_hospital', formData.sick_loc_type === 'Hospital');
+                    toggleInput('sick_outpatient', formData.sick_loc_type === 'Out Patient');
+                }
+            }
+            if (formData.sick_hospital) document.getElementById('sick_hospital').value = formData.sick_hospital;
+            if (formData.sick_outpatient) document.getElementById('sick_outpatient').value = formData.sick_outpatient;
+
+            if (formData.women_illness) document.querySelector('input[name="women_illness"]').value = formData.women_illness;
+
+            if (formData.study_type) {
+                const radio = document.querySelector(`input[name="study_type"][value="${formData.study_type}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    toggleInput('study_specify', formData.study_type === 'Other');
+                }
+            }
+            if (formData.study_specify) document.getElementById('study_specify').value = formData.study_specify;
+
+            if (formData.others_type) {
+                const radio = document.querySelector(`input[name="others_type"][value="${formData.others_type}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    setOtherLeaveId(radio, formData.others_type, true);
+                }
+            }
+            if (formData.others_specify) document.getElementById('others_specify').value = formData.others_specify;
+
+            if (formData.date_picker) {
+                // document.getElementById('date_picker').value = formData.date_picker;
+                if (window.fp) {
+                    window.fp.setDate(formData.date_picker.split(','));
+                    updateCalculations(window.fp.selectedDates);
+                }
+            }
+            
+            if (formData.commutation) document.querySelector('input[name="commutation"]').checked = formData.commutation;
+        }
+
         // Function to restrict dates for COC
-        function updateDateRestrictions(leaveTypeName) {
+        function updateDateRestrictions(leaveTypeName, isInitialLoad = false) {
             if (!window.fp) return;
 
             // Define leave types that require 5 days advance notice
             const isAdvanceLeave = leaveTypeName && (
                 leaveTypeName.includes('Vacation') || 
-                leaveTypeName.includes('COC') || 
+                leaveTypeName.includes('CTO') || 
                 leaveTypeName.toLowerCase().includes('compensatory') ||
                 leaveTypeName.includes('Force') || 
                 leaveTypeName.includes('Mandatory')
@@ -459,8 +601,10 @@
             if (isAdvanceLeave) {
                 const today = new Date();
                 
+                // Set minDate to today to prevent past dates
+                window.fp.set('minDate', 'today');
+
                 // 5 days advance notice: Today + 4 days are disabled
-                // March 24 (today) -> 24, 25, 26, 27, 28 are disabled. 29 is first available.
                 const endOfBlackout = new Date();
                 endOfBlackout.setDate(today.getDate() + 4);
 
@@ -470,14 +614,21 @@
                         to: endOfBlackout.toISOString().split('T')[0]
                     }
                 ]);
+            } else if (leaveTypeName && leaveTypeName.includes('Sick')) {
+                // SICK LEAVE: Allow past dates (no minDate)
+                window.fp.set('minDate', null);
+                window.fp.set('disable', []);
             } else {
-                // Remove restrictions for other types (e.g., Sick Leave)
+                // OTHER LEAVES: Prevent past dates but no 5-day blackout
+                window.fp.set('minDate', 'today');
                 window.fp.set('disable', []);
             }
             
-            // Clear selected dates if they are now disabled
-            window.fp.clear();
-            updateCalculations([]);
+            // Clear selected dates only if it's a new interaction, not a load
+            if (!isInitialLoad) {
+                window.fp.clear();
+                updateCalculations([]);
+            }
         }
 
         function showDropdown(e) {
@@ -512,6 +663,8 @@
             
             // Trigger date restrictions
             updateDateRestrictions(name);
+
+            saveFormData();
         }
 
         function updateCalculations(dates) {
@@ -556,13 +709,13 @@
         }
 
         // Helper to set ID when selecting from "Others" radio group
-        function setOtherLeaveId(radio, value) {
+        function setOtherLeaveId(radio, value, isInitialLoad = false) {
             const hiddenInput = document.getElementById('real_leave_type_id');
             const specifyInput = document.getElementById('others_specify');
 
             if (value === 'specify') {
                 specifyInput.disabled = false;
-                specifyInput.focus();
+                if (!isInitialLoad) specifyInput.focus();
             } else {
                 // It is a real dynamic Leave Type ID (e.g., 5, 8, etc.)
                 specifyInput.disabled = true;
@@ -571,8 +724,9 @@
                 
                 // Trigger date restrictions for "Other" types (like COC)
                 const label = radio.closest('label').querySelector('span').innerText;
-                updateDateRestrictions(label);
+                updateDateRestrictions(label, isInitialLoad);
             }
+            if (!isInitialLoad) saveFormData();
         }
 
         function includesAny(text, keywords) {

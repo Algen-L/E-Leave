@@ -36,7 +36,7 @@
     font-size: 4rem;
     font-weight: 800;
     background: #f8fafc;
-    color: var(--primary, #0f4c75);
+    color: var(--primary, #1b4a9a);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
@@ -106,12 +106,12 @@
 .form-control:focus,
 .form-select:focus {
     background: white;
-    border-color: var(--primary, #0f4c75);
+    border-color: var(--primary, #1b4a9a);
     box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.1);
 }
 
 .btn-save {
-    background: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+    background: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%);
     color: white;
     border: none;
     padding: 12px;
@@ -182,13 +182,13 @@
 
 .ts-wrapper.form-control.focus .ts-control {
     background: white !important;
-    border-color: var(--primary, #0f4c75) !important;
+    border-color: var(--primary, #1b4a9a) !important;
     box-shadow: 0 0 0 4px rgba(15, 76, 117, 0.1) !important;
 }
 
 .ts-dropdown .optgroup-header {
     font-weight: 800 !important;
-    background: var(--primary, #0f4c75) !important;
+    background: var(--primary, #1b4a9a) !important;
     color: white !important;
     font-size: 0.72rem !important;
     padding: 8px 12px !important;
@@ -243,4 +243,26 @@
 .status-option:not(.active):not(.inactive):hover {
     border-color: #cbd5e1 !important;
     background: #f8fafc !important;
+}
+
+.locked-role-field {
+    width: 100%;
+    height: 46px;
+    padding: 10px 16px;
+    background: #f1f5f9;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: not-allowed;
+    user-select: none;
+}
+
+.locked-role-field i {
+    font-size: 0.85rem;
+    color: #94a3b8;
 }

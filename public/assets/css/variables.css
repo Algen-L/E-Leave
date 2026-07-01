@@ -2,10 +2,10 @@
 
 :root {
     /* Color Palette */
-    --primary: #0f4c75;
-    --primary-light: #1b6ca8;
-    --primary-dark: #0a2f4a;
-    --primary-gradient: linear-gradient(135deg, #0f4c75 0%, #1b6ca8 100%);
+    --primary: #1b4a9a;
+    --primary-light: #3b66bc;
+    --primary-dark: #123166;
+    --primary-gradient: linear-gradient(135deg, #1b4a9a 0%, #3b66bc 100%);
 
     --accent: #d4af37;
     --accent-light: #e5c158;
@@ -17,10 +17,10 @@
     --warning-bg: #fef3c7;
     --danger: #ef4444;
     --danger-bg: #fee2e2;
-    --info: #3b82f6;
-    --info-bg: #dbeafe;
+    --info: #1b4a9a;
+    --info-bg: #dce7ff;
 
-    --vibrant-blue: #0ea5e9;
+    --vibrant-blue: #1b4a9a;
     --vibrant-orange: #f97316;
 
     /* Backgrounds */

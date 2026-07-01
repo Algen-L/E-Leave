@@ -17,6 +17,7 @@ class CompensatoryLeaveCredit extends Model
         'expiration_date',
         'remarks',
         'status',
+        'added_by',
     ];
 
     protected $casts = [
@@ -28,6 +29,11 @@ class CompensatoryLeaveCredit extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function addedBy()
+    {
+        return $this->belongsTo(User::class, 'added_by');
     }
 
     public function leaveType()

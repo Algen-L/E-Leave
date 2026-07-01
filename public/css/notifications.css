@@ -75,17 +75,17 @@
 
 /* Info State */
 .toast-info {
-    border-left: 6px solid #3b82f6;
+    border-left: 6px solid #1b4a9a;
     background: rgba(239, 246, 255, 0.95);
 }
 
 .toast-info .toast-icon {
-    background-color: #3b82f6;
+    background-color: #1b4a9a;
     color: white;
 }
 
 .toast-info .toast-title {
-    color: #1e40af;
+    color: #123166;
 }
 
 .toast-icon {
@@ -174,7 +174,7 @@
 }
 
 .toast-info .toast-progress {
-    color: #3b82f6;
+    color: #1b4a9a;
 }
 
 @keyframes slideInRight {

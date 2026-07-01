@@ -99,9 +99,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,super_ad
     Route::post('/auth-reset/{id}/unblock', [AdminController::class, 'authResetUnblock'])->name('auth-reset.unblock');
     Route::post('/auth-reset/send-reset', [AdminController::class, 'sendPasswordReset'])->name('auth-reset.send-reset');
 
-    // Signatories (Super Admin Only)
-    Route::get('/signatories', [AdminController::class, 'signatories'])->name('signatories');
+    // Offices & Signatories (Super Admin Only)
+    Route::get('/signatories', [AdminController::class, 'officesAndSignatories'])->name('signatories');
     Route::post('/signatories', [AdminController::class, 'updateSignatories'])->name('signatories.update');
+
+    // Office Management
+    Route::post('/offices', [AdminController::class, 'storeOffice'])->name('offices.store');
+    Route::put('/offices/{office}', [AdminController::class, 'updateOffice'])->name('offices.update');
+    Route::delete('/offices/{office}', [AdminController::class, 'deleteOffice'])->name('offices.delete');
 });
 
 /*
@@ -115,7 +120,6 @@ Route::prefix('head-hr')->name('head-hr.')->middleware(['auth', 'role:head_hr,su
     Route::post('/leave-policies', [App\Http\Controllers\HeadHRController::class, 'updatePolicy'])->name('leave-policies.update');
     Route::post('/leave-types', [App\Http\Controllers\HeadHRController::class, 'storeLeaveType'])->name('leave-types.store');
     Route::delete('/leave-types/{id}', [App\Http\Controllers\HeadHRController::class, 'destroyLeaveType'])->name('leave-types.destroy');
-    Route::get('/audit-logs', [App\Http\Controllers\HeadHRController::class, 'auditLogs'])->name('audit-logs');
     Route::post('/requests/{id}', [App\Http\Controllers\HeadHRController::class, 'handleRequest'])->name('requests.handle');
 });
 
@@ -130,6 +134,8 @@ Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_
     Route::get('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'editCredits'])->name('manage-credits.edit');
     Route::post('/manage-credits/{user}', [App\Http\Controllers\HRController::class, 'updateCredits'])->name('manage-credits.update');
     Route::post('/manage-credits/{user}/add-cto', [App\Http\Controllers\HRController::class, 'addCtoCredit'])->name('manage-credits.add-cto');
+    Route::post('/manage-credits/{user}/reset-cto', [App\Http\Controllers\HRController::class, 'resetCto'])->name('manage-credits.reset-cto');
+    Route::delete('/manage-credits/coc/{batch}', [App\Http\Controllers\HRController::class, 'deleteCtoCredit'])->name('manage-credits.delete-coc');
     Route::post('/unlock-credits/{user}', [App\Http\Controllers\HRController::class, 'requestUnlock'])->name('manage-credits.unlock-request');
 });
 
@@ -138,10 +144,15 @@ Route::prefix('hr-staff')->name('hr-staff.')->middleware(['auth', 'role:hr,head_
 | HR Routes (Profile)
 |--------------------------------------------------------------------------
 */
-Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,hr_review_officer'])->group(function () {
+Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,head_hr,hr_review_officer,sgod_chief,cid_chief,ao,asds,sds,admin,super_admin'])->group(function () {
     Route::get('/dashboard', [HRController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [HRController::class, 'profile'])->name('profile');
     Route::put('/profile', [HRController::class, 'updateProfile'])->name('profile.update');
+    
+    // HR Reports
+    Route::get('/reports/leave-card', [App\Http\Controllers\HRReportController::class, 'leaveCard'])->name('reports.leave-card');
+    Route::get('/reports/leave-summary', [App\Http\Controllers\HRReportController::class, 'leaveSummary'])->name('reports.leave-summary');
+    Route::get('/reports/leave-individual', [App\Http\Controllers\HRReportController::class, 'leaveIndividual'])->name('reports.leave-individual');
 });
 
 /*
@@ -151,9 +162,10 @@ Route::prefix('hr')->name('hr.')->middleware(['auth', 'role:hr,hr_review_officer
 */
 Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/home', [UserController::class, 'home'])->name('home');
+    Route::get('/dashboard', [App\Http\Controllers\HigherRoleController::class, 'dashboard'])->name('dashboard');
     Route::get('/profile', [UserController::class, 'profile'])->name('profile');
     Route::put('/profile', [UserController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/profile/leave-card', [\App\Http\Controllers\PrintLeaveCardController::class, 'print'])->name('profile.leave-card');
+    Route::get('/profile/leave-card', [\App\Http\Controllers\PrintLeaveCardController::class, 'print'])->name('profile.leave-card')->middleware('role:hr,head_hr,hr_review_officer,admin,super_admin');
 
     // Password Update
     Route::put('/profile/password/update', [UserController::class, 'updatePassword'])->name('profile.password.update');
@@ -170,13 +182,18 @@ Route::prefix('user')->name('user.')->middleware('auth')->group(function () {
     Route::get('/leave/approvals/{id}', [App\Http\Controllers\LeaveApprovalController::class, 'show'])->name('leave.approvals.show');
     Route::post('/leave/approvals/{id}/verify', [App\Http\Controllers\LeaveApprovalController::class, 'verify'])->name('leave.verify');
     Route::post('/leave/approvals/{id}/recommend', [App\Http\Controllers\LeaveApprovalController::class, 'recommend'])->name('leave.recommend');
+    Route::post('/leave/approvals/{id}/asds-approve', [App\Http\Controllers\LeaveApprovalController::class, 'asdsApprove'])->name('leave.asds-approve');
     Route::post('/leave/approvals/{id}/approve', [App\Http\Controllers\LeaveApprovalController::class, 'approve'])->name('leave.approve');
     Route::post('/leave/approvals/{id}/reject', [App\Http\Controllers\LeaveApprovalController::class, 'reject'])->name('leave.reject');
 
     // Notifications
     Route::post('/notifications/read', [UserController::class, 'markNotificationRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [UserController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
+    Route::delete('/notifications/delete-all', [UserController::class, 'clearAllNotifications'])->name('notifications.delete-all');
+    Route::delete('/notifications/{id}', [UserController::class, 'deleteNotification'])->name('notifications.delete');
+    Route::get('/help', [UserController::class, 'help'])->name('help');
     Route::get('/notifications', [UserController::class, 'getNotifications'])->name('notifications');
+
 });
 
 /*
@@ -188,4 +205,14 @@ Route::prefix('records')->name('records.')->middleware(['auth', 'role:record_per
     Route::get('/dashboard', [\App\Http\Controllers\RecordPersonnelController::class, 'dashboard'])->name('dashboard');
     Route::get('/applications', [\App\Http\Controllers\RecordPersonnelController::class, 'index'])->name('index');
     Route::get('/leave/view/{id}', [\App\Http\Controllers\RecordPersonnelController::class, 'showLeave'])->name('leave.show');
+    Route::get('/bulk-download', [\App\Http\Controllers\BulkDownloadController::class, 'downloadZip'])->name('bulk-download');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Report & Hub Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('reports')->name('reports.')->middleware(['auth', 'role:hr,head_hr,hr_review_officer,record_personnel,admin,super_admin,sgod_chief,cid_chief,ao,asds,sds'])->group(function () {
+    Route::get('/print-hub', [App\Http\Controllers\ReportController::class, 'printHub'])->name('print-hub');
 });

@@ -20,10 +20,11 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Take up all available space */
+    flex-grow: 1;
     width: auto;
-    transition: margin-left var(--transition-premium);
+    transition: all var(--transition-premium);
     position: relative;
+    background: var(--bg-primary);
 }
 
 .content-wrapper {
@@ -971,3 +972,111 @@
         justify-content: center;
     }
 }
+
+/* --------------------------------------------------------------------------
+   STACK TABLE CARD PATTERN (Consolidated Card View)
+   -------------------------------------------------------------------------- */
+.stack-card-table thead {
+    display: none !important;
+}
+
+.stack-card-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 4px !important;
+}
+
+.stack-card-table tr {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 12px 24px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    margin-bottom: 8px;
+    gap: 16px;
+}
+
+.stack-card-table td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 4px 0 !important;
+    border: none !important;
+    text-align: left !important;
+    flex: 1;
+    min-width: 0; /* Prevents overflow */
+}
+
+/* Ensure Actions and Progress columns have appropriate width/alignment */
+.stack-card-table td[data-label="Actions"] {
+    flex: 0 0 auto;
+    align-items: center !important;
+}
+
+.stack-card-table td[data-label="Progress"] {
+    flex: 1.5; /* Give more space to the progress bar */
+}
+
+.stack-card-table td::before {
+    content: attr(data-label);
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* Vertical Stack for Mobile/Phone devices */
+@media (max-width: 992px) {
+    .stack-card-table tr {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 16px !important;
+        gap: 0;
+    }
+
+    .stack-card-table td {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 10px 0 !important;
+        border-bottom: 1px solid var(--border-light) !important;
+        text-align: right !important;
+        flex: none;
+    }
+
+    .stack-card-table td:last-child {
+        border-bottom: none !important;
+        margin-top: 8px !important;
+        justify-content: center !important;
+    }
+
+    .stack-card-table td::before {
+        margin-bottom: 0;
+        margin-right: 15px;
+    }
+}
+
+/* Base Utility for Hidden on Mobile */
+@media (max-width: 576px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+
+    .current-date-box {
+        display: none !important;
+    }
+
+    .top-bar-right {
+        gap: 8px;
+    }
+}
+

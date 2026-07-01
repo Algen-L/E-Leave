@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
+use App\Models\LeaveApplication;
+use App\Models\LeaveCreditAuditLog;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -22,6 +24,14 @@ class AdminController extends Controller
      */
     public function dashboard()
     {
+        if (auth()->user()->isHeadHR()) {
+            return redirect()->route('head-hr.dashboard');
+        }
+        
+        if (auth()->user()->role === 'hr') {
+            return redirect()->route('hr.dashboard');
+        }
+
         $data = $this->getDashboardStats();
         return view('admin.dashboard', $data);
     }
@@ -133,6 +143,46 @@ class AdminController extends Controller
             }
             $data['userGrowth'] = $userGrowth;
 
+            // 5. Application Filed Analytics (Last 6 Months)
+            $totalApplications = LeaveApplication::count();
+            $applicationGrowthData = collect();
+            for ($i = 5; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $monthLabel = $month->format('M Y');
+                
+                $count = LeaveApplication::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count();
+                    
+                $applicationGrowthData->push([
+                    'month' => $monthLabel,
+                    'count' => $count
+                ]);
+            }
+
+            // Trend: Filed this month vs Last month
+            $filedThisMonth = LeaveApplication::whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
+                ->count();
+            $filedLastMonth = LeaveApplication::whereYear('created_at', now()->subMonth()->year)
+                ->whereMonth('created_at', now()->subMonth()->month)
+                ->count();
+            
+            $filedTrendUp = $filedThisMonth >= $filedLastMonth;
+            $filedGrowthRate = $filedLastMonth > 0 ? round((($filedThisMonth - $filedLastMonth) / $filedLastMonth) * 100, 1) : ($filedThisMonth > 0 ? 100 : 0);
+
+            $data['totalApplications'] = $totalApplications;
+            $data['applicationGrowth'] = $applicationGrowthData;
+            $data['filedTrendUp'] = $filedTrendUp;
+            $data['filedGrowthRate'] = $filedGrowthRate;
+
+            // 6. Office Category Distribution (Applications)
+            $data['officeCategoryDistribution'] = LeaveApplication::join('users', 'leave_applications.user_id', '=', 'users.id')
+                ->join('offices', 'users.office_station', '=', 'offices.name')
+                ->select('offices.category as label', DB::raw('count(*) as value'))
+                ->groupBy('offices.category')
+                ->get();
+
             // 4. Security Stats
             $data['securityStats'] = [
                 'blocked_users' => SecurityTracking::where('is_blocked', true)->count(),
@@ -156,7 +206,7 @@ class AdminController extends Controller
             'office' => $request->get('filter_office', ''),
         ];
 
-        $query = User::query();
+        $query = User::query()->with('roles');
 
         // Apply search filter
         if (!empty($filters['search'])) {
@@ -170,7 +220,9 @@ class AdminController extends Controller
 
         // Apply role filter
         if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
+            $query->whereHas('roles', function ($q) use ($filters) {
+                $q->where('name', $filters['role']);
+            });
         }
 
         // Apply office filter
@@ -178,9 +230,13 @@ class AdminController extends Controller
             $query->where('office_station', $filters['office']);
         }
 
-        // Exclude current user and all super admins from the list
-        $query->where('id', '!=', Auth::id())
-              ->where('role', '!=', 'super_admin');
+        // Exclude current user and all super admins from the list unless current user is super admin
+        if (!Auth::user()->isSuperAdmin()) {
+            $query->where('id', '!=', Auth::id())
+                  ->whereDoesntHave('roles', function ($q) {
+                      $q->where('name', 'super_admin');
+                  });
+        }
 
         // View-based filter
         if ($view === 'active') {
@@ -240,22 +296,65 @@ class AdminController extends Controller
             'last_name' => 'required|string|max:100',
             'gmail' => 'required|email|unique:users,gmail,' . $user->id,
             'position' => 'nullable|string|max:100',
-            'role' => 'required|string|in:user,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
+            'roles' => 'required|array',
+            'roles.*' => 'string|in:user,super_admin,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
             'office_station' => 'nullable|string|max:100',
             'is_active' => 'required|boolean',
             'password' => 'nullable|string|min:6|confirmed',
             'employee_number' => 'nullable|string|regex:/^[0-9]{7}$/|unique:users,employee_number,' . $user->id,
         ]);
 
+        $isHrOnly = Auth::user()->hasRole(['hr', 'head_hr', 'hr_review_officer']) && !Auth::user()->hasRole(['super_admin', 'admin']);
+        if ($isHrOnly) {
+            $roleNames = $user->roles->pluck('name')->toArray();
+        } else {
+            $roleNames = $request->roles ?? [];
+            
+            // Prevent removing super_admin if editing oneself
+            if ($user->id === Auth::id() && $user->hasRole('super_admin') && !in_array('super_admin', $roleNames)) {
+                $roleNames[] = 'super_admin';
+            }
+            
+            // Prevent assigning super_admin or admin to others
+            if ($user->id !== Auth::id()) {
+                $roleNames = array_diff($roleNames, ['super_admin', 'admin']);
+                // Keep the target user's existing super_admin/admin roles if they already have them
+                if ($user->hasRole('super_admin')) {
+                    $roleNames[] = 'super_admin';
+                }
+                if ($user->hasRole('admin')) {
+                    $roleNames[] = 'admin';
+                }
+            }
+            
+            if (!in_array('super_admin', $roleNames) && !in_array('user', $roleNames)) {
+                $roleNames[] = 'user';
+            }
+        }
+
+        // Authorization check for super_admin role assignment
+        if (in_array('super_admin', $roleNames) && !Auth::user()->isSuperAdmin()) {
+            return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign the Super Admin role.');
+        }
+
         // Authorization check for restricted roles
         $restrictedRoles = ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'];
-        if (in_array($request->role, $restrictedRoles) && Auth::user()->role !== 'super_admin') {
+        $requestedRestricted = array_intersect($roleNames, $restrictedRoles);
+        if (!empty($requestedRestricted) && !Auth::user()->isSuperAdmin()) {
             return redirect()->back()->withInput()->with('error', 'Only Super Admin can assign this role.');
         }
 
         // HR Review Officer Restriction: Only HR or Super Admin
-        if ($request->role === 'hr_review_officer' && !in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
+        if (in_array('hr_review_officer', $roleNames) && !Auth::user()->isSuperAdmin() && !Auth::user()->isHR()) {
             return redirect()->back()->withInput()->with('error', 'Only HR Personnel or Super Admin can assign the HR Review Officer role.');
+        }
+
+        $mainRole = 'user';
+        foreach ($roleNames as $rName) {
+            if ($rName !== 'user') {
+                $mainRole = $rName;
+                break;
+            }
         }
 
         $updateData = [
@@ -264,14 +363,11 @@ class AdminController extends Controller
             'last_name' => $request->last_name,
             'gmail' => $request->gmail,
             'position' => $request->position,
-            'role' => $request->role,
+            'role' => $mainRole, // Backwards compatibility
             'office_station' => $request->office_station,
             'is_active' => $request->is_active,
             'employee_number' => $request->employee_number,
         ];
-
-        // Note: 'full_name' and 'name' are automatically updated by the User model's boot method
-        // upon saving first/middle/last.
 
         // Only update password if provided (hashed cast handles hashing)
         if ($request->filled('password')) {
@@ -279,6 +375,10 @@ class AdminController extends Controller
         }
 
         $user->update($updateData);
+
+        // Sync roles
+        $roleIds = \App\Models\Role::whereIn('name', $roleNames)->pluck('id')->toArray();
+        $user->roles()->sync($roleIds);
 
         ActivityLog::logAction(Auth::id(), 'Updated User Record', "Updated user: {$user->full_name} (ID: {$user->id})");
 
@@ -335,7 +435,9 @@ class AdminController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'full_name' => 'nullable|string|max:100',
+            'first_name' => 'nullable|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'password' => 'nullable|string|min:6|confirmed',
@@ -349,8 +451,14 @@ class AdminController extends Controller
         $user = Auth::user();
         $updateData = [];
 
-        if ($request->filled('full_name')) {
-            $updateData['full_name'] = $request->full_name;
+        if ($request->filled('first_name')) {
+            $updateData['first_name'] = $request->first_name;
+        }
+        if ($request->has('middle_name')) {
+            $updateData['middle_name'] = $request->middle_name;
+        }
+        if ($request->filled('last_name')) {
+            $updateData['last_name'] = $request->last_name;
         }
         if ($request->has('office_station')) {
             $updateData['office_station'] = $request->office_station;
@@ -459,60 +567,139 @@ class AdminController extends Controller
      */
     public function activityLogs(Request $request)
     {
+        $user = Auth::user();
+        $type = $request->get('type', 'system');
+
+        // Prevent HR Review Officer from viewing Officer Actions
+        if ($user->hasRole('hr_review_officer') && !$user->hasRole(['super_admin', 'admin']) && $type === 'officer') {
+            return redirect()->route('admin.activity-logs', ['type' => 'system'])->with('error', 'Access denied to Officer Actions.');
+        }
+
+        $unreadCount = Notification::getUnreadCount($user->id);
         $filters = [
             'search' => $request->get('search', ''),
             'action' => $request->get('action', ''),
-            'date_range' => $request->get('date_range', ''),
+            'date_range' => $request->get('date_range', '30days'),
+            'officer_id' => $request->get('officer_id', ''),
+            'type' => $type,
         ];
 
-        $query = ActivityLog::withUserDetails()
-            ->search($filters['search'])
-            ->latest('created_at');
+        // 1. Initialize Query based on type
+        if ($type === 'credit') {
+            $query = LeaveCreditAuditLog::with(['actor', 'targetUser']);
+            if (!$user->isSuperAdmin()) {
+                $query->whereDoesntHave('actor.roles', function($q) {
+                    $q->where('name', 'super_admin');
+                })->whereDoesntHave('targetUser.roles', function($q) {
+                    $q->where('name', 'super_admin');
+                });
+            }
+        } else {
+            $query = ActivityLog::withUserDetails();
+            if (!$user->isSuperAdmin()) {
+                $query->whereDoesntHave('user.roles', function($q) {
+                    $q->where('name', 'super_admin');
+                });
+            }
+            
+            // For 'officer' type, filter actors by HR roles
+            if ($type === 'officer') {
+                $hrRoles = ['hr', 'head_hr', 'hr_review_officer'];
+                if ($user->hasRole('super_admin')) {
+                    $hrRoles[] = 'super_admin';
+                }
+                $query->whereHas('user', function ($q) use ($hrRoles) {
+                    $q->whereIn('role', $hrRoles);
+                });
+            }
+        }
 
-        // Filter by action type
-        if (!empty($filters['action'])) {
-            $actionMap = [
-                'login' => 'login',
-                'logout' => 'logout',
-                'create' => ['create', 'register', 'add'],
-                'update' => ['update', 'edit', 'change'],
-                'delete' => ['delete', 'remove'],
-            ];
-            $keywords = $actionMap[$filters['action']] ?? $filters['action'];
-            if (is_array($keywords)) {
-                $query->where(function ($q) use ($keywords) {
-                    foreach ($keywords as $kw) {
-                        $q->orWhere('action', 'like', "%{$kw}%");
-                    }
+        // 2. Apply Filters (Search)
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            if ($type === 'credit') {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('actor', function ($q2) use ($search) {
+                        $q2->where('full_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('targetUser', function ($q2) use ($search) {
+                        $q2->where('full_name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('leave_type_name', 'like', "%{$search}%")
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhere('reason', 'like', "%{$search}%");
                 });
             } else {
-                $query->where('action', 'like', "%{$keywords}%");
+                $query->where(function ($q) use ($search) {
+                    $q->where('action', 'like', "%{$search}%")
+                      ->orWhere('details', 'like', "%{$search}%")
+                      ->orWhereHas('user', function ($qu) use ($search) {
+                          $qu->where('full_name', 'like', "%{$search}%");
+                      });
+                });
             }
         }
 
-        // Filter by date range
+        // 3. Apply Filters (Officer specific for 'officer' tab)
+        if ($type === 'officer' && !empty($filters['officer_id'])) {
+            $query->where('user_id', $filters['officer_id']);
+        }
+
+        // 4. Apply Filters (Action specific)
+        if (!empty($filters['action'])) {
+            if ($type === 'credit') {
+                $query->where('action', $filters['action']);
+            } else {
+                $actionMap = [
+                    'login' => 'login',
+                    'logout' => 'logout',
+                    'create' => ['create', 'register', 'add'],
+                    'update' => ['update', 'edit', 'change'],
+                    'delete' => ['delete', 'remove'],
+                    'Verify' => 'Verif',
+                    'Approve' => 'Approv',
+                ];
+                $keywords = $actionMap[$filters['action']] ?? $filters['action'];
+                if (is_array($keywords)) {
+                    $query->where(function ($q) use ($keywords) {
+                        foreach ($keywords as $kw) {
+                            $q->orWhere('action', 'like', "%{$kw}%");
+                        }
+                    });
+                } else {
+                    $query->where('action', 'like', "%{$keywords}%");
+                }
+            }
+        }
+
+        // 5. Apply Filters (Date Range)
         if (!empty($filters['date_range'])) {
+            $tz = config('app.timezone');
             switch ($filters['date_range']) {
                 case 'today':
-                    $query->whereDate('created_at', Carbon::now(config('app.timezone'))->toDateString());
+                    $query->whereDate('created_at', Carbon::now($tz)->toDateString());
                     break;
                 case '7days':
-                    $query->where('created_at', '>=', Carbon::now(config('app.timezone'))->subDays(6)->startOfDay());
+                    $query->where('created_at', '>=', Carbon::now($tz)->subDays(6)->startOfDay());
                     break;
                 case '30days':
-                    $query->where('created_at', '>=', Carbon::now(config('app.timezone'))->subDays(29)->startOfDay());
+                    $query->where('created_at', '>=', Carbon::now($tz)->subDays(29)->startOfDay());
                     break;
             }
         }
 
-        $logs = $query->limit(200)->get();
+        // 6. Execute Query
+        $logs = $query->latest('created_at')->paginate(25)->withQueryString();
 
-        return view('admin.activity-logs', [
-            'logs' => $logs,
-            'filters' => $filters,
-            'user' => Auth::user(),
-            'unreadCount' => Notification::getUnreadCount(Auth::id()),
-        ]);
+        // 7. Get dropdown data
+        $officers = [];
+        if ($type === 'officer') {
+            $hrRoles = ['hr', 'head_hr', 'hr_review_officer'];
+            if ($user->role === 'super_admin') { $hrRoles[] = 'super_admin'; }
+            $officers = User::whereIn('role', $hrRoles)->where('is_active', true)->orderBy('full_name')->get();
+        }
+
+        return view('admin.activity-logs', compact('logs', 'filters', 'officers', 'user', 'unreadCount', 'type'));
     }
 
     /**
@@ -521,10 +708,12 @@ class AdminController extends Controller
     public function showRegisterUser()
     {
         $offices = Office::all()->groupBy('category');
+        $allRoles = \App\Models\Role::all();
 
         return view('admin.register-user', [
             'user' => Auth::user(),
             'offices' => $offices,
+            'allRoles' => $allRoles,
             'unreadCount' => Notification::getUnreadCount(Auth::id()),
         ]);
     }
@@ -543,18 +732,43 @@ class AdminController extends Controller
             'office_station' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'employee_number' => 'required|string|regex:/^[0-9]{7}$/|unique:users,employee_number',
-            'role' => 'required|string|in:user,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
+            'roles' => 'required|array',
+            'roles.*' => 'string|in:user,super_admin,admin,hr,head_hr,hr_review_officer,immediate_head,asds,sds,sgod_chief,cid_chief,ao,record_personnel',
         ]);
+
+        $isHrOnly = Auth::user()->hasRole(['hr', 'head_hr', 'hr_review_officer']) && !Auth::user()->hasRole(['super_admin', 'admin']);
+        if ($isHrOnly) {
+            $roleNames = ['user'];
+        } else {
+            $roleNames = $request->roles;
+            if (!in_array('super_admin', $roleNames) && !in_array('user', $roleNames)) {
+                $roleNames[] = 'user';
+            }
+        }
+
+        // Authorization check for super_admin role assignment
+        if (in_array('super_admin', $roleNames) && !Auth::user()->isSuperAdmin()) {
+            return redirect()->back()->withInput()->with('error', 'Only Super Admin can create accounts with the Super Admin role.');
+        }
 
         // Authorization check for restricted roles
         $restrictedRoles = ['asds', 'sds', 'sgod_chief', 'cid_chief', 'ao'];
-        if (in_array($request->role, $restrictedRoles) && Auth::user()->role !== 'super_admin') {
+        $requestedRestricted = array_intersect($roleNames, $restrictedRoles);
+        if (!empty($requestedRestricted) && !Auth::user()->isSuperAdmin()) {
             return redirect()->back()->withInput()->with('error', 'Only Super Admin can create accounts with this role.');
         }
 
         // HR Review Officer Restriction: Only HR or Super Admin
-        if ($request->role === 'hr_review_officer' && !in_array(Auth::user()->role, ['hr', 'head_hr', 'super_admin'])) {
+        if (in_array('hr_review_officer', $roleNames) && !Auth::user()->isSuperAdmin() && !Auth::user()->isHR()) {
             return redirect()->back()->withInput()->with('error', 'Only HR Personnel or Super Admin can assign the HR Review Officer role.');
+        }
+
+        $mainRole = 'user';
+        foreach ($roleNames as $rName) {
+            if ($rName !== 'user') {
+                $mainRole = $rName;
+                break;
+            }
         }
 
         $username = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $request->first_name)) . mt_rand(1000, 9999);
@@ -569,21 +783,26 @@ class AdminController extends Controller
             'office_station' => $request->office_station,
             'position' => $request->position,
             'employee_number' => $request->employee_number,
-            'role' => $request->role,
+            'role' => $mainRole,
             'is_active' => true,
             'created_by' => Auth::id(),
         ]);
 
+        // Sync roles
+        $roleIds = \App\Models\Role::whereIn('name', $roleNames)->pluck('id')->toArray();
+        $user->roles()->sync($roleIds);
+
         ActivityLog::logAction(Auth::id(), 'Created User', "User ID: {$user->id} - {$user->full_name}");
 
         // Notify HR Personnel if created by an HR Review Officer
-        if (Auth::user()->role === 'hr_review_officer') {
-            $hrStaff = User::whereIn('role', ['hr', 'head_hr'])->where('is_active', true)->get();
+        if (Auth::user()->hasRole('hr_review_officer')) {
+            $hrStaff = User::whereHas('roles', function($q) {
+                $q->whereIn('name', ['hr', 'head_hr']);
+            })->where('is_active', true)->get();
             foreach ($hrStaff as $hr) {
                 Notification::send(Auth::id(), $hr->id, "HR Review Officer " . Auth::user()->full_name . " has registered a new user: " . $user->full_name);
             }
         }
-
 
         return redirect()->route('admin.manage-users')->with('success', 'User created successfully!');
     }
@@ -593,12 +812,15 @@ class AdminController extends Controller
      */
     public function editUser(User $user)
     {
+        $user->load('roles');
         $offices = Office::all()->groupBy('category');
+        $allRoles = \App\Models\Role::all();
 
         return view('admin.edit-user', [
             'editUser' => $user,
             'user' => Auth::user(),
             'offices' => $offices,
+            'allRoles' => $allRoles,
             'unreadCount' => Notification::getUnreadCount(Auth::id()),
         ]);
     }
@@ -758,15 +980,28 @@ class AdminController extends Controller
     }
 
     /**
-     * Show signatories management
+     * Show combined offices and signatories management
      */
-    public function signatories()
+    public function officesAndSignatories()
     {
         $signatories = \App\Models\Signatory::all();
+        
+        // Get user counts per office to show in deletion warnings
+        $userCounts = User::select('office_station', DB::raw('count(*) as total'))
+            ->whereNotNull('office_station')
+            ->groupBy('office_station')
+            ->pluck('total', 'office_station');
+
+        $offices = Office::orderBy('category')->orderBy('name')->get();
+        foreach ($offices as $office) {
+            $office->user_count = $userCounts[$office->name] ?? 0;
+        }
+        $offices = $offices->groupBy('category');
+
         $user = Auth::user();
         $unreadCount = Notification::getUnreadCount($user->id);
 
-        return view('admin.signatories', compact('signatories', 'user', 'unreadCount'));
+        return view('admin.signatories', compact('signatories', 'offices', 'user', 'unreadCount'));
     }
 
     /**
@@ -791,5 +1026,57 @@ class AdminController extends Controller
         ActivityLog::logAction(Auth::id(), 'Updated Signatories', 'Administrative signatories updated');
 
         return redirect()->back()->with('success', 'Signatories updated successfully.');
+    }
+
+    /**
+     * Store a new office
+     */
+    public function storeOffice(Request $request)
+    {
+        $request->validate([
+            'category' => 'required|string|max:50',
+            'name' => 'required|string|max:100|unique:offices,name',
+        ]);
+
+        Office::create($request->all());
+
+        ActivityLog::logAction(Auth::id(), 'Created Office', "Office: {$request->name} ({$request->category})");
+
+        return redirect()->back()->with('success', 'Office added successfully!');
+    }
+
+    /**
+     * Update an office
+     */
+    public function updateOffice(Request $request, Office $office)
+    {
+        $request->validate([
+            'category' => 'required|string|max:50',
+            'name' => 'required|string|max:100|unique:offices,name,' . $office->id,
+        ]);
+
+        $oldName = $office->name;
+        $office->update($request->all());
+
+        ActivityLog::logAction(Auth::id(), 'Updated Office', "Office: {$oldName} -> {$office->name}");
+
+        return redirect()->back()->with('success', 'Office updated successfully!');
+    }
+
+    /**
+     * Delete an office
+     */
+    public function deleteOffice(Office $office)
+    {
+        $name = $office->name;
+        
+        // Update users belonging to this office to have no office station
+        User::where('office_station', $name)->update(['office_station' => null]);
+        
+        $office->delete();
+
+        ActivityLog::logAction(Auth::id(), 'Deleted Office', "Office: {$name}");
+
+        return redirect()->back()->with('success', "Office '{$name}' removed. Users from this office have been updated to 'No Office Assigned'.");
     }
 }

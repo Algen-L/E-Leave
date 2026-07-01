@@ -1,418 +1,373 @@
 @extends('layouts.sdo')
 
-@section('title', 'My Profile')
-@section('page-title', 'My Profile')
+@section('title', 'Admin Profile')
+@section('page-title', 'System Administration Hub')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/profile.css') }}?v={{ time() }}">
-    <style>
-        .profile-container {
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        .profile-card {
-            opacity: 0;
-            animation: backInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        .profile-card:nth-child(1) { animation-delay: 0.1s; }
-        .profile-card:nth-child(2) { animation-delay: 0.2s; }
-        .profile-card:nth-child(3) { animation-delay: 0.3s; }
-        .profile-card:nth-child(4) { animation-delay: 0.4s; }
-
-        @keyframes backInDown {
-            0% {
-                transform: translateY(-100px) scale(0.7);
-                opacity: 0;
-            }
-            80% {
-                transform: translateY(0px) scale(0.7);
-                opacity: 0.7;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/profile-redesign.css') }}?v={{ time() }}">
 @endpush
 
 @section('content')
-    <div class="profile-container">
-        <!-- 1. Core Identification -->
-        <div class="profile-card">
-            <div class="profile-card-header">
-                <div class="profile-section-title">
-                    <i class="fas fa-id-card"></i>
-                    Core Identification
+    <div class="profile-redesign-wrapper">
+        <div class="profile-grid-layout">
+            
+            <!-- 1. Identity Card (Top Left) -->
+            <div class="dash-card identity-card animate__animated animate__fadeIn">
+                <div class="avatar-container">
+                    @if($user->profile_picture)
+                        <img src="{{ storage_url($user->profile_picture) }}" alt="{{ $user->full_name }}" class="avatar-img">
+                    @else
+                        <div class="avatar-placeholder">
+                            {{ strtoupper(substr($user->full_name, 0, 1)) }}
+                        </div>
+                    @endif
                 </div>
-            </div>
-            <div class="profile-card-body">
-                <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data" id="profileUpdateForm">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="profile-form">
-                        <div class="form-item-row">
-                            <label class="form-item-label">Primary Full Name</label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-user"></i></div>
-                                <input type="text" class="input-premium" name="full_name" value="{{ $user->full_name }}" required>
-                            </div>
-                        </div>
-
-                        <div class="form-item-row">
-                            <label class="form-item-label">Office / Assignment</label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-building"></i></div>
-                                <input type="text" class="input-premium" name="office_station" value="{{ $user->office_station }}">
-                            </div>
-                        </div>
-
-                        <div class="form-item-row">
-                            <label class="form-item-label">Official Position</label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-briefcase"></i></div>
-                                <input type="text" class="input-premium" name="position" value="{{ $user->position }}">
-                            </div>
-                        </div>
-
-                        </div>
-
-                    <div class="profile-footer">
-                        <a href="{{ route('admin.dashboard') }}" class="btn-back">
-                            <i class="fas fa-arrow-left"></i>
-                            Return to Dashboard
-                        </a>
-                        <button type="submit" class="btn-sync">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            Synchronize Security Profile
-                        </button>
+                <h3 class="profile-name">{{ $user->full_name }}</h3>
+                <span class="profile-id">ID: {{ $user->employee_number ?: 'N/A' }}</span>
+                
+                <div class="info-list" style="margin-top: 24px;">
+                    <div class="info-item">
+                        <span class="info-label">Member Since</span>
+                        <span class="info-value">{{ $user->created_at->format('M d, Y') }}</span>
                     </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 2. Administrative Privileges -->
-        <div class="profile-card accent-blue">
-            <div class="profile-card-header">
-                <div class="profile-section-title">
-                    <i class="fas fa-user-shield"></i>
-                    Administrative Privileges
-                </div>
-            </div>
-            <div class="profile-card-body">
-                <div class="privilege-box">
-                    <div class="privilege-icon-container">
-                        <i class="fas fa-key"></i>
-                    </div>
-                    <div class="privilege-text">
-                        <span class="role-level">Role Level: {{ strtoupper($user->role) }}</span>
-                        <p class="role-desc">
-                            Your account is authorized with <strong>Highest Level</strong> administrative permissions. 
-                            You have full control over system configuration, user management, and security protocols.
-                        </p>
+                    <div class="info-item">
+                        <span class="info-label">Status</span>
+                        <span class="status-badge {{ $user->is_active ? 'status-active' : 'status-inactive' }}">
+                            {{ $user->is_active ? 'ACTIVE' : 'INACTIVE' }}
+                        </span>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </div>
-        </div>
-
-        <!-- 3. Security & Authentication -->
-        <div class="profile-card accent-purple">
-            <div class="profile-card-header">
-                <div class="profile-section-title">
-                    <i class="fas fa-lock"></i>
-                    Security & Authentication
+            <!-- 2. General Information Card (Top Middle) -->
+            <div class="dash-card animate__animated animate__fadeIn" style="animation-delay: 0.1s;">
+                <div class="dash-card-header">
+                    <h4 class="dash-card-title"><i class="fas fa-info-circle"></i> General Information</h4>
+                </div>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">Current Position</span>
+                        <span class="info-value">{{ $user->position ?: 'System Administrator' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Office Assignment</span>
+                        <span class="info-value">{{ $user->office_station ?: 'Main Division' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Access Level</span>
+                        <span class="info-value">Full Master Access</span>
+                    </div>
                 </div>
             </div>
-            <div class="profile-card-body">
-                <form action="{{ route('admin.profile.update') }}" method="POST">
-                    @csrf
-                    @method('PUT')
-                    
-                    <div class="profile-form">
-                        <div class="form-item-row">
-                            <label class="form-item-label">Current Password <span class="required-asterisk">*</span></label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-key"></i></div>
-                                <input type="password" class="input-premium" name="current_password" required>
-                            </div>
-                        </div>
 
-                        <div class="form-item-row">
-                            <label class="form-item-label">New Password <span class="required-asterisk">*</span></label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-lock"></i></div>
-                                <input type="password" class="input-premium" name="password" required minlength="6" placeholder="Minimum 6 characters">
-                            </div>
-                        </div>
-
-                        <div class="form-item-row">
-                            <label class="form-item-label">Confirm Password <span class="required-asterisk">*</span></label>
-                            <div class="input-group-premium">
-                                <div class="input-icon"><i class="fas fa-check-circle"></i></div>
-                                <input type="password" class="input-premium" name="password_confirmation" required minlength="6" placeholder="Confirm new password">
-                            </div>
-                        </div>
+            <!-- 3. Administrative Privilege Card (Top Right) -->
+            <div class="dash-card animate__animated animate__fadeIn" style="animation-delay: 0.2s;">
+                <div class="dash-card-header">
+                    <h4 class="dash-card-title"><i class="fas fa-user-shield"></i> Administrative Privilege</h4>
+                </div>
+                <div class="privilege-content">
+                    <div class="role-display mb-3">
+                        <span class="role-badge">{{ ucfirst(str_replace('_', ' ', $user->role)) }}</span>
                     </div>
-
-                    <div class="profile-footer" style="justify-content: flex-end;">
-                        <button type="submit" class="btn-sync">
-                            <i class="fas fa-save"></i>
-                            Update Password
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 4. E-Signature Section -->
-        <div class="profile-card">
-            <div class="profile-card-header">
-                <div class="profile-section-title">
-                    <i class="fas fa-file-signature"></i>
-                    Electronic Signature
+                    <ul class="privilege-list">
+                        <li><i class="fas fa-microchip"></i> System Governance</li>
+                        <li><i class="fas fa-users-cog"></i> Master User Control</li>
+                        <li><i class="fas fa-shield-alt"></i> Security Audit</li>
+                        <li><i class="fas fa-sliders-h"></i> Policy Management</li>
+                    </ul>
                 </div>
             </div>
-            <div class="profile-card-body">
-                <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data" id="signatureForm">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="esignature_mode" id="esignatureMode" value="upload">
-                    <input type="hidden" name="esignature_data" id="esignatureData">
 
-                    <div class="form-item-row" style="margin-bottom: 20px;">
-                        <label class="form-item-label">Current Signature</label>
-                        <div class="signature-preview" style="border: 2px dashed #cbd5e1; padding: 20px; text-align: center; border-radius: 12px; background: #f8fafc; flex: 1;">
+            <!-- 4. Management Center (Bottom Left - Tabs) -->
+            <div class="dash-card large-area animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                <div class="dash-tabs">
+                    <button class="dash-tab-btn active" onclick="switchProfileTab('editInfo', this)">
+                        <i class="fas fa-user-edit"></i> Edit Details
+                    </button>
+                    <button class="dash-tab-btn" onclick="switchProfileTab('eSignature', this)">
+                        <i class="fas fa-file-signature"></i> E-Signature
+                    </button>
+                    <button class="dash-tab-btn" onclick="switchProfileTab('security', this)">
+                        <i class="fas fa-shield-alt"></i> Security & Password
+                    </button>
+                </div>
+
+                <!-- Tab 1: Edit Information -->
+                <div id="editInfo" class="profile-tab-content">
+                    <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+                        <div class="dash-form-grid">
+                            <div class="dash-field" style="grid-column: span 2;">
+                                <label class="dash-label">Profile Image</label>
+                                <input type="file" name="profile_picture" class="dash-input" accept="image/*">
+                            </div>
+<div class="dash-field">
+    <label class="dash-label">First Name</label>
+    <input type="text" class="dash-input" name="first_name" value="{{ $user->first_name }}" required>
+</div>
+<div class="dash-field">
+    <label class="dash-label">Middle Name</label>
+    <input type="text" class="dash-input" name="middle_name" value="{{ $user->middle_name }}">
+</div>
+<div class="dash-field">
+    <label class="dash-label">Last Name</label>
+    <input type="text" class="dash-input" name="last_name" value="{{ $user->last_name }}" required>
+</div>
+                            <div class="dash-field">
+                                <label class="dash-label">Employee Number (7-Digit)</label>
+                                <input type="text" class="dash-input" name="employee_number" value="{{ $user->employee_number }}" pattern="\d{7}" maxlength="7">
+                            </div>
+                            <div class="dash-field">
+                                <label class="dash-label">Designation / Position</label>
+                                <input type="text" class="dash-input" name="position" value="{{ $user->position }}">
+                            </div>
+                             <div class="dash-field">
+                                <label class="dash-label">Office / Station</label>
+                                <input type="text" class="dash-input" name="office_station" value="{{ $user->office_station }}">
+                            </div>
+                        </div>
+                        <div style="margin-top: 24px; text-align: right;">
+                            <button type="submit" class="dash-btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 2: E-Signature Management -->
+                <div id="eSignature" class="profile-tab-content" style="display: none;">
+                    <form action="{{ route('admin.profile.update') }}" method="POST" enctype="multipart/form-data" id="sigFormRedesign">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="esignature_mode" id="sigModeRedesign" value="upload">
+                        <input type="hidden" name="esignature_data" id="sigDataRedesign">
+
+                        <div class="sig-box-redesign">
                             @if($user->esignature)
-                                <img src="{{ storage_url($user->esignature) }}" alt="E-Signature" style="max-height: 100px; max-width: 100%;">
+                                <img src="{{ storage_url($user->esignature) }}" alt="Signature" id="currentSigPreview" style="max-height: 80px;">
                             @else
-                                <p class="text-muted" style="font-size: 0.85rem;">No signature uploaded yet.</p>
+                                <p class="text-muted" style="font-size: 0.8rem; margin: 0;">No signature recorded yet.</p>
                             @endif
                         </div>
-                    </div>
 
-                    <div class="form-item-row">
-                        <label class="form-item-label">Update Signature</label>
-                        <div style="flex: 1;">
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <button type="button" class="btn-tab active" id="tabUpload" onclick="switchSigMode('upload')" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: #eef2ff; color: #6366f1; cursor: pointer; font-size: 0.8rem; font-weight: 700;">
-                                    <i class="fas fa-upload"></i> UPLOAD PNG
+                        <div class="dash-field">
+                            <label class="dash-label">Signature Action</label>
+                            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                                <button type="button" class="dash-btn-primary" onclick="switchSigInput('upload')" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; flex: 1;">
+                                    <i class="fas fa-upload"></i> Upload PNG
                                 </button>
-                                <button type="button" class="btn-tab" id="tabDraw" onclick="switchSigMode('draw')" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 700;">
-                                    <i class="fas fa-pen-nib"></i> DRAW SIGNATURE
+                                <button type="button" class="dash-btn-primary" onclick="switchSigInput('draw')" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; flex: 1;">
+                                    <i class="fas fa-pen"></i> Draw Now
                                 </button>
                             </div>
 
-                            <div id="uploadArea">
-                                <input type="file" name="esignature" class="input-premium" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px;" accept="image/png">
-                                <small style="display: block; margin-top: 8px; color: #64748b; font-size: 0.75rem;">
-                                    Please upload a clear image of your signature (<strong>PNG only</strong>).
-                                </small>
+                            <div id="sigUploadAreaRedesign">
+                                <input type="file" name="esignature" class="dash-input" accept="image/png">
+                                <small style="display:block; margin-top: 8px; color: #64748b;">Transparent PNG recommended.</small>
                             </div>
 
-                            <div id="drawArea" style="display: none;">
-                                <div style="border: 2px solid #e2e8f0; border-radius: 8px; background: #fff; overflow: hidden; width: 100%; max-width: 400px; height: 200px;">
-                                    <canvas id="sigCanvas" width="400" height="200" style="display: block; cursor: crosshair; touch-action: none; width: 100%; height: 100%;"></canvas>
+                            <div id="sigDrawAreaRedesign" style="display: none;">
+                                <div style="border: 1px solid #e2e8f0; border-radius: 12px; height: 160px; background: #fff; overflow: hidden;">
+                                    <canvas id="redesignSigCanvas" width="600" height="160" style="width: 100%; height: 100%; cursor: crosshair;"></canvas>
                                 </div>
-                                <div style="margin-top: 10px; display: flex; align-items: center; gap: 20px;">
-                                    <small style="color: #64748b; font-size: 0.75rem;">Sign within the box</small>
-                                    <button type="button" onclick="clearSigCanvas()" style="color: #dc2626; background: transparent; border: none; cursor: pointer; font-weight: 600; font-size: 0.8rem;">
-                                        <i class="fas fa-eraser"></i> Clear
-                                    </button>
+                                    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 0.8rem; color: #475569; font-weight: 600;">Pen Thickness:</span>
+                                            <input type="range" min="1" max="10" value="4.5" step="0.5" style="width: 100px; cursor: pointer;" oninput="updatePenThickness(this.value)">
+                                            <span id="thicknessValueAdmin" style="font-size: 0.8rem; color: #475569; font-weight: 700;">4.5</span>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link text-danger" onclick="clearRedesignCanvas()">Clear Drawing</button>
+                                    </div>
                                 </div>
+                        </div>
+
+                        <div style="margin-top: 24px; text-align: right;">
+                            <button type="button" onclick="submitSigRedesign()" class="dash-btn-primary"><i class="fas fa-signature"></i> Finalize Signature</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tab 3: Security & Password -->
+                <div id="security" class="profile-tab-content" style="display: none;">
+                    <form action="{{ route('admin.profile.update') }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="dash-form-grid" style="max-width: 500px;">
+                            <div class="dash-field" style="grid-column: span 2;">
+                                <label class="dash-label">Current Password</label>
+                                <input type="password" name="current_password" class="dash-input" required>
+                            </div>
+                            <div class="dash-field">
+                                <label class="dash-label">New Password</label>
+                                <input type="password" name="password" class="dash-input" required minlength="6">
+                            </div>
+                            <div class="dash-field">
+                                <label class="dash-label">Confirm New Password</label>
+                                <input type="password" name="password_confirmation" class="dash-input" required minlength="6">
                             </div>
                         </div>
-                    </div>
-
-                    <div class="profile-footer" style="justify-content: flex-end;">
-                        <button type="button" onclick="submitSignature()" class="btn-sync">
-                            <i class="fas fa-save"></i>
-                            Save Signature
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- 4. Send System Notification -->
-        @if(in_array($user->role, ['super_admin', 'admin', 'head_hr']))
-            <div class="profile-card accent-orange">
-                <div class="profile-card-header">
-                    <div class="profile-section-title">
-                        <i class="fas fa-bullhorn"></i>
-                        Send System Notification
-                    </div>
+                        <div style="margin-top: 24px; text-align: right;">
+                            <button type="submit" class="dash-btn-primary"><i class="fas fa-lock"></i> Update Password</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="profile-card-body">
+            </div>
+
+            <!-- 5. Quick Communications Card (Bottom Right) -->
+            <div class="dash-card animate__animated animate__fadeInRight" style="animation-delay: 0.4s;">
+                <div class="dash-card-header">
+                    <h4 class="dash-card-title"><i class="fas fa-paper-plane"></i> Quick Communications</h4>
+                </div>
+                <div class="notification-form-container">
                     <form action="{{ route('admin.notifications.send') }}" method="POST">
                         @csrf
-                        <label class="form-label-premium">Recipient <span>*</span></label>
-                        <div class="input-group-premium" style="margin-bottom: 20px;">
-                            <div class="input-icon"><i class="fas fa-users"></i></div>
-                            <select class="input-premium" name="recipient_id" required>
-                                <option value="all">All Users</option>
+                        <div class="dash-field">
+                            <label class="dash-label">Recipient</label>
+                            <select name="recipient_id" class="dash-input" required>
+                                <option value="all">Broadcast to All Users</option>
                                 @foreach($allUsers as $u)
                                     @if($u->id !== $user->id)
-                                        <option value="{{ $u->id }}">{{ $u->full_name }}</option>
+                                        <option value="{{ $u->id }}">{{ $u->full_name }} ({{ ucfirst($u->role) }})</option>
                                     @endif
                                 @endforeach
                             </select>
                         </div>
-
-                        <label class="form-label-premium">Message <span>*</span></label>
-                        <textarea class="textarea-premium" name="message" maxlength="500" placeholder="Type your notification message here..." required></textarea>
-
-                        <button type="submit" class="btn-send">
-                            <i class="fas fa-paper-plane"></i>
-                            Send
+                        <div class="dash-field mt-3">
+                            <label class="dash-label">Message</label>
+                            <textarea name="message" class="dash-input" rows="3" placeholder="Compose your system notification..." required></textarea>
+                        </div>
+                        <button type="submit" class="dash-btn-primary mt-3" style="width: 100%;">
+                            <i class="fas fa-paper-plane"></i> Send Notification
                         </button>
                     </form>
-
-                    <div class="system-protocol-extra">
-                        <div class="protocol-header">
-                            <i class="fas fa-info-circle"></i>
-                            System Broadcast Protocol
-                        </div>
-                        <ul class="protocol-list">
-                            <li>
-                                <i class="fas fa-clock"></i>
-                                <span><strong>Delivery Timing</strong>: Notifications are delivered in real-time to active sessions and stored for offline users.</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span><strong>Content Policy</strong>: Use for official administrative announcements only. Avoid redundant or sensitive data.</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-history"></i>
-                                <span><strong>Audit Trail</strong>: All outgoing broadcasts are logged with timestamp and author ID for security compliance.</span>
-                            </li>
-                            <li>
-                                <i class="fas fa-server"></i>
-                                <span><strong>Priority Level</strong>: System notifications bypass individual user "Do Not Disturb" settings.</span>
-                            </li>
-                        </ul>
-                    </div>
+                    <p style="font-size: 0.72rem; color: #64748b; margin-top: 12px; line-height: 1.4;">
+                        <i class="fas fa-info-circle"></i> Notifications sent here will appear in the recipient's dashboard and system alerts.
+                    </p>
                 </div>
             </div>
-        @endif
+
+         </div>
     </div>
 
     @push('scripts')
         <script>
-            // ---- Signature Logic ----
-            let canvas, ctx;
-            let isDrawing = false;
-            let hasSignature = false;
+            // --- Tabs Logic ---
+            function switchProfileTab(tabId, btn) {
+                // Hide all contents
+                document.querySelectorAll('.profile-tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Remove active class from buttons
+                document.querySelectorAll('.dash-tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
 
-            function initCanvas() {
-                canvas = document.getElementById('sigCanvas');
-                if (!canvas) return;
-                if (canvas.getAttribute('data-init') === 'true') return;
+                // Show target content
+                document.getElementById(tabId).style.display = 'block';
+                btn.classList.add('active');
+            }
 
-                ctx = canvas.getContext('2d');
+            // --- Signature Logic (Redesign Version) ---
+            let redesignCanvas, redesignCtx;
+            let isDrawingRedesign = false;
+            let hasDrawingRedesign = false;
+
+            function initRedesignCanvas() {
+                redesignCanvas = document.getElementById('redesignSigCanvas');
+                if (!redesignCanvas) return;
+                if (redesignCanvas.getAttribute('data-init') === 'true') return;
+
+                redesignCtx = redesignCanvas.getContext('2d');
+                redesignCtx.lineWidth = currentPenThickness;
+                redesignCtx.lineCap = 'round';
+                redesignCtx.strokeStyle = '#000000';
+
+                const rect = redesignCanvas.getBoundingClientRect();
                 const dpr = window.devicePixelRatio || 1;
-                const rect = canvas.getBoundingClientRect();
+                redesignCanvas.width = rect.width * dpr;
+                redesignCanvas.height = rect.height * dpr;
+                redesignCtx.scale(dpr, dpr);
 
-                canvas.width = rect.width * dpr;
-                canvas.height = rect.height * dpr;
-                ctx.scale(dpr, dpr);
+                redesignCanvas.addEventListener('mousedown', (e) => startRedesignDraw(e));
+                redesignCanvas.addEventListener('mousemove', (e) => redesignDraw(e));
+                redesignCanvas.addEventListener('mouseup', endRedesignDraw);
+                redesignCanvas.addEventListener('mouseout', endRedesignDraw);
 
-                ctx.lineWidth = 2;
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = '#000000';
+                redesignCanvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startRedesignDraw(e.touches[0]);
+                }, { passive: false });
+                redesignCanvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    redesignDraw(e.touches[0]);
+                }, { passive: false });
+                redesignCanvas.addEventListener('touchend', endRedesignDraw);
 
-                canvas.addEventListener('mousedown', startDraw);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseup', endDraw);
-                canvas.addEventListener('mouseout', endDraw);
-
-                canvas.setAttribute('data-init', 'true');
+                redesignCanvas.setAttribute('data-init', 'true');
             }
 
-            function startDraw(e) {
-                isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                ctx.beginPath();
-                ctx.moveTo((e.clientX - rect.left), (e.clientY - rect.top));
+            let currentPenThickness = 4.5;
+            function updatePenThickness(val) {
+                currentPenThickness = parseFloat(val);
+                const displayUser = document.getElementById('thicknessValueUser');
+                if (displayUser) displayUser.textContent = val;
+                const displayHR = document.getElementById('thicknessValueHR');
+                if (displayHR) displayHR.textContent = val;
+                const displayAdmin = document.getElementById('thicknessValueAdmin');
+                if (displayAdmin) displayAdmin.textContent = val;
             }
 
-            function draw(e) {
-                if (!isDrawing) return;
-                hasSignature = true;
-                const rect = canvas.getBoundingClientRect();
-                ctx.lineTo((e.clientX - rect.left), (e.clientY - rect.top));
-                ctx.stroke();
+            function startRedesignDraw(e) {
+                isDrawingRedesign = true;
+                const rect = redesignCanvas.getBoundingClientRect();
+                redesignCtx.lineWidth = currentPenThickness;
+                redesignCtx.beginPath();
+                redesignCtx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
             }
 
-            function endDraw() {
-                isDrawing = false;
-                ctx.beginPath();
+            function redesignDraw(e) {
+                if (!isDrawingRedesign) return;
+                hasDrawingRedesign = true;
+                const rect = redesignCanvas.getBoundingClientRect();
+                redesignCtx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                redesignCtx.stroke();
             }
 
-            function clearSigCanvas() {
-                if (!ctx || !canvas) return;
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                hasSignature = false;
+            function endRedesignDraw() {
+                isDrawingRedesign = false;
             }
 
-            function switchSigMode(mode) {
-                const uploadArea = document.getElementById('uploadArea');
-                const drawArea = document.getElementById('drawArea');
-                const tabUpload = document.getElementById('tabUpload');
-                const tabDraw = document.getElementById('tabDraw');
-                const modeInput = document.getElementById('esignatureMode');
+            function clearRedesignCanvas() {
+                redesignCtx.clearRect(0, 0, redesignCanvas.width, redesignCanvas.height);
+                hasDrawingRedesign = false;
+            }
+
+            function switchSigInput(mode) {
+                const uploadArea = document.getElementById('sigUploadAreaRedesign');
+                const drawArea = document.getElementById('sigDrawAreaRedesign');
+                document.getElementById('sigModeRedesign').value = mode;
 
                 if (mode === 'upload') {
                     uploadArea.style.display = 'block';
                     drawArea.style.display = 'none';
-                    tabUpload.style.background = '#eef2ff';
-                    tabUpload.style.color = '#6366f1';
-                    tabDraw.style.background = 'white';
-                    tabDraw.style.color = '#334155';
-                    modeInput.value = 'upload';
                 } else {
                     uploadArea.style.display = 'none';
                     drawArea.style.display = 'block';
-                    tabUpload.style.background = 'white';
-                    tabUpload.style.color = '#334155';
-                    tabDraw.style.background = '#eef2ff';
-                    tabDraw.style.color = '#6366f1';
-                    modeInput.value = 'draw';
-                    initCanvas();
+                    initRedesignCanvas();
                 }
             }
 
-            function submitSignature() {
-                const form = document.getElementById('signatureForm');
-                const mode = document.getElementById('esignatureMode').value;
-
+            function submitSigRedesign() {
+                const mode = document.getElementById('sigModeRedesign').value;
                 if (mode === 'draw') {
-                    if (!hasSignature) {
+                    if (!hasDrawingRedesign) {
                         alert('Please draw your signature first.');
                         return;
                     }
-                    const dataURL = canvas.toDataURL('image/png');
-                    document.getElementById('esignatureData').value = dataURL;
+                    document.getElementById('sigDataRedesign').value = redesignCanvas.toDataURL('image/png');
                 }
-                form.submit();
+                document.getElementById('sigFormRedesign').submit();
             }
-
-            // Init canvas on load if visible
-            window.addEventListener('load', () => {
-                if(document.getElementById('drawArea').style.display === 'block') {
-                    initCanvas();
-                }
-            });
         </script>
     @endpush
 @endsection
